@@ -187,6 +187,7 @@ class Testcase {
   final String input, output;
   final String original;
 
+  bool testing = false;
   TestResult? result;
 
   Testcase({
@@ -200,7 +201,7 @@ class Testcase {
   }
 
   bool get isPass {
-    return output == result?.output.join("\n");
+    return "$output\n" == result?.output.join("\n");
   }
 
   factory Testcase.parse(String message) {
@@ -212,8 +213,12 @@ class Testcase {
     }
 
     return Testcase(
-      input: arr[1].trim(),
-      output: arr[2].trim(), 
+      input: arr[1]
+        .replaceFirst("\n", "")
+        .trimRight(),
+      output: arr
+        .last // There are always some <new lines> mark at the begin of the List 
+        .replaceFirst("\n", ""), // Replace the first '\n' to empty string 
       original: message
     );
   }
@@ -223,9 +228,13 @@ class Testcase {
       throw TestException("指定的測試檔案不存在");
     }
 
+    testing = true;
+    result = null;
+
     final process = await Process.start("python", [target.path]);
 
     for (var line in input.split("\n")) {
+      // print("Feeding: $line");
       process.stdin.write(line);
       process.stdin.write(ascii.decode([10]));
     }
@@ -234,19 +243,41 @@ class Testcase {
       await process.exitCode
         .timeout(const Duration(seconds: 10));
     } on TimeoutException catch (_) {
-      process.kill();
+      result = TestResult(
+        error: ["測試時間超時，已強制結束"],
+        output: ["測試時間超時，已強制結束"]
+      );
       throw TestException("測試時間超時，已強制結束");
+    } on OSError catch (e) {
+      result = TestResult(
+        error: ["測試檔案無效: ${e.message}"],
+        output: ["測試時間超時，已強制結束"]
+      );
+    } catch (e) {
+      logger.e(e);
+      return result!;
+    } 
+    finally {
+      process.kill();
     }
 
     final out = await process.stdout
-      .map((e) => utf8.decode(e).trim())
+      .map((e) => utf8.decode(e))
       .toList();
 
     final err = await process.stderr
-      .map((e) => utf8.decode(e).trim())
+      .map((e) => utf8.decode(e))
       .toList();
     
-    result = TestResult(error: err, output: out);
+    result = TestResult(
+      error: err,
+      output: out.firstOrNull
+        ?.split("\n")
+        .map((e) => e.replaceAll(ascii.decode([13]), ""))
+        .toList() ?? []
+    );
+    testing = false;
+
     return result!;
   }
 }
@@ -326,6 +357,9 @@ class Homework {
   String status;
 
   Description? description;
+
+  bool get isAllTesting =>
+    description?.testCases.every((e) => e.testing) ?? false;
 
   bool _deleting = false;
   bool _submitting = false;

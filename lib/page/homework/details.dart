@@ -14,6 +14,7 @@ import 'package:ntut_program_assignment/page/homework/router.dart';
 
 class HomeworkDetail extends StatefulWidget {
   final Homework homework;
+  
 
   const HomeworkDetail({
     super.key,
@@ -25,8 +26,10 @@ class HomeworkDetail extends StatefulWidget {
 }
 
 class _HomeworkDetailState extends State<HomeworkDetail> {
+  File? selFile;
+
   // Store the testcase that currently selected
-  int _selectTestcase = 0;
+  
 
   // Store the list of all student ID that passes this homework 
   List<String>? _passList = [];
@@ -34,6 +37,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   // Store all online checked testcases status and messages
   List<CheckResult> _testcasesVal = [];
 
+  // Store copy button whether should display a check mark or clipboard icon 
   bool inputCopy = false, outputCopy = false;
 
   Future<void> refresh() async {
@@ -62,6 +66,147 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
     if (mounted) setState(() {});
   }
 
+  bool canDelete() {
+    switch (widget.homework.state) {
+      case HomeworkState.notPassed:
+      case HomeworkState.passed:
+        return DateTime.now().compareTo(widget.homework.deadline) <= 0;
+
+      default:
+        return false;
+    }
+  }
+
+  Future<void> _onPerformDrop(PerformDropEvent event) async {
+    for (var item in event.session.items) {
+      if (item.dataReader == null) {
+        logger.e("DataReader cannot read file from clipboard.");
+        continue;
+      }
+      item.dataReader!.getValue(Formats.fileUri, _onLoad);
+    }
+  }
+
+  Future<void> _onLoad(path) async {
+    var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
+
+    selFile = myFile;
+    // final tasks = [_homework.upload(myFile), _setKeyState()];
+    // await Future.wait(tasks);
+
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.homework.description == null) {
+      return const Center(
+        child: ProgressRing()
+      );
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 5),
+        OverviewCard(
+          homework: widget.homework,
+          passVal: _passList,
+          testcasesVal: _testcasesVal,
+
+        ),
+        const SizedBox(height: 10),
+        const Text("上傳",
+          style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        Tile.lore(
+          title: "作業上傳",
+          lore: "選擇檔案或是將檔案托抑制這裡來上傳作業",
+          icon: const Icon(FluentIcons.upload),
+          child: FilledButton(
+            child: const Text("選取檔案"),
+            onPressed: () {}
+          ),
+        ),
+        const SizedBox(height: 10),
+        const Text("題目",
+          style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        Tile(
+          width: double.infinity,
+          child: SelectableTextBox(
+            text: widget.homework.description!.problem
+          )
+        ),
+        const SizedBox(height: 10),
+        const Text("測試",
+          style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        const SizedBox(height: 5),
+        
+
+        TestAllTile(
+          homework: widget.homework
+        ),
+        const SizedBox(height: 5),
+        const SizedBox(height: 10),
+        const Text("危險區域",
+          style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        Tile.lore(
+          title: "刪除作業",
+          lore: "將目前所上傳的作業檔案刪除",
+          icon: const Icon(FluentIcons.delete),
+          child: CustomWidgets.alertButton(
+            child: const Text("刪除作業"),
+            onPressed: !canDelete() ? null : () async {
+              final isConfirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) => const ConfirmDialog()
+              );
+
+              if (!(isConfirmed??false)) return;
+
+              logger.i("Homework deleted!");
+
+              final task = widget.homework.delete();
+              setState(() {});
+              await task;
+
+              _passList = await widget.homework.fetchPassList();
+              
+              setState(() {});
+            }
+          )
+        )
+      ]
+    );
+  }
+}
+
+class TestAllTile extends StatefulWidget {
+  final Homework homework;
+
+  const TestAllTile({
+    super.key,
+    required this.homework
+  });
+
+  @override
+  State<TestAllTile> createState() => _TestAllTileState();
+}
+
+class _TestAllTileState extends State<TestAllTile> {
+  File? selFile;
+  bool _isAllTestRunning = false;
+
+  bool _isDragOver = false;
+
+  int _selectTestcase = 0;
+
+  List<bool> copyState = [false, false];
+
   Widget _copyIcon(bool key) {
     if (!key) {
       return const SizedBox.square(
@@ -76,6 +221,120 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
       dimension: 25,
       child:  Icon(FluentIcons.check_mark)
     );
+  }
+
+  Widget _testcaseBtns() => GridView(
+    shrinkWrap : true,
+    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 100,
+        childAspectRatio: 2.8,
+        crossAxisSpacing: 5,
+        mainAxisSpacing: 5
+    ),
+    children: List<int>.generate(widget.homework.description!.testCases.length, (e) => e)
+      .map((e) => _testcaseBtn(e))
+      .toList()
+  );
+
+  Widget _testcaseWindow() {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.fastOutSlowIn,
+      child: ClipRRect(
+        clipBehavior: Clip.hardEdge,
+        child: AnimatedSwitcher(
+          switchInCurve: Curves.fastOutSlowIn,
+          switchOutCurve: Curves.fastOutSlowIn,
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(animation);
+
+            final slideAnimation = child.key == ValueKey(_selectTestcase) 
+                // Fade out from left to right
+                ? Tween<Offset>(begin: const Offset(0, -1), end: const Offset(0, 0)).animate(animation)
+                // Fade in from left to right
+                : Tween<Offset>(begin: const Offset(0, 1), end: const Offset(0, 0)).animate(animation);
+
+            return FadeTransition(
+              opacity: fadeAnimation,
+              child: SlideTransition(
+                position: slideAnimation,
+                child: child
+              ),
+            );
+          },
+          duration: const Duration(milliseconds: 300),
+          child: _testcaseSection(_selectTestcase)
+        )
+      )
+    );
+  }
+
+  Future<void> _onPerformDrop(PerformDropEvent event) async {
+    for (var item in event.session.items) {
+      if (item.dataReader == null) {
+        logger.e("DataReader cannot read file from clipboard.");
+        continue;
+      }
+      item.dataReader!.getValue(Formats.fileUri, _onLoad);
+    }
+  }
+
+  Future<void> _onLoad(path) async {
+    var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
+
+    selFile = myFile;
+    // final tasks = [_homework.upload(myFile), _setKeyState()];
+    // await Future.wait(tasks);
+
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  void _onDropLeave(DropEvent event) {
+    setState(() => _isDragOver = false);
+  }
+
+  DropOperation _onDropOver(DropOverEvent event) {
+    setState(() => _isDragOver = true);
+    return event.session.allowedOperations.firstOrNull ?? DropOperation.none;
+  }
+
+  Widget _loreWidget() {
+    final testCases = widget.homework.description!.testCases;
+
+    if (selFile == null) {
+      return const Text("尚未選取檔案");
+    }
+
+    if (_isAllTestRunning) {
+      return const Text("測試中...");
+    }
+
+    final notPass = testCases.where((e) => !e.isPass).length;
+
+    if (notPass == 0) {
+      return const Text("通過所有測資");
+    }
+
+    return Text("尚有 $notPass 個未通過");
+  }
+
+  Future<void> _testAll() async {
+    final testCases = widget.homework.description!.testCases;
+
+    setState(() => _isAllTestRunning = true);
+    
+    final tasks = testCases
+      .map((e) => e.exec(selFile!));
+    
+    try {
+      await Future.wait(tasks);
+    } on TestException catch (e) {
+      logger.e(e.message);
+    } finally {
+      setState(() => _isAllTestRunning = false);
+    }
+    
   }
 
   Widget _testcaseSection(int index) {
@@ -114,13 +373,13 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
               Button(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 100),
-                  child: _copyIcon(inputCopy)
+                  child: _copyIcon(copyState.first)
                 ),
                 onPressed: () async {
                   await Clipboard.setData(ClipboardData(text: testCase.input));
-                  setState(() => inputCopy = true);
+                  setState(() => copyState.first = true);
                   await Future.delayed(const Duration(milliseconds: 800));
-                  setState(() => inputCopy = false);
+                  setState(() => copyState.first = false);
                 }
               )
             ]
@@ -138,13 +397,13 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
               Button(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 100),
-                  child: _copyIcon(outputCopy)
+                  child: _copyIcon(copyState.last)
                 ),
                 onPressed: () async {
                   await Clipboard.setData(ClipboardData(text: testCase.output));
-                  setState(() => outputCopy = true);
+                  setState(() => copyState.last = true);
                   await Future.delayed(const Duration(milliseconds: 800));
-                  setState(() => outputCopy = false);
+                  setState(() => copyState.last = false);
                 }
               )
             ]
@@ -180,9 +439,6 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
                     Controller.showToast(context, "測試${index+1} ", e.message, InfoBarSeverity.error);
                     return;
                   }
-
-
-
                   // print(result.output.join("\n"));
                   setState(() {});
                 }
@@ -218,94 +474,11 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
     );
   }
 
-  bool canDelete() {
-    switch (widget.homework.state) {
-      case HomeworkState.notPassed:
-      case HomeworkState.passed:
-        return DateTime.now().compareTo(widget.homework.deadline) <= 0;
-
-      default:
-        return false;
-    }
-  }
-
-  Widget _testcaseWindow() {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.fastOutSlowIn,
-      child: ClipRRect(
-        clipBehavior: Clip.hardEdge,
-        child: AnimatedSwitcher(
-          switchInCurve: Curves.fastOutSlowIn,
-          switchOutCurve: Curves.fastOutSlowIn,
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(animation);
-
-            final slideAnimation = child.key == ValueKey(_selectTestcase) 
-                // Fade out from left to right
-                ? Tween<Offset>(begin: const Offset(0, -1), end: const Offset(0, 0)).animate(animation)
-                // Fade in from left to right
-                : Tween<Offset>(begin: const Offset(0, 1), end: const Offset(0, 0)).animate(animation);
-
-            return FadeTransition(
-              opacity: fadeAnimation,
-              child: SlideTransition(
-                position: slideAnimation,
-                child: child
-              ),
-            );
-          },
-          duration: const Duration(milliseconds: 300),
-          child: _testcaseSection(_selectTestcase)
-        )
-      )
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.homework.description == null) {
-      return const Center(
-        child: ProgressRing()
-      );
-    }
-    
+  Widget _main() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const SizedBox(height: 5),
-        OverviewCard(
-          homework: widget.homework,
-          passVal: _passList,
-          testcasesVal: _testcasesVal,
-
-        ),
-        const SizedBox(height: 10),
-        const Text("題目",
-          style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 5),
-        Tile(
-          width: double.infinity,
-          child: SelectableTextBox(
-            text: widget.homework.description!.problem
-          )
-        ),
-        const SizedBox(height: 10),
-        const Text("測試與上傳",
-          style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 5),
-        GridView(
-          shrinkWrap : true,
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 100,
-              childAspectRatio: 2.8,
-              crossAxisSpacing: 5,
-              mainAxisSpacing: 5
-          ),
-          children: List<int>.generate(widget.homework.description!.testCases.length, (e) => e)
-            .map((e) => _testcaseBtn(e))
-            .toList()
-        ),
+        _testcaseBtns(),
         const SizedBox(height: 5),
         _testcaseWindow(),
         const SizedBox(height: 5),
@@ -313,45 +486,41 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
           title: "全部測試",
           lore: "將所有範例測試資料全部驗證過一次",
           icon: const Icon(FluentIcons.test_case),
-          child: FilledButton(
-            onPressed: () {
-
-            },
-            child: const Text("開始測試"),
-          )
-        ),
-        const SizedBox(height: 5),
-        const SizedBox(height: 10),
-        const Text("危險區域",
-          style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 5),
-        Tile.lore(
-          title: "刪除作業",
-          lore: "將目前所上傳的作業檔案刪除",
-          icon: const Icon(FluentIcons.delete),
-          child: CustomWidgets.alertButton(
-            child: const Text("刪除作業"),
-            onPressed: !canDelete() ? null : () async {
-              final isConfirmed = await showDialog<bool>(
-                context: context,
-                builder: (context) => const ConfirmDialog()
-              );
-
-              if (!(isConfirmed??false)) return;
-
-              logger.i("Homework deleted!");
-
-              final task = widget.homework.delete();
-              setState(() {});
-              await task;
-
-              _passList = await widget.homework.fetchPassList();
-              
-              setState(() {});
-            }
+          child: Row(
+            children: [
+              _loreWidget(),
+              const SizedBox(width: 10),
+              FilledButton(
+                onPressed: selFile == null ? null : _testAll,
+                child: const Text("開始測試")
+              )
+            ]
           )
         )
       ]
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DropRegion(
+      formats: const [
+        ...Formats.standardFormats,
+        Formats.fileUri
+      ],
+      hitTestBehavior: HitTestBehavior.opaque,
+      onDropOver: _onDropOver,
+      onDropLeave: _onDropLeave,
+      onPerformDrop: _onPerformDrop,
+      child: Container(
+        foregroundDecoration: _isDragOver ? DottedDecoration(
+        shape: Shape.box,
+        strokeWidth: 2.5,
+        color: FluentTheme.of(context).brightness.isDark ? Colors.white : Colors.black,
+        borderRadius: BorderRadius.circular(4)
+      ): null,
+        child: _main()
+      )
     );
   }
 }
@@ -632,73 +801,26 @@ class DetailRoute extends StatefulWidget {
 }
 
 class _DetailRouteState extends State<DetailRoute> {
-  bool _isDragOver = false;
 
   final _homework = Controller.homeworks[Controller.routes.last.value.index];
   
-  final key = GlobalKey<_HomeworkDetailState>(); 
+  final key = GlobalKey<_HomeworkDetailState>();
+
+  File? _selFile;
 
   Future<void> _setKeyState() async {
     key.currentState?.setState(() {});
   }
   
-  Future<void> _onLoad(path) async {
-    var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
-    await _homework.upload(myFile);
-    final tasks = [_homework.upload(myFile), _setKeyState()];
-    await Future.wait(tasks);
-
-    key.currentState?.setState(() {});
-    await key.currentState?.refresh();
-    if (!mounted) return;
-    setState(() {});
-  }
-
-  Future<void> _onPerformDrop(PerformDropEvent event) async {
-    for (var item in event.session.items) {
-      if (item.dataReader == null) {
-        logger.e("DataReader cannot read file from clipboard.");
-        continue;
-      }
-      item.dataReader!.getValue(Formats.fileUri, _onLoad);
-    }
-  }
-
-  void _onDropLeave(DropEvent event) {
-    setState(() => _isDragOver = false);
-  }
-
-  DropOperation _onDropOver(DropOverEvent event) {
-    setState(() => _isDragOver = true);
-    return event.session.allowedOperations.firstOrNull ?? DropOperation.none;
-  }
+  
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        AnimatedOpacity(
-          opacity: _isDragOver ? 1 : 0,
-          duration: const Duration(milliseconds: 300),
-          child: const DropItemInfo()
-        ),
-        DropRegion(
-          formats: const [
-            ...Formats.standardFormats,
-            Formats.fileUri
-          ],
-          hitTestBehavior: HitTestBehavior.opaque,
-          onDropOver: _onDropOver,
-          onDropLeave: _onDropLeave,
-          onPerformDrop: _onPerformDrop,
-          child: PageBase(
-            child: HomeworkDetail(
-              key: key,
-              homework: _homework
-            )
-          )
-        )
-      ]
+    return PageBase(
+      child: HomeworkDetail(
+        key: key,
+        homework: _homework
+      )
     );
   }
 }
@@ -708,33 +830,32 @@ class DropItemInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-    return Center(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 5),
+      constraints: const BoxConstraints(
+        maxWidth: 1000
+      ),
+      decoration: DottedDecoration(
+        shape: Shape.box,
+        strokeWidth: 1.5,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4)
+      ),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 5),
-        constraints: const BoxConstraints(
-          maxWidth: 1000
-        ),
-        decoration: DottedDecoration(
-          shape: Shape.box,
-          strokeWidth: 1.5,
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(4)
-        ),
-        child: Container(
-          alignment: Alignment.center,
-          width: double.infinity,
-          color: Colors.black.withOpacity(.25),
-          child: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(FluentIcons.cloud_upload, size: 100),
-              SizedBox(height: 10),
-              Text("放開以上傳作業")
-            ]
-          )
-        ) 
-      )
+        alignment: Alignment.center,
+        width: double.infinity,
+        color: Colors.black.withOpacity(.25),
+        child: const Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(FluentIcons.select_all, size: 35),
+            SizedBox(width: 10),
+            Text("放開選取檔案")
+          ]
+        )
+      ) 
     );
   }
 }
