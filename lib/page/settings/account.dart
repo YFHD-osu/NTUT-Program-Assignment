@@ -1,11 +1,11 @@
 import 'dart:async';
-
-import 'package:fluent_ui/fluent_ui.dart';
-
 import 'package:hive/hive.dart';
+import 'package:fluent_ui/fluent_ui.dart';
+import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/page/settings/router.dart';
 
-import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/widget.dart';
+import 'package:ntut_program_assignment/core/api.dart';
 
 class LoginDialog extends StatefulWidget {
   final List<String> evenCourses, oddCourses;
@@ -151,7 +151,7 @@ class _LoginDialogState extends State<LoginDialog> {
       username: _username.text,
       password: _password.text
     );
-
+    
     setState(() => _isLoading = true);
     try {
       await acc.login();
@@ -189,8 +189,6 @@ class _LoginDialogState extends State<LoginDialog> {
 
     // ignore: use_build_context_synchronously
     Navigator.of(context).pop();
-
-    // TODO: Create a "login success" pop up toast
   }
 }
 
@@ -211,6 +209,7 @@ class _AccountRouteState extends State<AccountRoute> {
   late CollectionBox _box;
 
   List<Account> _accounts = [];
+  String _selAutoLogin = "停用功能";
 
   late final StreamSubscription _sub;
 
@@ -228,6 +227,7 @@ class _AccountRouteState extends State<AccountRoute> {
   }
 
   void _setEnable(bool state) {
+    if (!mounted) return;
     setState(() => _btnDisabled = state);
   }
 
@@ -248,6 +248,7 @@ class _AccountRouteState extends State<AccountRoute> {
       )
     );
     await _refreshDB();
+    GlobalSettings.update.add(GlobalEvent.accountSwitch);
   }
 
   Future<void> _refreshDB() async {
@@ -338,6 +339,43 @@ class _AccountRouteState extends State<AccountRoute> {
               _loginAccountInfo() : _logoutAccountInfo()
           )
         ),
+        const SizedBox(height: 5),
+        Tile.lore(
+          icon: const Icon(FluentIcons.power_automate_logo),
+          title: "自動登入",
+          lore: "在應用程式啟動時登入所選擇的帳號",
+          child: SizedBox(
+            width: 200,
+            child: ComboBox<String>(
+              value: _selAutoLogin,
+              items: [
+                ComboBoxItem<String>(
+                  value: "停用功能",
+                  child: Container(
+                    width: 156,
+                    alignment: Alignment.centerLeft,
+                    child: const Text("停用功能")
+                  ),
+                ),
+                ..._accounts.map<ComboBoxItem<String>>((e) {
+                  return ComboBoxItem<String>(
+                    value: e.username,
+                    child: Container(
+                      width: 156,
+                      alignment: Alignment.centerLeft,
+                      child: Text("${e.username} ${e.name}")
+                    )
+                  );
+                })
+              ],
+              onChanged: (color) {
+                _selAutoLogin = color ?? "停用功能";
+                setState(() {});
+              },
+              placeholder: const Text('停用功能')
+            )
+          )
+        ),
         const SizedBox(height: 10),
         const Text("其他使用者"),
         const SizedBox(height: 5),
@@ -369,8 +407,9 @@ class _AccountRouteState extends State<AccountRoute> {
             ]
           )
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 5),
         _accountList(),
+        const SizedBox(height: 5),
         Align(
           alignment: Alignment.centerLeft,
           child: HyperlinkButton(
@@ -402,18 +441,19 @@ class _AccountRouteState extends State<AccountRoute> {
       );
     }
 
-    return Column(
-      children: _accounts
-        .where((e) => e.username != GlobalSettings.account?.username)
-        .map((e) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: AccountItem(
+    return SizedBox(
+      height: 65 * _accounts.length + 5 * (_accounts.length - 1),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: _accounts
+          .where((e) => e.username != GlobalSettings.account?.username)
+          .map((e) => AccountItem(
             data: e,
             enable: _btnDisabled,
             callback: _setEnable
-          )
-        ))
-        .toList()
+          ))
+          .toList()
+      )
     );
   }
 }
@@ -502,11 +542,31 @@ class _AccountItemState extends State<AccountItem> {
             onInvoked: !(!widget.enable && !_processing) ? null : () async {
               widget.callback(true);
               setState(() => _processing = true);
-              await GlobalSettings.login(widget.data);
               
-              widget.callback(false);
-              if (!mounted) return;
-              setState(() => _processing = false);
+              try {
+                await GlobalSettings.login(widget.data);
+              } on RuntimeError catch (e) {
+                // ignore: use_build_context_synchronously
+                Controller.showToast(context, "登入失敗", e.message, InfoBarSeverity.error);
+                return;
+              } on NetworkError catch (e) {
+                // ignore: use_build_context_synchronously
+                Controller.showToast(context, "登入失敗", e.message, InfoBarSeverity.error);
+                return;
+              } catch (e) {
+                // ignore: use_build_context_synchronously
+                Controller.showToast(context, "登入失敗", "發生未知錯誤: ${e.toString()}", InfoBarSeverity.error);
+                return;
+              } finally {
+                widget.callback(false);
+                _processing = false;
+              }
+
+              
+              // ignore: use_build_context_synchronously
+              Controller.showToast(context, "登入成功", "歡迎 ${GlobalSettings.account?.name}", InfoBarSeverity.info);
+              if (!mounted) setState(() {});
+              
             },
             child: const Padding(
               padding: EdgeInsets.symmetric(

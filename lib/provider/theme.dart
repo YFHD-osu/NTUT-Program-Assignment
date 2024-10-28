@@ -1,39 +1,12 @@
-import 'dart:io';
-
 import 'package:win32/win32.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart' show appWindow;
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_acrylic/window.dart';
 import 'package:flutter_acrylic/window_effect.dart';
+import 'package:ntut_program_assignment/widget.dart' show Platforms;
 
 import 'package:shared_preferences/shared_preferences.dart';
-
-enum SystemType {
-  win10,
-  win11,
-  macOS,
-  others
-}
-
-SystemType getSystemType() {
-  if (Platform.isWindows) {
-    final version = Platform.operatingSystemVersion;
-
-    if (version.contains("Windows 10")) {
-      final exp = RegExp(r"Build\s(\d+)");
-      Match? match = exp.firstMatch(version);
-      if (match != null) {
-        int buildNumber = int.parse(match.group(1)!);
-        return (buildNumber >= 22000) ? SystemType.win11 : SystemType.win10;
-      }
-    }
-  } else if(Platform.isMacOS) {
-    return SystemType.macOS;
-  }
-
-  return SystemType.others;
-}
 
 class ThemeProvider extends ChangeNotifier {
   ThemeProvider._();
@@ -64,7 +37,7 @@ class ThemeProvider extends ChangeNotifier {
     WindowEffect.disabled
   };
 
-  void _removeTitleBarButtons() {
+  void _removeTitleBarButtons() { 
     final hWnd = appWindow.handle;
     if (hWnd==null) return;
 
@@ -102,33 +75,30 @@ class ThemeProvider extends ChangeNotifier {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     int index = prefs.getInt('themeMode') ?? 0;
     theme = ThemeMode.values[index];
+    
     await setTheme(theme);
 
     index = prefs.getInt("windowEffect") ?? 0;
     effect = WindowEffect.values[index];
     await setEffect(effect);
 
-    switch(getSystemType()) {
-      case SystemType.macOS:
-        allowedEffects.addAll({
-          WindowEffect.mica,
-          WindowEffect.tabbed,
-          WindowEffect.acrylic
-        });
-      case SystemType.win11:
-        allowedEffects.addAll({
-          WindowEffect.mica,
-          WindowEffect.tabbed,
-          WindowEffect.acrylic
-        });
-        _removeTitleBarButtons();
-      case SystemType.win10:
-        allowedEffects.add(WindowEffect.acrylic);
-        _removeTitleBarButtons();
-        break;
-      
-      default:
+    if (Platforms.isWindows) {
+      allowedEffects.addAll({WindowEffect.acrylic});
+
+      if (Platforms.canMicaEffect) {
+        allowedEffects.addAll({WindowEffect.mica, WindowEffect.tabbed});
+      }
+
+      _removeTitleBarButtons();
+    } else if (Platforms.isMacOS) {
+      allowedEffects.addAll({
+        WindowEffect.mica,
+        WindowEffect.tabbed,
+        WindowEffect.acrylic
+      });
     }
+
+    notifyListeners();
     return theme;
   }
 

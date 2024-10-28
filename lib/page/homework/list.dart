@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:ntut_program_assignment/core/api.dart';
+import 'package:ntut_program_assignment/core/global.dart';
 
 import 'package:ntut_program_assignment/page/homework/router.dart';
 import 'package:ntut_program_assignment/widget.dart';

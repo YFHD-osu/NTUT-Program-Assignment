@@ -3,6 +3,8 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:ntut_program_assignment/widget.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 
 const String termOfUse = """
 使用者條款
@@ -56,16 +58,19 @@ class SpecialThanks extends StatefulWidget {
 }
 
 class SpecialThanksState extends State<SpecialThanks> {
+
   @override
   Widget build(BuildContext context) {
+    final locale = AppLocalizations.of(context)!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("開發者"),
+        Text(locale.settings_about_developer,),
         const SizedBox(height: 5),
         ThanksCard(
-          title: "YFHD",
-          lore: "寫啦幹！動手吧，別再拖延，創作的靈感等著你去實現，讓想法變成現實!",
+          title: locale.settings_about_YFHD_name,
+          lore: locale.settings_about_YFHD_desc,
           image: Image.asset(r"assets\acknowledge\yfhd.png"),
           content: HyperlinkButton(
             onPressed: () async {
@@ -78,9 +83,10 @@ class SpecialThanksState extends State<SpecialThanks> {
         const SizedBox(height: 10),
         const Text("特別銘謝"),
         const SizedBox(height: 5),
-        const ThanksCard(
+        ThanksCard(
           title: "PurpleSheep",
           lore: "打屁聊天，輕鬆愉快中深入分析程式碼。 a.k.a 愛上火車、蒼之彼空四重奏、千戀萬花、拔作島宿舍高級玩家!",
+          image: Image.asset(r"assets\acknowledge\purple_sheep.jpg"),
         ),
         const SizedBox(height: 10),
         ThanksCard(
@@ -101,9 +107,10 @@ class SpecialThanksState extends State<SpecialThanks> {
           image: Image.asset(r"assets\acknowledge\xuan.png")
         ),
         const SizedBox(height: 10),
-        const ThanksCard(
+        ThanksCard(
           title: "奶牛",
-          lore: "線上賭場讓人沉迷，各種遊戲隨時可以體驗，刺激與風險並存，享受不一樣的娛樂方式。"
+          lore: "線上賭場讓人沉迷，各種遊戲隨時可以體驗，刺激與風險並存，享受不一樣的娛樂方式。",
+          image: Image.asset(r"assets\acknowledge\milk_cow.png")
         ),
         const SizedBox(height: 10),
         ThanksCard(
@@ -122,7 +129,7 @@ class SpecialThanksState extends State<SpecialThanks> {
           image: Image.asset(r"assets/icon@x500.png"),
           content: HyperlinkButton(
             onPressed: () async {
-              final uri = Uri.parse("https://github.com/YFHD-osu/Media-Box");
+              final uri = Uri.parse("https://github.com/YFHD-osu/NTUT-Program-Assignment");
               await launchUrl(uri);
             },
             child: const Text("Source Code"))

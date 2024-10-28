@@ -1,0 +1,35 @@
+{
+  "@@locale": "en",
+
+  "application_title": "NTUT Program Assignment",
+  "@application_title": {
+    "type": "text",
+    "description": "The app name for this flutter application"
+  },
+
+  "sidebar_homework_title": "Homework List",
+  "@sidebar_homework_title": {
+    "description": "Homework List title shown in the sidebar"
+  },
+
+  "sidebar_settings_title": "Settings",
+  "@sidebar_settings_title": {
+    "description": "Settings title shown in the sidebar"
+  },
+
+  "settings_about_developer": "Developer",
+  "@settings_about_developer": {
+    "description": "Developer head title displayed in settings page"
+  },
+
+  "settings_about_YFHD_name": "YFHD",
+  "@settings_about_YFHD_name": {
+    "description": "YFHD name at about section"
+  },
+
+  "settings_about_YFHD_desc": "Write la! Do it, don't delay anymore, the inspiration is waiting for you to make it real, turn ideas into reality!",
+  "@settings_about_YFHD_desc": {
+    "description": "YFHD name at about section"
+  }
+  
+}

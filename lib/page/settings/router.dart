@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:ntut_program_assignment/core/global.dart';
 
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/page/settings/about.dart';
 import 'package:ntut_program_assignment/page/settings/account.dart';
 import 'package:ntut_program_assignment/page/settings/personalize.dart';
+import 'package:toastification/toastification.dart';
 
 enum EventType {
   setState
@@ -21,6 +23,31 @@ class Controller {
 
   static void setState() {
     update.sink.add(EventType.setState);
+  }
+
+  static ToastificationItem showToast(BuildContext context, String title, String message, InfoBarSeverity level) {
+    return toastification.showCustom(
+      // ignore: use_build_context_synchronously
+      context: context,
+      alignment: Alignment.bottomCenter,
+      autoCloseDuration: const Duration(seconds: 5),
+      builder: (BuildContext context, ToastificationItem holder) {
+        return Container(
+          width: 500,
+          margin: const EdgeInsets.symmetric(vertical: 5),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: const Color.fromRGBO(39, 39, 39, 1),
+          ),
+          child: InfoBar(
+            isLong: false,
+            title: Text(title),
+            content: Text(message),
+            severity: level
+          )
+        );
+      },
+    );
   }
 }
 
@@ -49,6 +76,8 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void dispose() {
     super.dispose();
+    Controller.items.clear();
+    Controller.items.add(const BreadcrumbItem(label: Text('設定 ', style: TextStyle(fontSize: 30)), value: -1));
     sub.cancel();
   }
 

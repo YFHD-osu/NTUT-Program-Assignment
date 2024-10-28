@@ -1,0 +1,32 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+
+jobs:
+  deploy:
+    runs-on: windows-latest
+    steps:
+      - name: Install Checkout@v3
+        uses: actions/checkout@v3
+      
+      - name: Install Flutter 
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
+          flutter-version: 3.24.0
+
+      - name: Install dependencies
+        run: |
+          flutter --version
+          flutter config --enable-web
+          flutter clean
+          flutter pub get
+          flutter pub upgrade
+
+      - name: Build Windows
+        run: |
+          flutter build windows -t lib/main.dart --release

@@ -4,6 +4,7 @@ import 'package:logger/logger.dart';
 
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ntut_program_assignment/core/global.dart';
 
 final logger = Logger(
   printer: PrettyPrinter()

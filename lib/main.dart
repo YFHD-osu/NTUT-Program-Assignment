@@ -1,38 +1,45 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:ntut_program_assignment/widget.dart';
 
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:ntut_program_assignment/core/api.dart';
+import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
 import 'package:ntut_program_assignment/page/homework/router.dart';
 import 'package:ntut_program_assignment/page/settings/router.dart';
 
+
 void main() async {
+  // Make http package to accept self-signed certificate 
+  HttpOverrides.global = DevHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
+  
+  if (Platforms.isWindows) {
+    doWhenWindowReady(() {
+      appWindow.size = const Size(800, 600);
+      appWindow.minSize = const Size(800, 600);
+      appWindow.show();
+    });
 
-  await windowManager.ensureInitialized();
-  windowManager.waitUntilReadyToShow(const WindowOptions(), () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
+    // Enable windows mica effect
+    await Window.initialize();
 
-  // Enable windows mica effect
-  await Window.initialize();
-
-  doWhenWindowReady(() {
-    appWindow.title = "Media Box";
-    appWindow.size = const Size(800, 600);
-    appWindow.minSize = const Size(800, 600);
-    appWindow.show();
-  });
+    await windowManager.ensureInitialized();
+    windowManager.waitUntilReadyToShow(const WindowOptions(), () async {
+      await windowManager.show();
+      await windowManager.focus();
+      await windowManager.setTitle("NTUT Program Assigiment");
+    });
+  }  
 
   await ThemeProvider.instance.initialize();
-  HttpOverrides.global = DevHttpOverrides();
   
   runApp(const MyApp());
 }
@@ -44,20 +51,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-        create: (context) => ThemeProvider.instance,
-        builder: (context, _) {
-          final themeProvider = Provider.of<ThemeProvider>(context);
-
-          return FluentApp(
-            title: 'NTUT Program Assignment',
-            debugShowCheckedModeBanner: false,
-            home: WindowBorder(
-                color: Colors.transparent, child: const HomePage()),
-            theme: ThemePack.light,
-            darkTheme: ThemePack.dark,
-            themeMode: themeProvider.theme,
-          );
-        });
+      create: (context) => ThemeProvider.instance,
+      builder: (context, _) {
+        final themeProvider = Provider.of<ThemeProvider>(context);
+        // print(AppLocalizations.supportedLocales);
+        return FluentApp(
+          locale: const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          debugShowCheckedModeBanner: false,
+          home: WindowBorder(color: Colors.transparent, child: const HomePage()),
+          theme: ThemePack.light,
+          darkTheme: ThemePack.dark,
+          themeMode: themeProvider.theme,
+        );
+      });
   }
 }
 
@@ -71,12 +79,26 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late StreamSubscription _sub;
   
-  int _index = 2;
+  int _index = 1;
   PaneDisplayMode _mode = PaneDisplayMode.compact;
+  
+  @override
+  void initState() {
+    super.initState();
+    _sub = GlobalSettings.stream.listen(_onUpdate);
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void dispose() {
+    _sub.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+  
+  @override
+  void didChangePlatformBrightness() {
+    super.didChangePlatformBrightness();
 
     // Update window effect on system brightness changed
     final theme = ThemeProvider.instance.theme;
@@ -86,8 +108,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   NavigationAppBar _windowsAppBar() {
+    final locale = AppLocalizations.of(context)!;
+    final FluentThemeData theme = FluentTheme.of(context);
+    
     return NavigationAppBar(
-    actions: const TitleBar(),
+    actions: SizedBox(
+      width: 138,
+      height: 50,
+      child: WindowCaption(
+        brightness: theme.brightness,
+        backgroundColor: Colors.transparent,
+      ),
+    ),
     title: MoveWindow(
       child: Row(children: [
         ClipRRect(
@@ -98,7 +130,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             width: 20, height: 20
           )),
         const SizedBox(width: 10),
-        const Text("NTUT Program Assignment")
+        Text(locale.application_title)
       ])),
     automaticallyImplyLeading: true,
     leading: Padding(
@@ -124,16 +156,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return const NavigationAppBar(
       height: 28,
       title: Center(
-        child: Text("Media Box")
+        child: Text("NTUT Program Assignment")
       ),
       automaticallyImplyLeading: false,
     );
   }
 
   NavigationAppBar _appBar() {
-    if (Platform.isWindows) {
+    if (Platforms.isWindows) {
       return _windowsAppBar();
-    } else if (Platform.isMacOS) {
+    } else if (Platforms.isMacOS) {
       return _macOSAppBar();
     }
 
@@ -148,32 +180,21 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _sub = GlobalSettings.stream.listen(_onUpdate);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _sub.cancel();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final locale = AppLocalizations.of(context)!;
 
     return NavigationView(
       appBar: _appBar(),
       pane: NavigationPane(
         toggleable: false,
-        displayMode: Platform.isMacOS ? PaneDisplayMode.open : _mode,
+        displayMode: Platforms.isMacOS ? PaneDisplayMode.open : _mode,
         size: const NavigationPaneSize(
           openMinWidth: 255, openMaxWidth: 255,
         ),
         items: [
           PaneItem(
             icon: const Icon(FluentIcons.backlog_list),
-            title: const Text('作業列表'),
+            title: Text(locale.sidebar_homework_title),
             body: const HomeworkRoute(),
             enabled: GlobalSettings.isLogin
           )
@@ -181,98 +202,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         footerItems: [
           PaneItemSeparator(),
           PaneItem(
-            icon: const Icon(FluentIcons.task_list),
-            title: const Text('Tasks'),
-            body: const Placeholder(),
-            enabled: true),
-          PaneItem(
             icon: const Icon(FluentIcons.settings),
-            title: const Text('Settings'),
+            title: Text(locale.sidebar_settings_title),
             body: const SettingsPage(),
             enabled: true)
         ],
         selected: _index,
         onChanged: (i) => setState(() => _index=i) 
       ));
-  }
-}
-
-class TitleBar extends StatefulWidget {
-  const TitleBar({
-    super.key,
-  });
-
-  @override
-  State<TitleBar> createState() => _TitleBarState();
-}
-
-class _TitleBarState extends State<TitleBar> with WindowListener {
-  bool _isMaximized = false;
-
-  void _setState() {
-    if (!mounted) return;
-    setState(() {});
-  }
-
-  @override
-  void initState() {
-    windowManager.addListener(this);
-    ThemeProvider.instance.addListener(_setState);
-    super.initState();
-  }
-
-  @override
-  void onWindowMaximize() {
-    setState(() => _isMaximized = true);
-  }
-
-  @override
-  void onWindowUnmaximize() {
-    setState(() => _isMaximized = false);
-  }
-
-  @override
-  void dispose() {
-    windowManager.removeListener(this);
-    ThemeProvider.instance.removeListener(_setState);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isLight = ThemeProvider.instance.isLight;
-    return WindowTitleBarBox(
-      child: Row(
-        children: [
-          const SizedBox(width: 50),
-          const Spacer(),
-          MinimizeWindowButton(
-            colors: WindowButtonColors(
-              iconNormal: isLight ? Colors.black : Colors.white)),
-          _isMaximized
-            ? RestoreWindowButton(
-                colors: WindowButtonColors(
-                    iconNormal: isLight ? Colors.black : Colors.white),
-                onPressed: () => setState(() {
-                  appWindow.restore();
-                }),
-              )
-            : MaximizeWindowButton(
-                colors: WindowButtonColors(
-                    iconNormal: isLight ? Colors.black : Colors.white),
-                onPressed: () => setState(() {
-                  appWindow.maximize();
-                }),
-              ),
-          CloseWindowButton(
-            colors: WindowButtonColors(
-              mouseOver: Colors.red,
-              iconNormal: isLight ? Colors.black : Colors.white,
-              iconMouseOver: Colors.white),
-          ),
-        ],
-      ),
-    );
   }
 }
 

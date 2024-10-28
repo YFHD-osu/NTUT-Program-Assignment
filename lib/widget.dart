@@ -1,52 +1,144 @@
+import 'dart:io';
+
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/foundation.dart';
 
-import 'package:ntut_program_assignment/provider/theme.dart';
 
-extension on BoxDecoration {
-  BoxDecoration merge(BoxDecoration? a) {
+class Tile extends StatelessWidget {
+  const Tile({
+    super.key, 
+    this.mode, 
+    this.alignment, 
+    this.child,
+    this.clipBehavior = Clip.none, 
+    this.constraints, 
+    this.height, 
+    this.width, 
+    this.margin, 
+    this.padding, 
+    this.decoration, 
+    this.borderRadius, 
+    this.title, 
+    this.lore, 
+    this.icon, 
+    this.leading
+  });
+
+  final int? mode;
+  final AlignmentGeometry? alignment;
+  final Clip clipBehavior;
+  final BoxConstraints? constraints; 
+  final Widget? child;
+  final double? height, width;
+  final EdgeInsets? margin, padding;
+  final BoxDecoration? decoration;
+  final BorderRadiusGeometry? borderRadius;
+
+  final String? title;
+  final String? lore;
+  final Widget? icon;
+  
+  final Widget? leading;
+  BoxDecoration _merge(BoxDecoration a, BoxDecoration? b) {
     return BoxDecoration(
-      color: a?.color ?? color,
-      image: a?.image ?? image,
-      border: a?.border ?? border,
-      borderRadius: a?.borderRadius ?? borderRadius,
-      boxShadow: a?.boxShadow == null
-          ? boxShadow
-          : (boxShadow == null
-              ? a?.boxShadow
-              : [...boxShadow!]),
-      gradient: a?.gradient ?? gradient,
-      backgroundBlendMode: a?.backgroundBlendMode ?? backgroundBlendMode,
-      shape: a?.shape ?? shape
+      color: b?.color ?? a.color,
+      image: b?.image ?? a.image,
+      border: b?.border ?? a.border,
+      borderRadius: b?.borderRadius ?? a.borderRadius,
+      boxShadow: b?.boxShadow == null
+        ? a.boxShadow
+        : (a.boxShadow == null
+            ? b?.boxShadow
+            : [...a.boxShadow!]),
+      gradient: b?.gradient ?? a.gradient,
+      backgroundBlendMode: b?.backgroundBlendMode ?? a.backgroundBlendMode,
+      shape: b?.shape ?? a.shape
     );
   }
-}
 
-class Tile extends Container {
-  Tile({
-    super.key,
-    super.alignment,
-    super.child,
-    super.clipBehavior,
-    super.constraints,
-    super.height,
-    super.margin,
-    super.transform,
-    super.transformAlignment,
-    EdgeInsets? padding,
-    BorderRadius? borderRadius,
-    BoxDecoration? decoration,
-    super.width
-  }) : super(
-    decoration: BoxDecoration(
-      color: ThemeProvider.instance.isDark ? 
+  bool _isDark(BuildContext context) =>
+    FluentTheme.of(context).brightness.isDark;
+
+  Widget _container(BuildContext context, Widget? childWidget) {
+    final normalDecoration = BoxDecoration(
+      color: _isDark(context) ? 
        const Color(0x0dffffff) :
        const Color(0xb3ffffff),
       borderRadius: borderRadius??BorderRadius.circular(5)
-    ).merge(decoration),
-    padding: padding ?? const EdgeInsets.symmetric(
-      horizontal: 20, vertical: 12.5
-    )
-  );
+    );
+
+    return Container(
+      alignment: alignment,
+      clipBehavior: clipBehavior,
+      constraints: constraints,
+      padding: padding ?? const EdgeInsets.symmetric(
+        horizontal: 20, vertical: 12.5
+      ),
+      decoration: _merge(normalDecoration, decoration),
+      width: width,
+      height: height,
+      margin: margin,
+      child: childWidget
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (mode == 1) { // Mode 1 stands for "Tile.lore()" mode
+      final modeChild = Row(
+        children: [
+          icon!,
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title!),
+                Text(lore!,
+                  style: TextStyle(
+                    color: FluentTheme.of(context).brightness.isDark ? 
+                      const Color.fromRGBO(207, 207, 207, 1) :
+                      const Color.fromRGBO(95, 95, 96, 1),
+                    overflow: TextOverflow.ellipsis
+                  )
+                ),
+              ]
+            )
+          ),
+          const SizedBox(width: 10),
+          child ?? const SizedBox()
+        ]
+      );
+      
+      return _container(context, modeChild);
+    }
+
+    if (mode == 2) {
+      final modeChild = Row(
+        children: [
+          SizedBox(width: leading == null ? 0 : 7),
+          leading??const SizedBox(),
+          const SizedBox(width: 10),
+          Text(title!),
+          const SizedBox(width: 5),
+          lore!=null ? Text(
+            lore!,
+            style: TextStyle(
+              color: FluentTheme.of(context).brightness.isDark ? 
+                const Color.fromRGBO(207, 207, 207, 1) :
+                const Color.fromRGBO(95, 95, 96, 1)
+            ),
+          ) : const SizedBox(),
+          const Spacer(),
+          child??const SizedBox()
+        ]
+      );
+
+      return _container(context, modeChild);
+    }
+
+    return _container(context, child);
+  }
 
   factory Tile.lore({
     Key? key,
@@ -55,7 +147,7 @@ class Tile extends Container {
     Clip? clipBehavior,
     BoxConstraints? constraints,
     double? height,
-    EdgeInsetsGeometry? margin,
+    EdgeInsets? margin,
     Matrix4? transform,
     AlignmentGeometry? transformAlignment,
     EdgeInsets? padding,
@@ -68,41 +160,20 @@ class Tile extends Container {
   }) {
     return Tile(
       key: key,
+      mode: 1,
       alignment: alignment,
       clipBehavior: clipBehavior??Clip.none,
       constraints: constraints,
       height: height,
       margin: margin,
-      transform: transform,
-      transformAlignment: transformAlignment,
       padding: padding,
       decoration: decoration,
       borderRadius: borderRadius,
       width: width,
-      child: Row(
-        children: [
-          icon,
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title),
-                Text(lore,
-                  style: TextStyle(
-                    color: ThemeProvider.instance.isDark ? 
-                      const Color.fromRGBO(207, 207, 207, 1) :
-                      const Color.fromRGBO(95, 95, 96, 1),
-                    overflow: TextOverflow.ellipsis
-                  )
-                ),
-              ]
-            )
-          ),
-          const SizedBox(width: 10),
-          child??const SizedBox()
-        ]
-      ),
+      title: title,
+      lore: lore,
+      icon: icon,
+      child: child,
     );
   }
 
@@ -110,57 +181,36 @@ class Tile extends Container {
     Key? key,
     Alignment? alignment,
     Widget? child,
-    Clip? clipBehavior,
+    Clip clipBehavior = Clip.none,
     BoxConstraints? constraints,
     double? height,
-    EdgeInsetsGeometry? margin,
+    EdgeInsets margin = const EdgeInsets.fromLTRB(26, 0, 0, 0),
     Matrix4? transform,
     AlignmentGeometry? transformAlignment,
     EdgeInsets? padding,
     BorderRadius? borderRadius,
     double? width,
-    BoxDecoration? decoration,
+    BoxDecoration decoration = const BoxDecoration(),
     required String title,
     String? lore,
     Widget? leading
   }) {
     return Tile(
       key: key,
+      mode: 2,
       alignment: alignment,
-      clipBehavior: clipBehavior??Clip.none,
+      clipBehavior: clipBehavior,
       constraints: constraints,
       height: height,
       margin: margin,
-      transform: transform,
-      transformAlignment: transformAlignment,
-      padding: padding ?? EdgeInsets.zero,
+      padding: padding,
       borderRadius: borderRadius,
       width: width,
-      decoration: decoration?? const BoxDecoration(),
-      child: Padding(
-        padding: padding ?? const EdgeInsets.only(
-          left: 46, right: 20, top: 10, bottom: 10
-        ),
-        child: Row(
-          children: [
-            SizedBox(width: leading == null ? 0 : 7),
-            leading??const SizedBox(),
-            const SizedBox(width: 10),
-            Text(title),
-            const SizedBox(width: 5),
-            lore!=null ? Text(
-              lore,
-              style: TextStyle(
-                color: ThemeProvider.instance.isDark ? 
-                  const Color.fromRGBO(207, 207, 207, 1) :
-                  const Color.fromRGBO(95, 95, 96, 1)
-              ),
-            ) : const SizedBox(),
-            const Spacer(),
-            child??const SizedBox()
-          ]
-        ) 
-      )
+      decoration: decoration,
+      title: title,
+      lore: lore,
+      leading: leading,
+      child: child,
     );
   }
 }
@@ -273,6 +323,9 @@ class SelectableTextBox extends StatelessWidget {
 
     return IntrinsicWidth(
       child: TextBox(
+        style: const TextStyle(
+          fontFamily: "FiraCode"
+        ),
         readOnly: true,
         maxLength: 9999,
         // minLines: lines.length,
@@ -295,5 +348,53 @@ class SelectableTextBox extends StatelessWidget {
         )
       )
     );
+  }
+}
+
+class Platforms {
+  static String? result;
+
+  static bool get isWindows =>
+    (result == null) ? fetchSystem() == "windows" : result == "windows";
+
+  static bool get isWeb =>
+    (result == null) ? fetchSystem() == "web" : result == "web";
+
+  static bool get isMacOS =>
+    (result == null) ? fetchSystem() == "macos" : result == "macos";
+
+  static String fetchSystem() {
+    if (kIsWeb) {
+      return result = "web";
+    }
+
+    if (Platform.isWindows) {
+      return result = "windows";
+    }
+
+    if (Platform.isMacOS) {
+      return result = "macos";
+    }
+
+    return result = "others";
+  }
+
+  static bool get canMicaEffect {
+    if (!isWindows) {
+      return false;
+    }
+
+    final version = Platform.operatingSystemVersion;
+
+    if (version.contains("Windows 10")) {
+      final exp = RegExp(r"Build\s(\d+)");
+      Match? match = exp.firstMatch(version);
+      if (match != null) {
+        int buildNumber = int.parse(match.group(1)!);
+        return (buildNumber >= 22000);
+      }
+    }
+
+    return false;
   }
 }

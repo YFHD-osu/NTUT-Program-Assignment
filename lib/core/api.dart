@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:http/http.dart' as http;
 import 'package:beautiful_soup_dart/beautiful_soup.dart';
+import 'package:ntut_program_assignment/core/global.dart';
 
 var logger = Logger(
   printer: PrettyPrinter(),
@@ -17,34 +18,6 @@ class DevHttpOverrides extends HttpOverrides {
     return super.createHttpClient(context)
       ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
   }
-}
-
-enum GlobalEvent {
-  accountSwitch
-}
-
-class GlobalSettings {
-  // The account that current using
-  static Account? account;
-
-  static final update = StreamController<GlobalEvent>();
-  static final stream = update.stream.asBroadcastStream();
-
-  static bool get isLogin =>
-    account != null ;
-
-  static Future<void> login(Account acc) async {
-    await acc.login();
-    logger.d("Logged in with session: ${acc.sessionID}");
-    account = acc;
-    update.sink.add(GlobalEvent.accountSwitch);
-  }
-
-  static void logout() {
-    account = null;
-    update.sink.add(GlobalEvent.accountSwitch);
-  }
-
 }
 
 class Account {
@@ -75,55 +48,58 @@ class Account {
     'Referer': "$domain/upload/Login",
     'Origin': domain,
     'Cookie': sessionID ?? "",
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
   };
 
-  Future<void> login() async {
-    final payload = {
-      "name": username,
-      "passwd": password,
-      "rdoCourse": course.toString()
-    };
-    final uri = Uri.parse("$domain/upload/Login");
+  late final client = InnerClient(
+    account: this
+  );
 
-    final headResp = await http.get(uri);
-    sessionID = headResp.headers['set-cookie']
+  late DateTime loginTime = DateTime.now();
+
+  Future<void> login() async {    
+    late http.Response response;
+    sessionID = null;
+
+    response = await client._get("/Login");
+    sessionID = response.headers['set-cookie']
       .toString()
       .split(" ")
       .first
       .replaceAll(";", "");
 
-    final response = await http.post(uri, body: payload, headers: headers);
+    final payload = {
+      "name": username,
+      "passwd": password,
+      "rdoCourse": course.toString()
+    };
 
+    response = await client._post("/Login", body: payload, headers: headers);
+
+    loginTime = DateTime.now();
     BeautifulSoup bs = BeautifulSoup(response.body);
     final loginBox = bs.find("div", class_: "login-box");
-    
+
     // If the login box still exist, means that login failed
     if (loginBox != null) {
       final error = bs.find("h4", class_: "card-title"); 
       throw Exception(error?.text??"");
     }
 
-    late final http.Response menuResp;
+    response = await client._get("/TopMenu", headers: headers);
 
-    final menuUri = Uri.parse("$domain/upload/TopMenu");
-
-    try { // TODO: Cencer here
-      menuResp = await http.get(menuUri, headers: headers);
-    } on http.ClientException catch (_) {
-      return;
-    }
-
-    bs = BeautifulSoup(menuResp.body);
+    bs = BeautifulSoup(response.body);
     final studentName = bs.find("div", class_: "content");
-    name = studentName!.text.replaceAll(" ", "").split("\n")[1];    
+    name = studentName!.text.replaceAll(" ", "").split("\n")[1];
   }
 
   void logout() => sessionID = null;
 
   static Future<List<String>> fetchCourse(bool isOdd) async {
     final uri = Uri.parse("${isOdd ? defaultDomain[0]: defaultDomain[1]}/upload/Login");
-    final response = await http.get(uri);
+    final response = await http.get(uri, headers: {
+      "origin": isOdd ? defaultDomain[0]: defaultDomain[1]
+    });
     BeautifulSoup bs = BeautifulSoup(response.body);
     final menu = bs.find("select", id: "inputGroupSelect01");
     if (menu?.contents == null) {
@@ -180,15 +156,38 @@ class Account {
   }
 }
 
-class HomeworkRuntimeError {
+class RuntimeError {
   final String message;
 
-  HomeworkRuntimeError(this.message);
+  RuntimeError(this.message);
+}
+
+class NetworkError {
+  final String message;
+
+  NetworkError(this.message);
+}
+
+class TestException {
+  final String message;
+
+  TestException(this.message);
+}
+
+class TestResult {
+  final List<String> error, output;
+
+  TestResult({
+    required this.error,
+    required this.output
+  });
 }
 
 class Testcase {
   final String input, output;
   final String original;
+
+  TestResult? result;
 
   Testcase({
     required this.input,
@@ -196,12 +195,20 @@ class Testcase {
     required this.original
   });
 
+  bool get hasOutput {
+    return result != null && result!.output.isNotEmpty;
+  }
+
+  bool get isPass {
+    return output == result?.output.join("\n");
+  }
+
   factory Testcase.parse(String message) {
     final regExp = RegExp(r"輸(入|出).+");
 
     final arr = message.split(regExp);
     if (arr.length < 3) {
-      throw HomeworkRuntimeError("Cannot parse testcase: $message");
+      throw RuntimeError("Cannot parse testcase: $message");
     }
 
     return Testcase(
@@ -209,6 +216,38 @@ class Testcase {
       output: arr[2].trim(), 
       original: message
     );
+  }
+
+  Future<TestResult> exec(File target) async {
+    if (!await target.exists()) {
+      throw TestException("指定的測試檔案不存在");
+    }
+
+    final process = await Process.start("python", [target.path]);
+
+    for (var line in input.split("\n")) {
+      process.stdin.write(line);
+      process.stdin.write(ascii.decode([10]));
+    }
+
+    try {
+      await process.exitCode
+        .timeout(const Duration(seconds: 10));
+    } on TimeoutException catch (_) {
+      process.kill();
+      throw TestException("測試時間超時，已強制結束");
+    }
+
+    final out = await process.stdout
+      .map((e) => utf8.decode(e).trim())
+      .toList();
+
+    final err = await process.stderr
+      .map((e) => utf8.decode(e).trim())
+      .toList();
+    
+    result = TestResult(error: err, output: out);
+    return result!;
   }
 }
 
@@ -332,7 +371,7 @@ class Homework {
     final resp = await client._get("/showHomework?hwId=$number");
 
     if (resp.statusCode == 500) {
-      throw HomeworkRuntimeError("無法獲取作業詳細資料，猜測作業不存在");
+      throw RuntimeError("無法獲取作業詳細資料，猜測作業不存在");
     }
 
     BeautifulSoup bs = BeautifulSoup(resp.body);
@@ -351,7 +390,7 @@ class Homework {
     
     final tr = table?.children.first.children;
     if (tr == null) {
-      throw HomeworkRuntimeError("Cannot fetch success list, not login ?");
+      throw RuntimeError("Cannot fetch success list, not login ?");
     }
 
     return tr
@@ -391,7 +430,7 @@ class Homework {
     final resp = await client._get("/delHw?title=$number&l=$language");
 
     if (resp.statusCode != 200) {
-      throw HomeworkRuntimeError("Failed to delete homework");
+      throw RuntimeError("Failed to delete homework");
     }
 
     await _refresh();
@@ -449,7 +488,7 @@ class Homework {
 
   Future<void> upload(File file) async {
     if (!await file.exists()) {
-      throw HomeworkRuntimeError("File is not exists");
+      throw RuntimeError("File is not exists");
     }
 
     final account = GlobalSettings.account!;
@@ -484,7 +523,7 @@ class Homework {
     _submitting = false;
 
     if (response.statusCode != 200) {
-      throw HomeworkRuntimeError(response.reasonPhrase.toString());
+      throw RuntimeError(response.reasonPhrase.toString());
     }
 
     return;
@@ -519,6 +558,32 @@ class InnerClient extends http.BaseClient {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
   };
 
+  Future<void> checkConnect() async {
+    late Uri uri;
+    
+    uri = Uri.parse("https://www.google.com/");
+    try {
+      await http.head(uri)
+        .timeout(const Duration(seconds: 8));
+    } on TimeoutException catch (_) {
+      throw NetworkError("無法連線到網際網路或網路不穩定");
+    } on SocketException catch (_) {
+      throw NetworkError("無法連線到網際網路或網路不穩定");
+    } catch (e) {
+      throw NetworkError(e.toString());
+    }
+
+    uri = Uri.parse(account.domain);
+    try {
+      await http.head(uri)
+        .timeout(const Duration(seconds: 8));
+    } on TimeoutException catch (_) {
+      throw NetworkError("網路不穩定或未使用VPN");
+    } catch (e) {
+      throw NetworkError(e.toString());
+    }
+  }
+
   http.BaseRequest _copyRequest(http.BaseRequest request) {
     http.BaseRequest requestCopy;
 
@@ -547,21 +612,37 @@ class InnerClient extends http.BaseClient {
 
     return requestCopy;
   }
-
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+  Future<http.StreamedResponse> _send(http.BaseRequest request, int depth, DateTime timestamp) async {
     late final http.StreamedResponse response;
+
     try {
       response = await _copyRequest(request).send();
     } on SocketException catch (_) {
-      GlobalSettings.account?.sessionID = "";
-      await GlobalSettings.account?.login();
-      return await send(request);
+      await checkConnect();
+      logger.e("SocketException occured with ${request.method} ${request.url}");
+      account.logout();
+      await account.login();
+
+      if (timestamp.compareTo(account.loginTime) < 0) {
+        throw RuntimeError("Login is processing, please resend request");
+      } 
+
+      if (depth > 2) {
+        throw RuntimeError("Cannot login");
+      }
+
+      logger.d("Debug depth: ${depth + 1}");
+      return _send(_copyRequest(request), depth + 1, timestamp);
     } on HandshakeException catch (_) {
-      throw HomeworkRuntimeError("Unable to locate to the server...");
+      throw RuntimeError("Unable to locate to the server...");
     }
 
     return response;
+  }
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    return await _send(request, 0, DateTime.now());
   }
 
   @override
@@ -572,11 +653,11 @@ class InnerClient extends http.BaseClient {
     return await super.get(url, headers: newHeader);
   }
 
-  Future<http.Response> _get(String url, {Map<String, String>? headers}) async {
+  Future<http.Response> _get(String endpoints, {Map<String, String>? headers}) async {
     final newHeader = _headers;
     newHeader.addAll(headers??{});
     
-    final uri = Uri.parse("${account.domain}/upload$url");
+    final uri = Uri.parse("${account.domain}/upload$endpoints");
     return await super.get(uri, headers: newHeader);
   }
 
@@ -586,6 +667,14 @@ class InnerClient extends http.BaseClient {
     newHeader.addAll(headers??{});
     
     return await super.get(url, headers: newHeader);
+  }
+
+  Future<http.Response> _post(String endpoints, {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
+    final newHeader = _headers;
+    newHeader.addAll(headers??{});
+    
+    final uri = Uri.parse("${account.domain}/upload$endpoints");
+    return await super.post(uri, headers: newHeader, body: body, encoding: encoding);
   }
 
 }

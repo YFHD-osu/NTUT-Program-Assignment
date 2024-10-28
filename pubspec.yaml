@@ -35,12 +35,9 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-
   win32: ^5.5.4
-
   provider: ^6.1.2
   file_picker: ^8.0.7
-  
   fluent_ui: ^4.9.0
   window_manager: ^0.4.2
   flutter_acrylic: ^1.1.4
@@ -57,6 +54,12 @@ dependencies:
   super_drag_and_drop: ^0.8.24
   dotted_decoration: ^2.0.0
   dio: ^5.7.0
+  toastification: ^2.3.0
+  pretty_diff_text: ^2.0.0
+  diff_match_patch: ^0.4.1
+
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
@@ -75,7 +78,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
+  generate: true
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -94,6 +97,9 @@ flutter:
     - assets\acknowledge\xuan.png
     - assets\acknowledge\small_cow.png
 
+    - assets\acknowledge\milk_cow.png
+    - assets\acknowledge\purple_sheep.jpg
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
@@ -105,12 +111,10 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
+  fonts:
+    - family: FiraCode
+      fonts:
+        - asset: fonts/FiraCodeNerdFont-Regular.ttf
   #   - family: Trajan Pro
   #     fonts:
   #       - asset: fonts/TrajanPro.ttf

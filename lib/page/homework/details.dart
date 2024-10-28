@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 
 import 'package:dotted_decoration/dotted_decoration.dart';
+import 'package:pretty_diff_text/pretty_diff_text.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 
@@ -32,6 +34,8 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   // Store all online checked testcases status and messages
   List<CheckResult> _testcasesVal = [];
 
+  bool inputCopy = false, outputCopy = false;
+
   Future<void> refresh() async {
     final tasks = [_loadSuccess(), _loadTest()];
     await Future.wait(tasks);
@@ -58,8 +62,24 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
     if (mounted) setState(() {});
   }
 
+  Widget _copyIcon(bool key) {
+    if (!key) {
+      return const SizedBox.square(
+        key: ValueKey(1),
+        dimension: 25,
+        child: Icon(FluentIcons.copy)
+      );
+    }
+
+    return const SizedBox.square(
+      key: ValueKey(0),
+      dimension: 25,
+      child:  Icon(FluentIcons.check_mark)
+    );
+  }
+
   Widget _testcaseSection(int index) {
-    final testCases = widget.homework.description!.testCases[index];
+    final testCase = widget.homework.description!.testCases[index];
 
     return Tile(
       key: ValueKey(index),
@@ -71,7 +91,9 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
               Container(
                 width: 10, height: 10,
                 decoration: BoxDecoration(
-                  color: Colors.green.lighter,
+                  color: testCase.hasOutput ? 
+                    (testCase.isPass ? Colors.green.lightest : Colors.red.lightest) : 
+                    Colors.grey,
                   borderRadius: BorderRadius.circular(10)
                 )
               ),
@@ -82,16 +104,90 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
           const SizedBox(height: 10),
           const Text("輸入"),
           const SizedBox(height: 5),
-          SizedBox(
-            width: double.infinity,
-            child: SelectableTextBox(text: testCases.input)
+          Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: SelectableTextBox(text: testCase.input)
+              ),
+              Button(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 100),
+                  child: _copyIcon(inputCopy)
+                ),
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: testCase.input));
+                  setState(() => inputCopy = true);
+                  await Future.delayed(const Duration(milliseconds: 800));
+                  setState(() => inputCopy = false);
+                }
+              )
+            ]
           ),
           const SizedBox(height: 10),
           const Text("輸出"),
           const SizedBox(height: 5),
-          SizedBox(
-            width: double.infinity,
-            child: SelectableTextBox(text: testCases.output)
+          Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: SelectableTextBox(text: testCase.output)
+              ),
+              Button(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 100),
+                  child: _copyIcon(outputCopy)
+                ),
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: testCase.output));
+                  setState(() => outputCopy = true);
+                  await Future.delayed(const Duration(milliseconds: 800));
+                  setState(() => outputCopy = false);
+                }
+              )
+            ]
+          ),
+          const SizedBox(height: 10),
+          const Text("測試結果"),
+          const SizedBox(height: 5),
+          Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: !testCase.hasOutput ? const Text("尚未執行測試") : PrettyDiffText(
+                  defaultTextStyle: const TextStyle(color: Colors.white, fontFamily: "FiraCode"),
+                  oldText: testCase.result!.output.join("\n"),
+                  newText: testCase.output
+                )
+              ),
+              Button(
+                child: const AnimatedSwitcher(
+                  duration: Duration(milliseconds: 100),
+                  child: SizedBox.square(
+                    dimension: 25,
+                    child: Icon(FluentIcons.play)
+                  )
+                ),
+                onPressed: () async {
+                  late final TestResult result;
+                  try {
+                    await testCase.exec(File(r"C:\Users\YFHD\Documents\NTUT-Works\Program Design\015.py"));
+                  } on TestException catch (e) {
+                    // ignore: use_build_context_synchronously
+                    Controller.showToast(context, "測試${index+1} ", e.message, InfoBarSeverity.error);
+                    return;
+                  }
+
+
+
+                  // print(result.output.join("\n"));
+                  setState(() {});
+                }
+              )
+            ]
           )
         ]
       )
@@ -99,6 +195,8 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   }
 
   Widget _testcaseBtn(int index) {
+    final testCase = widget.homework.description!.testCases[index];
+
     return Button(
       child: Row(
         mainAxisSize: MainAxisSize.max,
@@ -108,7 +206,9 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
             width: 10, height: 10,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: Colors.grey
+              color: testCase.hasOutput ?
+                (testCase.isPass ? Colors.green.lightest : Colors.red.lightest) : 
+                Colors.grey
           )),
           const SizedBox(width: 10),
           Text("資料 ${index+1}", style: const TextStyle(fontWeight: FontWeight.bold))
@@ -129,8 +229,47 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
     }
   }
 
+  Widget _testcaseWindow() {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.fastOutSlowIn,
+      child: ClipRRect(
+        clipBehavior: Clip.hardEdge,
+        child: AnimatedSwitcher(
+          switchInCurve: Curves.fastOutSlowIn,
+          switchOutCurve: Curves.fastOutSlowIn,
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(animation);
+
+            final slideAnimation = child.key == ValueKey(_selectTestcase) 
+                // Fade out from left to right
+                ? Tween<Offset>(begin: const Offset(0, -1), end: const Offset(0, 0)).animate(animation)
+                // Fade in from left to right
+                : Tween<Offset>(begin: const Offset(0, 1), end: const Offset(0, 0)).animate(animation);
+
+            return FadeTransition(
+              opacity: fadeAnimation,
+              child: SlideTransition(
+                position: slideAnimation,
+                child: child
+              ),
+            );
+          },
+          duration: const Duration(milliseconds: 300),
+          child: _testcaseSection(_selectTestcase)
+        )
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (widget.homework.description == null) {
+      return const Center(
+        child: ProgressRing()
+      );
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -148,11 +287,11 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
         Tile(
           width: double.infinity,
           child: SelectableTextBox(
-            text: widget.homework.description?.problem??"大招還在讀取中"
+            text: widget.homework.description!.problem
           )
         ),
         const SizedBox(height: 10),
-        const Text("測試資料",
+        const Text("測試與上傳",
           style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         GridView(
@@ -168,63 +307,50 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
             .toList()
         ),
         const SizedBox(height: 5),
-        AnimatedSize(
-          // alignment: Alignment.topCenter,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.fastOutSlowIn,
-          child: ClipRRect(
-            clipBehavior: Clip.hardEdge,
-            child: AnimatedSwitcher(
-              switchInCurve: Curves.fastOutSlowIn,
-              switchOutCurve: Curves.fastOutSlowIn,
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(animation);
+        _testcaseWindow(),
+        const SizedBox(height: 5),
+        Tile.lore(
+          title: "全部測試",
+          lore: "將所有範例測試資料全部驗證過一次",
+          icon: const Icon(FluentIcons.test_case),
+          child: FilledButton(
+            onPressed: () {
 
-                final slideAnimation = child.key == ValueKey(_selectTestcase) 
-                    // Fade out from left to right
-                    ? Tween<Offset>(begin: const Offset(0, -1), end: const Offset(0, 0)).animate(animation)
-                    // Fade in from left to right
-                    : Tween<Offset>(begin: const Offset(0, 1), end: const Offset(0, 0)).animate(animation);
-
-                return FadeTransition(
-                  opacity: fadeAnimation,
-                  child: SlideTransition(
-                    position: slideAnimation,
-                    child: child
-                  ),
-                );
-              },
-              duration: const Duration(milliseconds: 300),
-              child: _testcaseSection(_selectTestcase)
-            )
+            },
+            child: const Text("開始測試"),
           )
         ),
+        const SizedBox(height: 5),
         const SizedBox(height: 10),
         const Text("危險區域",
           style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
-        CustomWidgets.alertButton(
-          child: const Text("刪除作業"),
-          onPressed: !canDelete() ? null : () async {
-            final isConfirmed = await showDialog<bool>(
-              context: context,
-              builder: (context) => const ConfirmDialog()
-            );
+        Tile.lore(
+          title: "刪除作業",
+          lore: "將目前所上傳的作業檔案刪除",
+          icon: const Icon(FluentIcons.delete),
+          child: CustomWidgets.alertButton(
+            child: const Text("刪除作業"),
+            onPressed: !canDelete() ? null : () async {
+              final isConfirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) => const ConfirmDialog()
+              );
 
-            if (!(isConfirmed??false)) return;
+              if (!(isConfirmed??false)) return;
 
-            logger.i("Homework deleted!");
+              logger.i("Homework deleted!");
 
-            final task = widget.homework.delete();
-            setState(() {});
-            await task;
+              final task = widget.homework.delete();
+              setState(() {});
+              await task;
 
-            _passList = await widget.homework.fetchPassList();
-            
-            setState(() {});
-          }
-        ),
-
+              _passList = await widget.homework.fetchPassList();
+              
+              setState(() {});
+            }
+          )
+        )
       ]
     );
   }
@@ -657,7 +783,7 @@ class TestCaseFlyout extends StatelessWidget {
     required this.results
   });
 
-  Widget _testDataRow(CheckResult result) {
+  Widget _testDataRow(CheckResult result, BuildContext context) {
     return Tile(
       constraints: const BoxConstraints(
         minHeight: 48
@@ -685,6 +811,7 @@ class TestCaseFlyout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     final percent = results.where((e) => e.pass).length / results.length * 100;
     return Container(
       constraints: const BoxConstraints(
@@ -716,7 +843,7 @@ class TestCaseFlyout extends StatelessWidget {
           ),
           Expanded(child: ListView.separated(
             itemBuilder: (context, index) => 
-              _testDataRow(results[index]),
+              _testDataRow(results[index], context),
             itemCount: results.length,
             separatorBuilder: (context, index) => 
               const SizedBox(height: 10),
@@ -735,7 +862,7 @@ class PersonFlyout extends StatelessWidget {
     required this.passes
   });
 
-  Widget _testDataRow(String result) {
+  Widget _testDataRow(String result, BuildContext context) {
     return Tile(
       margin: const EdgeInsets.only(left: 10, right: 11),
       child: Row(
@@ -769,7 +896,7 @@ class PersonFlyout extends StatelessWidget {
         children: [
           Expanded(child: ListView.separated(
             itemBuilder: (context, index) => 
-              _testDataRow(passes[index]),
+              _testDataRow(passes[index], context),
             itemCount: passes.length,
             separatorBuilder: (context, index) => 
               const SizedBox(height: 10),
