@@ -14,7 +14,13 @@
 **NTUT Program Assignment** provides a better look UI and account management for everyone to submit their homework elegantly. 
 
 ## Installation
-Download from [GitHub Releases](https://github.com/YFHD-osu/NTUT-Program-Assignment/releases) and install it.
+First download your desired build from [Releases Page](https://github.com/YFHD-osu/NTUT-Program-Assignment/releases).
+Exeract the ``NTUT_Program_Assigiment_XXXX.zip`` to the location you want to install this program.
+Run the ``ntut_program_assignment.exe`` to launch the program.
+\[Additionally\] You can create a shortcut to the app if you want.
+
+## Upgrade
+Just simply delete all of the folder and download a newer version form Release Page.
 
 ## Platforms
 This project will support ``Windows`` initially, ``macOS``, ``Linux`` might be added to the support list in the future. <br>
