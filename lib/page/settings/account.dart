@@ -1,6 +1,7 @@
 import 'dart:async';
-import 'package:hive/hive.dart';
+
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:ntut_program_assignment/core/database.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/page/settings/router.dart';
 
@@ -27,7 +28,7 @@ class _LoginDialogState extends State<LoginDialog> {
   final _uFocus = FocusNode();
   final _pFocus = FocusNode();
 
-  String selCourse = "選擇課程";
+  String? selCourse;
 
   // Store the state of the "remember password" check box
   bool _rememberPW = true;
@@ -94,7 +95,7 @@ class _LoginDialogState extends State<LoginDialog> {
           SizedBox(
             width: 400,
             child: ComboBox<String>(
-              value: selCourse,
+              value: selCourse??courseList.first,
               items: courseList.map<ComboBoxItem<String>>((e) {
                 return ComboBoxItem<String>(
                   value: e,
@@ -108,8 +109,7 @@ class _LoginDialogState extends State<LoginDialog> {
               onChanged: (color) {
                 selCourse = color ?? courseList.first;
                 setState(() {});
-              },
-              placeholder: const Text('選擇課程')
+              }
             )
           ),
           const SizedBox(height: 10),
@@ -146,8 +146,9 @@ class _LoginDialogState extends State<LoginDialog> {
   }
 
   Future<void> _login() async {
+    final course = isEven ? widget.evenCourses : widget.oddCourses; 
     final acc = Account(
-      course: widget.evenCourses.indexOf(selCourse) + 1,
+      course: selCourse ==null ? 1 : course.indexOf(selCourse!) + 1,
       username: _username.text,
       password: _password.text
     );
@@ -177,18 +178,8 @@ class _LoginDialogState extends State<LoginDialog> {
 
     GlobalSettings.account = acc;
 
-    if (_rememberPW) {
-      final collection = await BoxCollection.open(
-        'data', // Name of your database
-        {'accounts'}, // Names of your boxes
-      );
-
-      final box = await collection.openBox("accounts");
-      await box.put(GlobalSettings.account!.name!, GlobalSettings.account!.toMap());
-    }
-
     // ignore: use_build_context_synchronously
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(_rememberPW);
   }
 }
 
@@ -202,14 +193,12 @@ class AccountRoute extends StatefulWidget {
 class _AccountRouteState extends State<AccountRoute> {
   bool _isDbBusy = false;
   bool _isLogging = false;
-  
-  bool _btnDisabled = false;
 
-  late BoxCollection collection;
-  late CollectionBox _box;
+  final database = Database(
+    name: "accounts"
+  );
 
   List<Account> _accounts = [];
-  String _selAutoLogin = "停用功能";
 
   late final StreamSubscription _sub;
 
@@ -226,11 +215,6 @@ class _AccountRouteState extends State<AccountRoute> {
     _sub.cancel();
   }
 
-  void _setEnable(bool state) {
-    if (!mounted) return;
-    setState(() => _btnDisabled = state);
-  }
-
   void _onUpdate(GlobalEvent event) {
     if (![GlobalEvent.accountSwitch].contains(event)) return;
     setState(() {});
@@ -239,7 +223,7 @@ class _AccountRouteState extends State<AccountRoute> {
   Future<void> _addAccount() async {
     final oddCourses = await Account.fetchCourse(true);
     final evenCourses = await Account.fetchCourse(false);
-    await showDialog<String>(
+    final rememberPw = await showDialog<bool>(
       // ignore: use_build_context_synchronously
       context: context,
       builder: (context) => LoginDialog(
@@ -247,6 +231,13 @@ class _AccountRouteState extends State<AccountRoute> {
         evenCourses: evenCourses,
       )
     );
+    if (rememberPw ?? false) {
+      await database.put(
+        GlobalSettings.account!.username,
+        GlobalSettings.account!.toMap()
+      );
+    }
+
     await _refreshDB();
     GlobalSettings.update.add(GlobalEvent.accountSwitch);
   }
@@ -255,13 +246,12 @@ class _AccountRouteState extends State<AccountRoute> {
     if (_isDbBusy) return;
 
     setState(() => _isDbBusy = true);
-    collection = await BoxCollection.open(
-      'data', // Name of your database
-      {'accounts'}, // Names of your boxes
-    );
-
-    _box = await collection.openBox("accounts");
-    final maps = await _box.getAllValues();
+    
+    if (!await database.initialize()) {
+      await database.refresh();
+    }
+    
+    final maps = await database.getAllValues();
     _accounts = maps
       .values
       .map((e) => Account.fromMap(e))
@@ -347,7 +337,7 @@ class _AccountRouteState extends State<AccountRoute> {
           child: SizedBox(
             width: 200,
             child: ComboBox<String>(
-              value: _selAutoLogin,
+              value: GlobalSettings.prefs.autoLogin ?? "停用功能",
               items: [
                 ComboBoxItem<String>(
                   value: "停用功能",
@@ -368,8 +358,8 @@ class _AccountRouteState extends State<AccountRoute> {
                   );
                 })
               ],
-              onChanged: (color) {
-                _selAutoLogin = color ?? "停用功能";
+              onChanged: (value) {
+                GlobalSettings.prefs.autoLogin = value;
                 setState(() {});
               },
               placeholder: const Text('停用功能')
@@ -425,6 +415,94 @@ class _AccountRouteState extends State<AccountRoute> {
     );
   }
 
+  Future<void> _login(Account account) async {
+    setState(() => _isLogging = true);
+
+    try {
+      await GlobalSettings.login(account);
+    } on RuntimeError catch (e) {
+      // ignore: use_build_context_synchronously
+      Controller.showToast(context, "登入失敗", e.message, InfoBarSeverity.error);
+      return;
+    } on NetworkError catch (e) {
+      // ignore: use_build_context_synchronously
+      Controller.showToast(context, "登入失敗", e.message, InfoBarSeverity.error);
+      return;
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      Controller.showToast(context, "登入失敗", "發生未知錯誤: ${e.toString()}", InfoBarSeverity.error);
+      return;
+    } finally {
+      _isLogging = false;
+    }
+
+    // ignore: use_build_context_synchronously
+    Controller.showToast(context, "登入成功", "歡迎 ${GlobalSettings.account?.name}", InfoBarSeverity.info);
+    if (!mounted) setState(() {});
+    
+  }
+
+  Widget _accountItem(Account account) {
+    final key = GlobalKey<SplitButtonState>();
+    return Tile.lore(
+      title: account.name.toString(),
+      lore: account.username,
+      icon: Container(
+        width: 40, height: 40,
+        decoration: BoxDecoration(
+          color: Colors.blue.lightest,
+          borderRadius: BorderRadius.circular(500)
+        ),
+        child: const Icon(FluentIcons.user_optional),
+      ),
+      child: SplitButton(
+        key: key,
+        enabled: !_isLogging,
+        flyout: FlyoutContent(
+          padding: const EdgeInsets.all(3),
+          constraints: const BoxConstraints(
+            maxWidth: 200.0, minWidth: 100),
+          child: Wrap(
+            runSpacing: 1.0,
+            spacing: 8.0,
+            children: [
+              HyperlinkButton(
+                style: const ButtonStyle(
+                  padding: WidgetStatePropertyAll(
+                    EdgeInsets.all(4.0),
+                  ),
+                ),
+                onPressed: () {
+                  _removeAccount(account);
+                  Navigator.of(context).pop();
+                },
+                child: Container(
+                  width: 100,
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 2.5),
+                  child: Text("移除帳號",
+                    style: TextStyle(color: Colors.red))
+                )
+              )
+            ]
+          ),
+        ),
+        onInvoked: _isLogging ? null : () => _login(account),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: 10, vertical: 5),
+          child: Text("登入")
+        )
+      )
+    );
+  }
+
+  Future<void> _removeAccount(Account account) async {
+    await database.delete(account.username);
+    _refreshDB();
+  }
+
   Widget _accountList() {
     if (_isDbBusy) {
       return const Align(
@@ -447,134 +525,8 @@ class _AccountRouteState extends State<AccountRoute> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: _accounts
           .where((e) => e.username != GlobalSettings.account?.username)
-          .map((e) => AccountItem(
-            data: e,
-            enable: _btnDisabled,
-            callback: _setEnable
-          ))
+          .map((e) => _accountItem(e))
           .toList()
-      )
-    );
-  }
-}
-
-class AccountItem extends StatefulWidget {
-  final bool enable;
-  final Account data;
-  final Function(bool) callback;
-  
-  const AccountItem({
-    super.key, 
-    required this.data,
-    required this.enable,
-    required this.callback
-  });
-
-  @override
-  State<AccountItem> createState() => _AccountItemState();
-}
-
-class _AccountItemState extends State<AccountItem> {
-  bool _processing = false;
-  final splitButtonKey = GlobalKey<SplitButtonState>();
-
-  @override
-  Widget build(BuildContext context) {
-    return Tile(
-      child: Row(
-        children: [
-          Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(
-              color: Colors.blue.lightest,
-              borderRadius: BorderRadius.circular(500)
-            ),
-            child: const Icon(FluentIcons.user_optional),
-          ),
-          const SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(widget.data.name.toString()),
-              Text(widget.data.username.toString())
-            ]
-          ),
-          const Spacer(),
-          AnimatedOpacity(
-            opacity: _processing ? 1: 0,
-            duration: const Duration(milliseconds: 350),
-            child: const ProgressRing()
-          ),
-          const SizedBox(width: 10),
-          SplitButton(
-            key: splitButtonKey,
-            enabled: !widget.enable && !_processing,
-            flyout: FlyoutContent(
-              padding: const EdgeInsets.all(3),
-              constraints: const BoxConstraints(
-                maxWidth: 200.0, minWidth: 100),
-              child: Wrap(
-                runSpacing: 1.0,
-                spacing: 8.0,
-                children: [
-                  HyperlinkButton(
-                    style: const ButtonStyle(
-                      padding: WidgetStatePropertyAll(
-                        EdgeInsets.all(4.0),
-                      ),
-                    ),
-                    onPressed: () {
-                      setState(() => {});
-                      Navigator.of(context).pop();
-                    },
-                    child: Container(
-                      width: 100,
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2.5),
-                      child: Text("移除帳號",
-                        style: TextStyle(color: Colors.red))
-                    )
-                  )
-                ]
-              ),
-            ),
-            onInvoked: !(!widget.enable && !_processing) ? null : () async {
-              widget.callback(true);
-              setState(() => _processing = true);
-              
-              try {
-                await GlobalSettings.login(widget.data);
-              } on RuntimeError catch (e) {
-                // ignore: use_build_context_synchronously
-                Controller.showToast(context, "登入失敗", e.message, InfoBarSeverity.error);
-                return;
-              } on NetworkError catch (e) {
-                // ignore: use_build_context_synchronously
-                Controller.showToast(context, "登入失敗", e.message, InfoBarSeverity.error);
-                return;
-              } catch (e) {
-                // ignore: use_build_context_synchronously
-                Controller.showToast(context, "登入失敗", "發生未知錯誤: ${e.toString()}", InfoBarSeverity.error);
-                return;
-              } finally {
-                widget.callback(false);
-                _processing = false;
-              }
-
-              
-              // ignore: use_build_context_synchronously
-              Controller.showToast(context, "登入成功", "歡迎 ${GlobalSettings.account?.name}", InfoBarSeverity.info);
-              if (!mounted) setState(() {});
-              
-            },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 10, vertical: 5),
-              child: Text("登入")
-            )
-          )
-        ]
       )
     );
   }

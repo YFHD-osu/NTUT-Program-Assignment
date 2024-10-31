@@ -39,6 +39,7 @@ void main() async {
     });
   }  
 
+  await GlobalSettings.initialize();
   await ThemeProvider.instance.initialize();
   
   runApp(const MyApp());
@@ -79,7 +80,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late StreamSubscription _sub;
   
-  int _index = 1;
+  int _index = 0;
   PaneDisplayMode _mode = PaneDisplayMode.compact;
   
   @override
@@ -195,8 +196,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           PaneItem(
             icon: const Icon(FluentIcons.backlog_list),
             title: Text(locale.sidebar_homework_title),
-            body: const HomeworkRoute(),
-            enabled: GlobalSettings.isLogin
+            body: const HomeworkRoute()
+          ),
+          PaneItem(
+            icon: const Icon(FluentIcons.info),
+            title: Text(locale.sidebar_submitted_assignment_title),
+            body: const UnimplementPage()
+          ),
+          PaneItem(
+            icon: const Icon(FluentIcons.red_eye),
+            title: Text(locale.sidebar_my_grade_title),
+            body: const UnimplementPage()
+          ),
+          PaneItem(
+            icon: const Icon(FluentIcons.comment),
+            title: Text(locale.sidebar_comment_title),
+            body: const UnimplementPage()
+          ),
+          PaneItem(
+            icon: const Icon(FluentIcons.erase_tool),
+            title: Text(locale.sidebar_change_password_title),
+            body: const UnimplementPage()
           )
         ],
         footerItems: [

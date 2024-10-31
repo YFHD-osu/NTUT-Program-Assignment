@@ -5,6 +5,7 @@ import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/page/homework/router.dart';
 import 'package:ntut_program_assignment/widget.dart';
 
+
 class HomeworkList extends StatefulWidget {
   const HomeworkList({super.key});
 
@@ -13,6 +14,7 @@ class HomeworkList extends StatefulWidget {
 }
 
 class _HomeworkListState extends State<HomeworkList> {
+  String? errMsg;
   late bool _isReady = Controller.homeworks.isNotEmpty;
 
   @override
@@ -24,10 +26,26 @@ class _HomeworkListState extends State<HomeworkList> {
   }   
 
   Future<void> _refresh() async {
+    if (GlobalSettings.account == null) {
+      return;
+    }
+
     Controller.homeworks.clear();
+    
+    errMsg = null;
     setState(() => _isReady = false);
 
-    Controller.homeworks = await GlobalSettings.account!.fetchHomeworkList();
+    try {
+      Controller.homeworks =
+      await GlobalSettings.account!.fetchHomeworkList();
+    } on NetworkError catch (e) {
+      errMsg = e.message;
+    } on RuntimeError catch (e) {
+      errMsg = e.message;
+    } catch (e) {
+      errMsg = e.toString();
+    }
+    
     setState(() => _isReady = true);
   }
 
@@ -160,13 +178,48 @@ class _HomeworkListState extends State<HomeworkList> {
 
   @override
   Widget build(BuildContext context) {
+    
+    if (GlobalSettings.account == null) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(FluentIcons.account_management, size: 50),
+            SizedBox(height: 10),
+            Text("請先移至設定、帳戶登入帳號")
+          ]
+        )
+      );
+    }
+
+    if (errMsg != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(FluentIcons.error, size: 50),
+            const SizedBox(height: 10),
+            Text("發生錯誤\n$errMsg", textAlign: TextAlign.center,),
+            const SizedBox(height: 10),
+            FilledButton(
+              onPressed: _refresh, 
+              child: const Text("重新整理"),
+            )
+          ]
+        )
+      );
+    }
+
     if (!_isReady) {
-      return const Column(
-        children: [
-          ProgressRing(),
-          SizedBox(height: 10),
-          Text("題目載入中..."),
-        ]
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ProgressRing(),
+            SizedBox(height: 10),
+            Text("題目載入中..."),
+          ]
+        )
       );
     }
     return Column(
@@ -195,8 +248,18 @@ class ListItem extends StatefulWidget {
 }
 
 class _ListItemState extends State<ListItem> {
+  String? _errorMsg;
+
   Future<void> _fetchDescription() async {
-    await widget.homework.fetchHomeworkDetail();
+    try {
+      await widget.homework.fetchHomeworkDetail();
+    } on RuntimeError catch (e) {
+      _errorMsg = e.message;
+    } on NetworkError catch (e) {
+      _errorMsg = e.message;
+    } catch (e) {
+      _errorMsg = e.toString();
+    }
 
     if (!mounted) return;
     setState(() {});
@@ -210,6 +273,30 @@ class _ListItemState extends State<ListItem> {
 
   @override
   Widget build(BuildContext context) {
+    if (_errorMsg != null) {
+      return Button(
+        style: const ButtonStyle(
+          padding: WidgetStatePropertyAll(EdgeInsets.zero)
+        ),
+        child: Tile.lore(
+          decoration: const BoxDecoration(),
+          title: "${widget.homework.number} 無法加載詳細資料",
+          lore: "繳交期限: ${widget.homework.deadline}",
+          icon: const Icon(FluentIcons.delete),
+          child: const Icon(FluentIcons.chevron_right),
+        ),
+        onPressed: () {
+          Controller.routes.add(BreadcrumbItem(
+            label: Text(
+              "${widget.homework.number} ${widget.homework.description?.title??''}",
+              style: const TextStyle(fontSize: 30)),
+            value: BreadcrumbValue(label: "${widget.homework.number} ${widget.homework.description?.title??''}", index: widget.homework.id-1)
+          ));
+          Controller.setState();
+        }
+      );
+    }
+
     return Button(
       style: const ButtonStyle(
         padding: WidgetStatePropertyAll(EdgeInsets.zero)

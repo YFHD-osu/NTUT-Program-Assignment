@@ -398,3 +398,21 @@ class Platforms {
     return false;
   }
 }
+
+class UnimplementPage extends StatelessWidget {
+  const UnimplementPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(FluentIcons.auto_enhance_on, size: 50),
+          SizedBox(height: 10),
+          Text("大招還在讀取中，敬請期待...")
+        ]
+      )
+    );
+  }
+}

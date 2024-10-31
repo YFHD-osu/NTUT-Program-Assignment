@@ -1,3 +1,4 @@
+import 'package:ntut_program_assignment/core/global.dart';
 import 'package:win32/win32.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart' show appWindow;
 import 'package:fluent_ui/fluent_ui.dart';
@@ -5,8 +6,6 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_acrylic/window.dart';
 import 'package:flutter_acrylic/window_effect.dart';
 import 'package:ntut_program_assignment/widget.dart' show Platforms;
-
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeProvider._();
@@ -30,12 +29,11 @@ class ThemeProvider extends ChangeNotifier {
 
   bool get isLight => !isDark;
 
-  ThemeMode theme = ThemeMode.system;
-  WindowEffect effect = WindowEffect.mica;
+  ThemeMode get theme =>
+    GlobalSettings.prefs.themeMode;
 
-  final Set<WindowEffect> allowedEffects = {
-    WindowEffect.disabled
-  };
+  WindowEffect get effect => 
+    GlobalSettings.prefs.windowEffect;
 
   void _removeTitleBarButtons() { 
     final hWnd = appWindow.handle;
@@ -70,32 +68,36 @@ class ThemeProvider extends ChangeNotifier {
         SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED
     );
   }
-  
-  Future<ThemeMode> initialize() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    int index = prefs.getInt('themeMode') ?? 0;
-    theme = ThemeMode.values[index];
-    
-    await setTheme(theme);
 
-    index = prefs.getInt("windowEffect") ?? 0;
-    effect = WindowEffect.values[index];
-    await setEffect(effect);
-
+  static Set<WindowEffect> get allowEffects {
+    final Set<WindowEffect> effects = {
+      WindowEffect.disabled
+    };
     if (Platforms.isWindows) {
-      allowedEffects.addAll({WindowEffect.acrylic});
+      effects.addAll({WindowEffect.acrylic});
 
       if (Platforms.canMicaEffect) {
-        allowedEffects.addAll({WindowEffect.mica, WindowEffect.tabbed});
+        effects.addAll({WindowEffect.mica, WindowEffect.tabbed});
       }
 
-      _removeTitleBarButtons();
     } else if (Platforms.isMacOS) {
-      allowedEffects.addAll({
+      effects.addAll({
         WindowEffect.mica,
         WindowEffect.tabbed,
         WindowEffect.acrylic
       });
+    }
+
+    return effects;
+  }
+  
+  Future<ThemeMode> initialize() async {
+    await setTheme(theme);
+
+    await setEffect(effect);
+
+    if (Platforms.isWindows) {
+      _removeTitleBarButtons();
     }
 
     notifyListeners();
@@ -103,9 +105,7 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   Future<void> setEffect(WindowEffect effect) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('windowEffect', effect.index);
-    this.effect = effect;
+    GlobalSettings.prefs.windowEffect = effect;
     
     await Window.setEffect(
       dark: isDark,
@@ -117,9 +117,7 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   Future<void> setTheme(ThemeMode themeMode) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('themeMode', themeMode.index);
-    theme = themeMode;
+    GlobalSettings.prefs.themeMode = themeMode;
 
     switch(themeMode) {
       case ThemeMode.dark:

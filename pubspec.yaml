@@ -60,6 +60,8 @@ dependencies:
 
   flutter_localizations:
     sdk: flutter
+  device_info_plus: ^10.1.2
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:

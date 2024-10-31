@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_acrylic/window_effect.dart';
+import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/main.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
 import 'package:ntut_program_assignment/widget.dart';
@@ -57,11 +58,11 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
               color: Colors.transparent
             ),
             child: ComboBox<WindowEffect>(
-              items: ThemeProvider.instance.allowedEffects
+              items: ThemeProvider.allowEffects
                 .map((e) => ComboBoxItem<WindowEffect>(
                     value: e, child: Text(e.name.capitalize())))
                 .toList(),
-              value: ThemeProvider.instance.effect,
+              value: GlobalSettings.prefs.windowEffect,
               onChanged: (WindowEffect? effect) async {
                 ThemeProvider.instance
                   .setEffect(effect ?? WindowEffect.disabled);

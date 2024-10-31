@@ -9,7 +9,9 @@ import 'package:ntut_program_assignment/page/homework/list.dart';
 import 'package:toastification/toastification.dart';
 
 enum EventType {
-  setState
+  setStateRouter,
+  refreshOverview,
+  setStateDetail
 }
 
 class BreadcrumbValue {
@@ -38,7 +40,7 @@ class Controller {
 
 
   static void setState() {
-    update.sink.add(EventType.setState);
+    update.sink.add(EventType.setStateRouter);
   }
 
   static initialize() {
@@ -103,7 +105,7 @@ class _HomeworkRouteState extends State<HomeworkRoute> {
   }
 
   void _onUpdate(EventType e) {
-    if (e == EventType.setState) {
+    if (e == EventType.setStateRouter) {
       setState(() {});
     }
   }

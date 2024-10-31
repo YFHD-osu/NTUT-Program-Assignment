@@ -12,6 +12,26 @@
     "description": "Homework List title shown in the sidebar"
   },
 
+  "sidebar_submitted_assignment_title" : "Submitted Assignment",
+  "@sidebar_submitted_assignment_title": {
+    "description": "Submitted Assignment title shown in the sidebar"
+  },
+
+  "sidebar_my_grade_title" : "My Grade",
+  "@sidebar_my_grade_title": {
+    "description": "My Grade title shown in the sidebar"
+  },
+
+  "sidebar_comment_title" : "Comments",
+  "@sidebar_comment_title": {
+    "description": "Comments title shown in the sidebar"
+  },
+
+  "sidebar_change_password_title" : "Change Password",
+  "@sidebar_change_password_title": {
+    "description": "Change password title shown in the sidebar"
+  },
+
   "sidebar_settings_title": "Settings",
   "@sidebar_settings_title": {
     "description": "Settings title shown in the sidebar"

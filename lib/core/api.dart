@@ -58,8 +58,8 @@ class Account {
   late DateTime loginTime = DateTime.now();
 
   Future<void> login() async {    
-    late http.Response response;
     sessionID = null;
+    late http.Response response;
 
     response = await client._get("/Login");
     sessionID = response.headers['set-cookie']
@@ -87,10 +87,14 @@ class Account {
     }
 
     response = await client._get("/TopMenu", headers: headers);
-
     bs = BeautifulSoup(response.body);
+
     final studentName = bs.find("div", class_: "content");
-    name = studentName!.text.replaceAll(" ", "").split("\n")[1];
+
+    if (studentName == null) {
+      throw RuntimeError("Cannot fetch Student ID (DNS error suspected)");
+    }
+    name = studentName.text.replaceAll(" ", "").split("\n")[1];
   }
 
   void logout() => sessionID = null;
@@ -362,13 +366,13 @@ class Homework {
     description?.testCases.every((e) => e.testing) ?? false;
 
   bool _deleting = false;
-  bool _submitting = false;
+  bool submitting = false;
 
   bool get isPass =>
     status == "通過";
 
   HomeworkState get state {
-    if (_submitting) {
+    if (submitting) {
       return HomeworkState.checking;
     }
 
@@ -386,6 +390,8 @@ class Homework {
 
     return HomeworkState.notTried;
   }
+
+
 
   final client = InnerClient(
     account: GlobalSettings.account!
@@ -521,13 +527,15 @@ class Homework {
   }
 
   Future<void> upload(File file) async {
+    submitting = true;
+
     if (!await file.exists()) {
+      submitting = false;
       throw RuntimeError("File is not exists");
-    }
+    }    
 
     final account = GlobalSettings.account!;
 
-    _submitting = true;
 
     // This endpoint must be GET before any homework uploaded
     await _prefetch();
@@ -554,7 +562,7 @@ class Homework {
     logger.d("Upload process completed with status code ${response.statusCode}");
 
     await _refresh();
-    _submitting = false;
+    submitting = false;
 
     if (response.statusCode != 200) {
       throw RuntimeError(response.reasonPhrase.toString());
@@ -652,18 +660,21 @@ class InnerClient extends http.BaseClient {
     try {
       response = await _copyRequest(request).send();
     } on SocketException catch (_) {
-      await checkConnect();
-      logger.e("SocketException occured with ${request.method} ${request.url}");
-      account.logout();
-      await account.login();
-
-      if (timestamp.compareTo(account.loginTime) < 0) {
-        throw RuntimeError("Login is processing, please resend request");
-      } 
-
       if (depth > 2) {
         throw RuntimeError("Cannot login");
       }
+
+      await checkConnect();
+      logger.e("SocketException occured with ${request.method} ${request.url}");
+
+      if (timestamp.compareTo(account.loginTime) < 0) {
+        throw RuntimeError("Login is processing, please resend request");
+      }
+
+      account.logout();
+      await account.login();
+
+      
 
       logger.d("Debug depth: ${depth + 1}");
       return _send(_copyRequest(request), depth + 1, timestamp);
@@ -692,7 +703,7 @@ class InnerClient extends http.BaseClient {
     newHeader.addAll(headers??{});
     
     final uri = Uri.parse("${account.domain}/upload$endpoints");
-    return await super.get(uri, headers: newHeader);
+    return await get(uri, headers: newHeader);
   }
 
   @override
@@ -700,7 +711,7 @@ class InnerClient extends http.BaseClient {
     final newHeader = _headers;
     newHeader.addAll(headers??{});
     
-    return await super.get(url, headers: newHeader);
+    return await super.post(url, headers: newHeader, body: body, encoding: encoding);
   }
 
   Future<http.Response> _post(String endpoints, {Map<String, String>? headers, Object? body, Encoding? encoding}) async {
@@ -708,7 +719,7 @@ class InnerClient extends http.BaseClient {
     newHeader.addAll(headers??{});
     
     final uri = Uri.parse("${account.domain}/upload$endpoints");
-    return await super.post(uri, headers: newHeader, body: body, encoding: encoding);
+    return await post(uri, headers: newHeader, body: body, encoding: encoding);
   }
 
 }

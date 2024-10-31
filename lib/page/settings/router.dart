@@ -25,7 +25,10 @@ class Controller {
     update.sink.add(EventType.setState);
   }
 
-  static ToastificationItem showToast(BuildContext context, String title, String message, InfoBarSeverity level) {
+  static ToastificationItem? showToast(BuildContext context, String title, String message, InfoBarSeverity level) {
+    if (!context.mounted) {
+      return null;
+    }
     return toastification.showCustom(
       // ignore: use_build_context_synchronously
       context: context,
