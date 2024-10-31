@@ -24,8 +24,8 @@ jobs:
       - name: Install Checkout@v3
         uses: actions/checkout@v3
       
-      - name: Install zip
-        uses: montudor/action-zip@v1
+      - name: Install 7z
+        uses: milliewalky/setup-7-zip@v1
 
       - name: Install Flutter 
         uses: subosito/flutter-action@v2
@@ -46,8 +46,7 @@ jobs:
           flutter build windows -t lib/main.dart --release --dart-define VERSION=${{ github.event.inputs.version }} --dart-define DISTRO=${{ github.event.inputs.distro }}
       
       - name: Zip the build
-        run: zip -r windows_build.zip ./build/windows/x64/runner/Release
-        working-directory: ./
+        run: 7z a "windows_build.zip" ".\build\windows\x64\runner\Release\*"
 
       - name: 'Upload Artifact'
         uses: actions/upload-artifact@v4
