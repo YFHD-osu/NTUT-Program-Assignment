@@ -19,7 +19,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Install Checkout@v3
         uses: actions/checkout@v3
@@ -40,4 +40,18 @@ jobs:
 
       - name: Build Windows
         run:
-          flutter build windows -t lib/main.dart --release --dart-define ${{ github.event.inputs.version }} --dart-define ${{ github.event.inputs.distro }}
+          flutter build windows -t lib/main.dart --release --dart-define VERSION=${{ github.event.inputs.version }} --dart-define DISTRO=${{ github.event.inputs.distro }}
+      
+      - name: Install zip
+        uses: montudor/action-zip@v1
+
+      - name: Zip the build
+        run: zip -r windows_build.zip ./build/windows/x64/runner/Release
+        working-directory: ./
+
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NTUT_Program_Assigiment_${{ github.event.inputs.version }}_${{ github.event.inputs.distro }}.zip
+          path: windows_build.zip
+          retention-days: 5
