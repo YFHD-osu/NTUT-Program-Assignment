@@ -2,9 +2,20 @@ name: Build Windows
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches:
-  #     - main
+    inputs:
+      version:
+        type: string
+        description: "Set the version number of this build"
+        required: true
+      
+      distro:
+        type: choice
+        description: Set the distro channel of this build
+        required: true
+        options: 
+        - Alpha
+        - Beta
+        - Release
 
 jobs:
   deploy:
@@ -28,5 +39,5 @@ jobs:
           flutter pub upgrade
 
       - name: Build Windows
-        run: |
-          flutter build windows -t lib/main.dart --release
+        run:
+          flutter build windows -t lib/main.dart --release --dart-define ${{ github.event.inputs.version }} --dart-define ${{ github.event.inputs.distro }}

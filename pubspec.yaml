@@ -93,9 +93,10 @@ flutter:
     
     - assets\jong_yih_kuo@x500.png
 
+    - assets\acknowledge\428.png
+    - assets\acknowledge\ray.png
     - assets\acknowledge\yfhd.png
     - assets\acknowledge\dgcl.png
-    - assets\acknowledge\ray.png
     - assets\acknowledge\xuan.png
     - assets\acknowledge\small_cow.png
 

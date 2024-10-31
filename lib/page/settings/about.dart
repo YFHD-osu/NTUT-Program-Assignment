@@ -63,6 +63,14 @@ class SpecialThanksState extends State<SpecialThanks> {
   Widget build(BuildContext context) {
     final locale = AppLocalizations.of(context)!;
 
+    List<String> getInfo() {
+      
+      const distro = String.fromEnvironment("DISTRO", defaultValue: "None");
+      const version = String.fromEnvironment("VERSION", defaultValue: "None");
+
+      return [version, distro, kDebugMode ? 'Debug' : 'Release'];
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -118,14 +126,18 @@ class SpecialThanksState extends State<SpecialThanks> {
           lore: "惦記，被退選的同學啊。",
           image: Image.asset(r"assets\acknowledge\dgcl.png")
         ),
+        const SizedBox(height: 10),
+        ThanksCard(
+          title: "428",
+          lore: "我不會打程式，郭忠義我恨你。",
+          image: Image.asset(r"assets\acknowledge\428.png")
+        ),
         const SizedBox(height: 20),
         const Text("關於程式"),
         const SizedBox(height: 5),
         ThanksCard(
           title: "NTUT Program Assignment",
-          lore: "v0.0.1 | "
-            "Alpha | "
-            "${kDebugMode ? 'Debug' : 'Release'}",
+          lore: getInfo().join(" | "),
           image: Image.asset(r"assets/icon@x500.png"),
           content: HyperlinkButton(
             onPressed: () async {
