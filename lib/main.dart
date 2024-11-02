@@ -41,7 +41,7 @@ void main() async {
   HttpOverrides.global = DevHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
   
-  if (Platforms.isWindows) {
+  if (Platforms.isDesktop) {
     doWhenWindowReady(() {
       appWindow.size = const Size(800, 600);
       appWindow.minSize = const Size(800, 600);
@@ -148,7 +148,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           clipBehavior: Clip.antiAlias,
           borderRadius: BorderRadius.circular(5),
           child: Image.asset(
-            "assets\\icon@x500.png",
+            "assets/icon@x500.png",
             width: 20, height: 20
           )),
         const SizedBox(width: 10),
@@ -185,7 +185,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   NavigationAppBar _appBar() {
-    if (Platforms.isWindows) {
+    if (Platforms.isWindows || Platforms.isLinux) {
       return _windowsAppBar();
     } else if (Platforms.isMacOS) {
       return _macOSAppBar();

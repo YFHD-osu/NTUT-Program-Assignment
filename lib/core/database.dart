@@ -45,6 +45,12 @@ class Database {
       return sha256.convert(rawKey).bytes;
     }
 
+    if (Platforms.isLinux) {
+      final info = await deviceInfoPlugin.linuxInfo;
+      final rawKey = utf8.encode("${info.id}${info.machineId}${info.variantId}");
+      return sha256.convert(rawKey).bytes;
+    }
+
     return Uint8List(0);
   }
 

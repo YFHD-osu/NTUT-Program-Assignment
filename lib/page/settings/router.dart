@@ -241,7 +241,7 @@ class AccountOverview extends StatelessWidget {
             color: Colors.green.lightest
           ),
           child: Image.asset(
-            r'assets\jong_yih_kuo@x500.png'
+            r'assets/jong_yih_kuo@x500.png'
           )
         ),
         const SizedBox(width: 15),

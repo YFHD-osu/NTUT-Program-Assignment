@@ -363,6 +363,12 @@ class Platforms {
   static bool get isMacOS =>
     (result == null) ? fetchSystem() == "macos" : result == "macos";
 
+  static bool get isLinux =>
+    (result == null) ? fetchSystem() == "linux" : result == "linux";
+
+  static bool get isDesktop =>
+    [isWindows, isMacOS, isLinux].any((e) => e);
+
   static String fetchSystem() {
     if (kIsWeb) {
       return result = "web";
@@ -374,6 +380,10 @@ class Platforms {
 
     if (Platform.isMacOS) {
       return result = "macos";
+    }
+
+    if (Platform.isLinux) {
+      return result = "linux";
     }
 
     return result = "others";
