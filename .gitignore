@@ -45,3 +45,4 @@ app.*.map.json
 /.vscode
 *.hive
 *.lock
+dist/1.0.0+1/ntut_program_assignment-1.0.0+1-linux.deb

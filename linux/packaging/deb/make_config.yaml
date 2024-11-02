@@ -14,7 +14,7 @@ section: x11
 installed_size: 20000
 essential: false
 
-dependencies:
+icon: assets/icon@x500.png
 
 postinstall_scripts:
   - echo "Installed my awesome app"
