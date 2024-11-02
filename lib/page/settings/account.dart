@@ -423,22 +423,23 @@ class _AccountRouteState extends State<AccountRoute> {
     } on RuntimeError catch (e) {
       // ignore: use_build_context_synchronously
       Controller.showToast(context, "登入失敗", e.message, InfoBarSeverity.error);
+      if (mounted) setState(() => _isLogging = false);
       return;
     } on NetworkError catch (e) {
       // ignore: use_build_context_synchronously
       Controller.showToast(context, "登入失敗", e.message, InfoBarSeverity.error);
+      if (mounted) setState(() => _isLogging = false);
       return;
     } catch (e) {
       // ignore: use_build_context_synchronously
       Controller.showToast(context, "登入失敗", "發生未知錯誤: ${e.toString()}", InfoBarSeverity.error);
+      if (mounted) setState(() => _isLogging = false);
       return;
-    } finally {
-      _isLogging = false;
     }
 
     // ignore: use_build_context_synchronously
     Controller.showToast(context, "登入成功", "歡迎 ${GlobalSettings.account?.name}", InfoBarSeverity.info);
-    if (!mounted) setState(() {});
+    if (mounted) setState(() {});
     
   }
 

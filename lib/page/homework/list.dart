@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/core/global.dart';
@@ -16,14 +18,30 @@ class HomeworkList extends StatefulWidget {
 class _HomeworkListState extends State<HomeworkList> {
   String? errMsg;
   late bool _isReady = Controller.homeworks.isNotEmpty;
+  late StreamSubscription _sub;
+
 
   @override
   void initState() {
     super.initState();
+    _sub = GlobalSettings.stream.listen(_onGlobalEvent);
     if (Controller.homeworks.isEmpty) {
       _refresh();
     }
-  }   
+  }
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
+  }
+
+  void _onGlobalEvent(GlobalEvent e) {
+    if (e == GlobalEvent.accountSwitch) {
+      _refresh();
+      setState(() {});
+    }
+  }
 
   Future<void> _refresh() async {
     if (GlobalSettings.account == null) {

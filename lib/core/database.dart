@@ -27,7 +27,7 @@ class Database {
     collection = await BoxCollection.open(
       name, // Name of your database
       {name}, // Names of your boxes,
-      path: r"./data",
+      path: r"./data/",
       key: HiveAesCipher(await _getChipset())
     );
 
@@ -115,8 +115,9 @@ class Preferences {
     
     final map = await database.getAllValues();
 
+    final defaultEffect = Platforms.canMicaEffect ? WindowEffect.mica : WindowEffect.disabled;
     _themeMode = ThemeMode.values[map['themeMode']??0];
-    _windowEffect = WindowEffect.values[map['windowEffect'] ?? 0];
+    _windowEffect = WindowEffect.values[map['windowEffect'] ?? defaultEffect.index];
     _autoLogin = map['autoLogin'];
   }
 }

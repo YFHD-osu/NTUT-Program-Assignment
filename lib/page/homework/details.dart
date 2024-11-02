@@ -11,12 +11,12 @@ import 'package:animated_flip_counter/animated_flip_counter.dart';
 
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
+import 'package:ntut_program_assignment/main.dart' show logger;
 import 'package:ntut_program_assignment/page/homework/router.dart';
 
 class HomeworkDetail extends StatefulWidget {
   final Homework homework;
   
-
   const HomeworkDetail({
     super.key,
     required this.homework

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:ntut_program_assignment/widget.dart';
+import 'package:logger/logger.dart' show Logger, PrettyPrinter, DateTimeFormat, Level;
 
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -14,9 +15,28 @@ import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
 import 'package:ntut_program_assignment/page/homework/router.dart';
 import 'package:ntut_program_assignment/page/settings/router.dart';
+import 'package:ntut_program_assignment/core/logger.dart' show FileOutput;
 
+late final Logger logger;
 
 void main() async {
+  final output = FileOutput();
+  await output.initialize("logs");
+
+  logger = Logger(
+    printer: PrettyPrinter(
+      dateTimeFormat: DateTimeFormat.onlyTime,
+      levelEmojis: {
+        Level.debug: "[DEBUG]",
+        Level.error: "[ERROR]",
+        Level.fatal: "[FETAL]",
+        Level.info: "[INFO]",
+        Level.warning: "[WARNNING]"
+      }
+    ),
+    output: output,
+  );
+
   // Make http package to accept self-signed certificate 
   HttpOverrides.global = DevHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +45,7 @@ void main() async {
     doWhenWindowReady(() {
       appWindow.size = const Size(800, 600);
       appWindow.minSize = const Size(800, 600);
+      appWindow.title = "NTUT Program Assigiment";
       appWindow.show();
     });
 
@@ -32,13 +53,13 @@ void main() async {
     await Window.initialize();
 
     await windowManager.ensureInitialized();
-    windowManager.waitUntilReadyToShow(const WindowOptions(), () async {
-      await windowManager.show();
-      await windowManager.focus();
-      await windowManager.setTitle("NTUT Program Assigiment");
-    });
-  }  
-
+    // windowManager.waitUntilReadyToShow(const WindowOptions(), () async {
+    //   await windowManager.show();
+    //   await windowManager.focus();
+    //   await windowManager.setTitle("");
+    // });
+  }
+  
   await GlobalSettings.initialize();
   await ThemeProvider.instance.initialize();
   

@@ -3,14 +3,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:intl/intl.dart';
-import 'package:logger/logger.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:beautiful_soup_dart/beautiful_soup.dart';
 import 'package:ntut_program_assignment/core/global.dart';
-
-var logger = Logger(
-  printer: PrettyPrinter(),
-);
+import 'package:ntut_program_assignment/main.dart' show logger;
 
 class DevHttpOverrides extends HttpOverrides {
   @override
@@ -164,12 +161,22 @@ class RuntimeError {
   final String message;
 
   RuntimeError(this.message);
+
+  @override
+  String toString() {
+    return message;
+  }
 }
 
 class NetworkError {
   final String message;
 
   NetworkError(this.message);
+
+  @override
+  String toString() {
+    return message;
+  }
 }
 
 class TestException {
@@ -660,7 +667,7 @@ class InnerClient extends http.BaseClient {
     try {
       response = await _copyRequest(request).send();
     } on SocketException catch (_) {
-      if (depth > 2) {
+      if (depth > 1) {
         throw RuntimeError("Cannot login");
       }
 
@@ -673,8 +680,6 @@ class InnerClient extends http.BaseClient {
 
       account.logout();
       await account.login();
-
-      
 
       logger.d("Debug depth: ${depth + 1}");
       return _send(_copyRequest(request), depth + 1, timestamp);

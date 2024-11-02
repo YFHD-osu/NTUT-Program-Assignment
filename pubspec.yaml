@@ -31,35 +31,36 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_localizations:
+    sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
-  win32: ^5.5.4
-  provider: ^6.1.2
-  file_picker: ^8.0.7
+  # Window related
   fluent_ui: ^4.9.0
   window_manager: ^0.4.2
   flutter_acrylic: ^1.1.4
   bitsdojo_window: ^0.1.6
-  shared_preferences: ^2.3.2
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+
+  http: ^1.2.2
+  beautiful_soup_dart: ^0.3.0
+  
+  win32: ^5.5.4
+  provider: ^6.1.2
+  file_picker: ^8.0.7
   url_launcher: ^6.3.1
   logger: ^2.4.0
   ffi: ^2.1.3
-  http: ^1.2.2
-  beautiful_soup_dart: ^0.3.0
+  
   hive: ^2.2.3
   intl: ^0.19.0
   animated_flip_counter: ^0.3.4
   super_drag_and_drop: ^0.8.24
   dotted_decoration: ^2.0.0
-  dio: ^5.7.0
   toastification: ^2.3.0
   pretty_diff_text: ^2.0.0
-  diff_match_patch: ^0.4.1
-
-  flutter_localizations:
-    sdk: flutter
   device_info_plus: ^10.1.2
   crypto: ^3.0.6
 
@@ -90,16 +91,15 @@ flutter:
   assets:
     - assets\icon@x500.png
     - assets\icon_bg@x1024.png
-    
     - assets\jong_yih_kuo@x500.png
 
+  # Icon of every contributor  
     - assets\acknowledge\428.png
     - assets\acknowledge\ray.png
     - assets\acknowledge\yfhd.png
     - assets\acknowledge\dgcl.png
     - assets\acknowledge\xuan.png
     - assets\acknowledge\small_cow.png
-
     - assets\acknowledge\milk_cow.png
     - assets\acknowledge\purple_sheep.jpg
 
