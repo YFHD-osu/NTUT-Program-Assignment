@@ -54,42 +54,42 @@ jobs:
           path: .\build\windows\x64\runner\Release\
           retention-days: 5
 
-  # build_ubuntu:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Install Checkout@v3
-  #       uses: actions/checkout@v3
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Checkout@v3
+        uses: actions/checkout@v3
 
-  #     - name: Install Flutter 
-  #       uses: flutter-actions/setup-flutter@v3
-  #       with:
-  #         cache: true
-  #         cache-sdk: true
-  #         version: 3.24.0
-  #         channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
+      - name: Install Flutter 
+        uses: flutter-actions/setup-flutter@v3
+        with:
+          cache: true
+          cache-sdk: true
+          version: 3.24.0
+          channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
           
-  #     - name: Install dependencies
-  #       run: |
-  #         flutter --version
-  #         flutter config --enable-web
-  #         flutter clean
-  #         flutter pub get
-  #         flutter pub upgrade
+      - name: Install flutter distributor dependencies
+        run: |
+          sudo apt install locate
+          wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool
+          sudo mv appimagetool /usr/local/bin/
 
-  #     - name: Build Linux
-  #       run:
-  #         flutter build linux -t lib/main.dart --release \
-  #         --dart-define VERSION=${{ github.event.inputs.version }} \
-  #         --dart-define DISTRO=${{ github.event.inputs.distro }}
+
+      - name: Build Linux
+        run:
+          flutter build linux -t lib/main.dart --release \
+          --dart-define VERSION=${{ github.event.inputs.version }} \
+          --dart-define DISTRO=${{ github.event.inputs.distro }}
           
-  #         ldd ./build/linux/x64/release/bundle/linux_desktop_test
+          ldd ./build/linux/x64/release/bundle/linux_desktop_test
 
-  #     - name: 'Upload Artifact'
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: NTUT_Program_Assigiment_${{ github.event.inputs.version }}_${{ github.event.inputs.distro }}_lin.zip
-  #         path: .\build\windows\x64\runner\Release\
-  #         retention-days: 5
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NTUT_Program_Assigiment_${{ github.event.inputs.version }}_${{ github.event.inputs.distro }}_lin.zip
+          path: .\build\windows\x64\runner\Release\
+          retention-days: 5
 
   # build_macos:
   #   runs-on: macos-latest

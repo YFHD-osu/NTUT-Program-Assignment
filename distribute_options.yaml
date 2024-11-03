@@ -1,19 +1,91 @@
 output: dist/
+variables:
+#  FLUTTER_ROOT: ~/fvm/versions/3.16.5
+  # PGYER_API_KEY: your api key
 releases:
-  - name: dev
+  - name: dev-profile
     jobs:
-      - name: release-dev-linux-deb
+      - name: linux-appimage
+        package:
+          platform: linux
+          target: appimage
+          build_args:
+            profile: true
+      - name: linux-deb
         package:
           platform: linux
           target: deb
           build_args:
-            enable-experiment: records
-            dart-define:
-              APP_ENV: dev
-
-      - name: release-dev-linux-rpm
+            profile: true
+      - name: linux-pacman
         package:
           platform: linux
-          target: rpm
+          target: pacman
           build_args:
-            enable-experiment: records
+            profile: true
+      - name: linux-zip
+        package:
+          platform: linux
+          target: zip
+          build_args:
+            profile: true
+      - name: windows-exe
+        package:
+          platform: windows
+          target: exe
+          build_args:
+            profile: true
+      # msix does not support profile mode yet
+      # - name: windows-msix
+      #   package:
+      #     platform: windows
+      #     target: msix
+      #     build_args:
+      #       profile: true
+      - name: windows-zip
+        package:
+          platform: windows
+          target: zip
+          build_args:
+            profile: true
+            
+  - name: dev-release
+    jobs:
+      - name: linux-appimage
+        package:
+          platform: linux
+          target: appimage
+      - name: linux-deb
+        package:
+          platform: linux
+          target: deb
+      - name: linux-zip
+        package:
+          platform: linux
+          target: zip
+      # - name: macos-dmg
+      #   package:
+      #     platform: macos
+      #     target: dmg
+      #     build_args:
+      #       dart-define-from-file: env.json
+      # - name: macos-pkg
+      #   package:
+      #     platform: macos
+      #     target: pkg
+      # - name: macos-zip
+      #   package:
+      #     platform: macos
+      #     target: zip
+      - name: windows-exe
+        package:
+          platform: windows
+          target: exe
+      - name: windows-msix
+        package:
+          platform: windows
+          target: msix
+      - name: windows-zip
+        package:
+          platform: windows
+          target: zip
