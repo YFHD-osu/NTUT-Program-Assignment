@@ -10,16 +10,12 @@ packagerEmail: yfhdtw@gmail.com
 license: MIT
 url: https://github.com/YFHD-osu/NTUT-Program-Assignment
 
-# build_arch: aarch64
-
 maintainer:
   name: YFHD-osu
   email: yfhdtw@gmail.com
 
 priority: optional
-
 section: x11
-
 installed_size: 20000
 
 dependencies:

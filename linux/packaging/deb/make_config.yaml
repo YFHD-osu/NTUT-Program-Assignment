@@ -33,4 +33,4 @@ categories:
 
 startup_notify: true
 
-metainfo: linux/packaging/ntut-program-assignment.appdata.xml
+metainfo: linux/packaging/ntut.appdata.xml
