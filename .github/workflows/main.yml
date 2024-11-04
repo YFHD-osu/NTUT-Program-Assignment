@@ -22,7 +22,7 @@ on:
     #     - Release
 
 jobs:
-  Build Linux:
+  Build-Linux:
     runs-on: ubuntu-latest
     steps:
       - name: Install Checkout@v3
@@ -100,7 +100,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  Build Windows:
+  Build-Windows:
     runs-on: windows-latest
     steps:
       - name: Install Checkout@v3
