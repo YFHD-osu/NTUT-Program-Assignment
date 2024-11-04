@@ -1,4 +1,4 @@
-name: Build Windows
+name: Build
 
 on:
   workflow_dispatch:
@@ -22,6 +22,80 @@ on:
     #     - Release
 
 jobs:
+  build_linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Checkout@v3
+        uses: actions/checkout@v3
+
+      - name: Install Flutter 
+        uses: flutter-actions/setup-flutter@v3
+        with:
+          cache: true
+          cache-sdk: true
+          version: 3.24.0
+          channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
+          
+      - name: Install flutter distributor dependencies
+        run: |
+          sudo apt install locate
+          wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool
+          sudo mv appimagetool /usr/local/bin/
+
+      - name: Distribute App
+        run: flutter_distributor release --name dev-release
+
+      - name: Find Release Folder
+        id: find_release_folder
+        run: |
+          # Function to find the deepest directory
+          get_deepest_path() {
+              local path="$1"
+              local deepest_path="$path"
+              local current_path=""
+
+              # Loop through each item in the current directory
+              for item in "$path"/*; do
+                  # Check if the item is a directory
+                  if [ -d "$item" ]; then
+                      # Recursively find the deepest directory in the subdirectory
+                      current_path=$(get_deepest_path "$item")
+
+                      # Compare depths and update if the current one is deeper
+                      if [ "${#current_path}" -gt "${#deepest_path}" ]; then
+                          deepest_path="$current_path"
+                      fi
+                  fi
+              done
+
+              echo "$deepest_path"  # Return the deepest path found
+          }
+
+
+          # Get the deepest directory path
+          result=$(get_deepest_path "./dist")
+          echo "release_folder=$(result)" >> $GITHUB_OUTPUT  # Set output
+
+      - name: Parse Version
+        id: parse_version
+        run: |
+          match=$(grep -E 'version: [0-9]+\.[0-9]+\.[0-9]+' pubspec.yaml)
+          version=$(echo "$match" | sed 's/version: //')
+          echo "version=$(version)" >> $GITHUB_OUTPUT  # Set output
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          tag_name: "v${{ steps.parse_version.outputs.version }}"
+          name: "v${{ steps.parse_version.outputs.version }}"
+          files: "${{ steps.find_release_folder.outputs.release_folder }}/*"
+          body: |
+            Release Note
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build_windows:
     runs-on: windows-latest
     steps:
@@ -89,43 +163,6 @@ jobs:
             Release Note
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # build_linux:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Install Checkout@v3
-  #       uses: actions/checkout@v3
-
-  #     - name: Install Flutter 
-  #       uses: flutter-actions/setup-flutter@v3
-  #       with:
-  #         cache: true
-  #         cache-sdk: true
-  #         version: 3.24.0
-  #         channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
-          
-  #     - name: Install flutter distributor dependencies
-  #       run: |
-  #         sudo apt install locate
-  #         wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
-  #         chmod +x appimagetool
-  #         sudo mv appimagetool /usr/local/bin/
-
-
-  #     - name: Build Linux
-  #       run:
-  #         flutter build linux -t lib/main.dart --release \
-  #         --dart-define VERSION=${{ github.event.inputs.version }} \
-  #         --dart-define DISTRO=${{ github.event.inputs.distro }}
-          
-  #         ldd ./build/linux/x64/release/bundle/linux_desktop_test
-
-  #     - name: 'Upload Artifact'
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: NTUT_Program_Assigiment_${{ github.event.inputs.version }}_${{ github.event.inputs.distro }}_lin.zip
-  #         path: .\build\windows\x64\runner\Release\
-  #         retention-days: 5
 
   # build_macos:
   #   runs-on: macos-latest
