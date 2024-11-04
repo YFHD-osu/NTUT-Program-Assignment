@@ -58,16 +58,6 @@ jobs:
           draft: true
           prerelease: false
 
-      - name: Upload Artifact to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/my-folder.zip  # Path to the artifact file
-          asset_name: my-folder.zip            # Name of the asset in the release
-          asset_content_type: application/zip
-      
       - name: Get Folder Name from Tag
         id: folder_name
         run: echo "folder_name=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
