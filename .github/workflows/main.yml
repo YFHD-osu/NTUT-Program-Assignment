@@ -43,6 +43,9 @@ jobs:
           chmod +x appimagetool
           export PATH="$PATH":"$HOME/.pub-cache/bin"
           sudo mv appimagetool /usr/local/bin/
+      
+      - name: Install Flutter Distributor
+        run: dart pub global activate flutter_distributor
 
       - name: Distribute App
         run: flutter_distributor release --name dev-release
