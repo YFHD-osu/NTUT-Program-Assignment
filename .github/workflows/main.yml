@@ -39,13 +39,19 @@ jobs:
       - name: Install flutter distributor dependencies
         run: |
           sudo apt install locate
+          sudo apt install rpm patchelf
+          sudo apt-get install libgtk-3-0 libblkid1 liblzma5
+          sudo apt-get install clang cmake git ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+
           wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x appimagetool
-          export PATH="$PATH":"$HOME/.pub-cache/bin"
+          
           sudo mv appimagetool /usr/local/bin/
       
       - name: Install Flutter Distributor
-        run: dart pub global activate flutter_distributor
+        run: |
+          dart pub global activate flutter_distributor
+          export PATH="$PATH":"$HOME/.pub-cache/bin"
 
       - name: Distribute App
         run: flutter_distributor release --name dev-release
