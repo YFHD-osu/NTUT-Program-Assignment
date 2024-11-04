@@ -1,6 +1,6 @@
 output: dist/
 variables:
-#  FLUTTER_ROOT: ~/fvm/versions/3.16.5
+  # FLUTTER_ROOT: ~/fvm/versions/3.16.5
   # PGYER_API_KEY: your api key
 releases:
   - name: dev-profile
@@ -11,30 +11,40 @@ releases:
           target: appimage
           build_args:
             profile: true
+            dart-define-from-file: env.json
+
       - name: linux-deb
         package:
           platform: linux
           target: deb
           build_args:
             profile: true
+            dart-define-from-file: env.json
+
       - name: linux-pacman
         package:
           platform: linux
           target: pacman
           build_args:
             profile: true
+            dart-define-from-file: env.json
+
       - name: linux-zip
         package:
           platform: linux
           target: zip
           build_args:
             profile: true
+            dart-define-from-file: env.json
+
       - name: windows-exe
         package:
           platform: windows
           target: exe
           build_args:
             profile: true
+            dart-define-from-file: env.json
+
       # msix does not support profile mode yet
       # - name: windows-msix
       #   package:
@@ -48,6 +58,7 @@ releases:
           target: zip
           build_args:
             profile: true
+            dart-define-from-file: env.json
             
   - name: dev-release
     jobs:
@@ -55,14 +66,23 @@ releases:
         package:
           platform: linux
           target: appimage
+          build_args:
+            dart-define-from-file: env.json
+
       - name: linux-deb
         package:
           platform: linux
           target: deb
+          build_args:
+            dart-define-from-file: env.json
+
       - name: linux-zip
         package:
           platform: linux
           target: zip
+          build_args:
+            dart-define-from-file: env.json
+
       # - name: macos-dmg
       #   package:
       #     platform: macos
@@ -81,11 +101,19 @@ releases:
         package:
           platform: windows
           target: exe
-      - name: windows-msix
-        package:
-          platform: windows
-          target: msix
+          build_args:
+            dart-define-from-file: env.json
+
+      # - name: windows-msix
+      #   package:
+      #     platform: windows
+      #     target: msix
+      #     build_args:
+      #       dart-define-from-file: env.json
+
       - name: windows-zip
         package:
           platform: windows
           target: zip
+          build_args:
+            dart-define-from-file: env.json

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 
 const String termOfUse = """
@@ -58,18 +59,29 @@ class SpecialThanks extends StatefulWidget {
 }
 
 class SpecialThanksState extends State<SpecialThanks> {
+  String? version;
+
+  Future<String> getAppVersion() async {
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    return packageInfo.version;
+  }
+
+  List<String> getInfo() {
+    return [version??"載入中...", "Stable", kDebugMode ? 'Debug' : 'Release'];
+  }
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    getAppVersion()
+      .then((e) => version = e)
+      .then((e) {if (mounted) setState(() {});});
+  }
 
   @override
   Widget build(BuildContext context) {
     final locale = AppLocalizations.of(context)!;
-
-    List<String> getInfo() {
-      
-      const distro = String.fromEnvironment("DISTRO", defaultValue: "None");
-      const version = String.fromEnvironment("VERSION", defaultValue: "None");
-
-      return [version, distro, kDebugMode ? 'Debug' : 'Release'];
-    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

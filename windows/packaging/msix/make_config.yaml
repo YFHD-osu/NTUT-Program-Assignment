@@ -1,0 +1,4 @@
+display_name: NTUT Program Assignment
+msix_version: 1.0.0.0
+logo_path: assets\icon@x500.png
+capabilities: internetClient

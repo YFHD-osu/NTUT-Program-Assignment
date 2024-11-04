@@ -2,21 +2,24 @@ name: Build Windows
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        type: string
-        description: "Set the version number of this build"
-        required: true
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers the workflow on version tags like v1.0.0, v2.1.3, etc.
+    # inputs:
+    #   version:
+    #     type: string
+    #     description: "Set the version number of this build"
+    #     required: true
       
-      distro:
-        type: choice
-        default: Release
-        description: Set the distro channel of this build
-        required: true
-        options: 
-        - Alpha
-        - Beta
-        - Release
+    #   distro:
+    #     type: choice
+    #     default: Release
+    #     description: Set the distro channel of this build
+    #     required: true
+    #     options: 
+    #     - Alpha
+    #     - Beta
+    #     - Release
 
 jobs:
   build_windows:
@@ -32,64 +35,100 @@ jobs:
           cache-sdk: true
           version: 3.24.0
           channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
+      
+      - name: Install Inno Setup
+        run: choco install innosetup
           
-      - name: Install dependencies
+      - name: Install Flutter Distributor
         run: |
-          flutter --version
-          flutter config --enable-web
-          flutter clean
-          flutter pub get
-          flutter pub upgrade
-
-      - name: Build Windows
-        run:
-          flutter build windows -t lib/main.dart --release ^
-          --dart-define VERSION=${{ github.event.inputs.version }} ^
-          --dart-define DISTRO=${{ github.event.inputs.distro }}
-
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v4
-        with:
-          name: NTUT_Program_Assigiment_${{ github.event.inputs.version }}_${{ github.event.inputs.distro }}_win.zip
-          path: .\build\windows\x64\runner\Release\
-          retention-days: 5
-
-  build_linux:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Checkout@v3
-        uses: actions/checkout@v3
-
-      - name: Install Flutter 
-        uses: flutter-actions/setup-flutter@v3
-        with:
-          cache: true
-          cache-sdk: true
-          version: 3.24.0
-          channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
+          dart pub global activate flutter_distributor
+          set PATH=%PATH%;%localappdata%\Pub\Cache\bin
           
-      - name: Install flutter distributor dependencies
+      - name: Distribute App
+        run: flutter_distributor release --name dev-release
+    
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: true
+          prerelease: false
+
+      - name: Upload Artifact to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/my-folder.zip  # Path to the artifact file
+          asset_name: my-folder.zip            # Name of the asset in the release
+          asset_content_type: application/zip
+      
+      - name: Get Folder Name from Tag
+        id: folder_name
+        run: echo "folder_name=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Upload Each File in Folder
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          sudo apt install locate
-          wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
-          chmod +x appimagetool
-          sudo mv appimagetool /usr/local/bin/
+          $uploadUrl = '${{ steps.create_release.outputs.upload_url }}'
+          $folderPath = './dist/${{ env.folder_name }}/'  # Change to your folder path
 
+          # Loop through each file in the folder
+          Get-ChildItem -Path $folderPath | ForEach-Object {
+            $filePath = $_.FullName
+            $fileName = $_.Name
+            Write-Host "Uploading $fileName..."
 
-      - name: Build Linux
-        run:
-          flutter build linux -t lib/main.dart --release \
-          --dart-define VERSION=${{ github.event.inputs.version }} \
-          --dart-define DISTRO=${{ github.event.inputs.distro }}
+            # Use Invoke-RestMethod to upload each file
+            Invoke-RestMethod -Uri "$uploadUrl?name=$fileName" `
+                              -Method Post `
+                              -Headers @{ Authorization = "token $env:GITHUB_TOKEN" } `
+                              -ContentType "application/octet-stream" `
+                              -InFile $filePath 
+
+  # build_linux:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Install Checkout@v3
+  #       uses: actions/checkout@v3
+
+  #     - name: Install Flutter 
+  #       uses: flutter-actions/setup-flutter@v3
+  #       with:
+  #         cache: true
+  #         cache-sdk: true
+  #         version: 3.24.0
+  #         channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
           
-          ldd ./build/linux/x64/release/bundle/linux_desktop_test
+  #     - name: Install flutter distributor dependencies
+  #       run: |
+  #         sudo apt install locate
+  #         wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+  #         chmod +x appimagetool
+  #         sudo mv appimagetool /usr/local/bin/
 
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v4
-        with:
-          name: NTUT_Program_Assigiment_${{ github.event.inputs.version }}_${{ github.event.inputs.distro }}_lin.zip
-          path: .\build\windows\x64\runner\Release\
-          retention-days: 5
+
+  #     - name: Build Linux
+  #       run:
+  #         flutter build linux -t lib/main.dart --release \
+  #         --dart-define VERSION=${{ github.event.inputs.version }} \
+  #         --dart-define DISTRO=${{ github.event.inputs.distro }}
+          
+  #         ldd ./build/linux/x64/release/bundle/linux_desktop_test
+
+  #     - name: 'Upload Artifact'
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: NTUT_Program_Assigiment_${{ github.event.inputs.version }}_${{ github.event.inputs.distro }}_lin.zip
+  #         path: .\build\windows\x64\runner\Release\
+  #         retention-days: 5
 
   # build_macos:
   #   runs-on: macos-latest
