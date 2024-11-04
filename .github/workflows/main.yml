@@ -45,7 +45,8 @@ jobs:
 
           wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x appimagetool
-          
+
+          sudo apt install fuse
           sudo mv appimagetool /usr/local/bin/
       
       - name: Install Flutter Distributor
