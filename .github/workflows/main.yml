@@ -41,6 +41,7 @@ jobs:
           sudo apt install locate
           wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x appimagetool
+          export PATH="$PATH":"$HOME/.pub-cache/bin"
           sudo mv appimagetool /usr/local/bin/
 
       - name: Distribute App
