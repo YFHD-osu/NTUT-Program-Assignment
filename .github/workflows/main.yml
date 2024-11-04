@@ -82,6 +82,7 @@ jobs:
                               -Headers @{ Authorization = "token $env:GITHUB_TOKEN" } `
                               -ContentType "application/octet-stream" `
                               -InFile $filePath 
+          }
 
   # build_linux:
   #   runs-on: ubuntu-latest
