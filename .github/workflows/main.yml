@@ -74,7 +74,7 @@ jobs:
             }
           }
 
-          $releaseFolder = Get-Depth(".\dist")
+          $releaseFolder = Get-Depth(".\dist").FullName.replace("\", "/")
           echo "::set-output name=release_folder::$releaseFolder"
 
       - name: Release
@@ -83,7 +83,7 @@ jobs:
           draft: true
           tag_name: "v${{ steps.parse_version.outputs.version }}"
           name: "v${{ steps.parse_version.outputs.version }}"
-          files: "${{ steps.find_release_folder.outputs.release_folder }}\\*"
+          files: "${{ steps.find_release_folder.outputs.release_folder }}/*"
           body: |
             Release Note
         env:
