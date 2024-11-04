@@ -48,49 +48,46 @@ jobs:
         run: flutter_distributor release --name dev-release
 
       - name: Parse Version
+        id: parse_version
         shell: pwsh
         run: |
           $match = Select-String -Path pubspec.yaml 'version: \d+.\d+..+' -AllMatches
           $version = $match.Matches.Value.replace("version: ", "")
           "VERSION=$version" >> $env:GITHUB_ENV
           Write-Host "Version parsed successfully ($version)"
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ env.version }}
-          draft: true
-          prerelease: false
-
-      - name: Get Folder Name from Tag
-        id: folder_name
-        run: echo "folder_name=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
-
-      - name: Upload Each File in Folder
+          
+          echo "::set-output name=version::$version"
+      
+      - name: Find Release Folder
+        id: find_release_folder
         shell: pwsh
+        run: |
+          function Get-Depth {
+            param ( $path )
+
+            $items = Get-ChildItem -Path $path -Directory
+
+            if ($items.Length -eq 0) {
+              return $path
+            } else {
+              return Get-Depth($items[0])
+            }
+          }
+
+          $releaseFolder = Get-Depth(".\dist")
+          echo "::set-output name=release_folder::$releaseFolder"
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          tag_name: "v${{ steps.parse_version.outputs.version }}"
+          name: "v${{ steps.parse_version.outputs.version }}"
+          files: "${{ steps.find_release_folder.outputs.release_folder }}\\*"
+          body: |
+            Release Note
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          $uploadUrl = '${{ steps.create_release.outputs.upload_url }}'
-          $folderPath = './dist/${{ env.version }}'  # Change to your folder path
-
-          # Loop through each file in the folder
-          Get-ChildItem -Path $folderPath | ForEach-Object {
-            $filePath = $_.FullName
-            $fileName = $_.Name
-            Write-Host "Uploading $fileName..."
-
-            # Use Invoke-RestMethod to upload each file
-            Invoke-RestMethod -Uri "$uploadUrl?name=$fileName" `
-                              -Method Post `
-                              -Headers @{ Authorization = "token $env:GITHUB_TOKEN" } `
-                              -ContentType "application/octet-stream" `
-                              -InFile $filePath 
-          }
 
   # build_linux:
   #   runs-on: ubuntu-latest
