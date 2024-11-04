@@ -75,7 +75,7 @@ jobs:
       - name: Upload Each File in Folder
         shell: pwsh
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           $uploadUrl = '${{ steps.create_release.outputs.upload_url }}'
           $folderPath = './dist/${{ env.folder_name }}/'  # Change to your folder path
