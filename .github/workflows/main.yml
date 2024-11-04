@@ -42,7 +42,7 @@ jobs:
       - name: Install Flutter Distributor
         run: |
           dart pub global activate flutter_distributor
-          set PATH=%PATH%;%localappdata%\Pub\Cache\bin
+          $env:PATH += ";C:\Users\runneradmin\AppData\Local\Pub\Cache\bin"
           
       - name: Distribute App
         run: flutter_distributor release --name dev-release
