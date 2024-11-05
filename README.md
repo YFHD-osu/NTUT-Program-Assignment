@@ -7,8 +7,10 @@
     src="https://img.shields.io/badge/fluent-design-blue?style=flat-square&color=gray&labelColor=0078D7"
   />
 </a>
-<a title="NTUT Program Assignment" href="https://github.com/YFHD-osu/NTUT-Program-Assignment">
-  <img src="https://github.com/YFHD-osu/NTUT-Program-Assignment/workflows/Build/release/badge.svg"> <img>
+<a title="Build" href="https://github.com/YFHD-osu/NTUT-Program-Assignment/actions/workflows/main.yml">
+  <img
+    src="https://github.com/YFHD-osu/NTUT-Program-Assignment/actions/workflows/main.yml/badge.svg"
+  />
 </a>
 
 **NTUT Program Assignment** provides a better look UI and account management for everyone to submit their homework elegantly. 
