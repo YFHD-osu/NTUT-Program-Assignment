@@ -175,11 +175,26 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   NavigationAppBar _macOSAppBar() {
-    return const NavigationAppBar(
-      height: 28,
-      title: Center(
-        child: Text("NTUT Program Assignment")
-      ),
+    final locale = AppLocalizations.of(context)!;
+    final FluentThemeData theme = FluentTheme.of(context);
+    
+    return NavigationAppBar(
+      height: 30,
+      title: MoveWindow(
+        child: Row(children: [
+          const SizedBox(width: 30),
+          const Spacer(),
+          ClipRRect(
+            clipBehavior: Clip.antiAlias,
+            borderRadius: BorderRadius.circular(5),
+            child: Image.asset(
+              "assets/icon@x500.png",
+              width: 20, height: 20
+            )),
+          const SizedBox(width: 10),
+          Text(locale.application_title),
+          const Spacer(),
+        ])),
       automaticallyImplyLeading: false,
     );
   }

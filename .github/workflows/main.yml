@@ -171,18 +171,29 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Build-macOS:
-  #   runs-on: macos-latest
-  #   steps:
-  #     - name: Install Checkout@v3
-  #       uses: actions/checkout@v3
+  Build-macOS:
+    runs-on: macos-latest
+    steps:
+      - name: Install Checkout@v3
+        uses: actions/checkout@v3
 
-  #     - name: Install Flutter 
-  #       uses: flutter-actions/setup-flutter@v3
-  #       with:
-  #         cache: true
-  #         cache-sdk: true
-  #         version: 3.24.0
-  #         channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
+      - name: Install Flutter 
+        uses: flutter-actions/setup-flutter@v3
+        with:
+          cache: true
+          cache-sdk: true
+          version: 3.24.0
+          channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
+      
+      - name: Install Flutter Distributor Dependences
+        run: |
+          npm install -g appdmg
+          brew install p7zip
 
+      - name: Install flutter distributor
+        run: |
+          dart pub global activate flutter_distributor
+          export PATH="$PATH":"$HOME/.pub-cache/bin"
+      
+      
       

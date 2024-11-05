@@ -107,20 +107,20 @@ releases:
           build_args:
             dart-define-from-file: env.json
 
-      # - name: macos-dmg
-      #   package:
-      #     platform: macos
-      #     target: dmg
-      #     build_args:
-      #       dart-define-from-file: env.json
+      - name: macos-dmg
+        package:
+          platform: macos
+          target: dmg
+          build_args:
+            dart-define-from-file: env.json
       # - name: macos-pkg
       #   package:
       #     platform: macos
       #     target: pkg
-      # - name: macos-zip
-      #   package:
-      #     platform: macos
-      #     target: zip
+      - name: macos-zip
+        package:
+          platform: macos
+          target: zip
 
       - name: windows-exe
         package:

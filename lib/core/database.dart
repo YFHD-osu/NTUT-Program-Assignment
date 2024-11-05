@@ -51,6 +51,12 @@ class Database {
       return sha256.convert(rawKey).bytes;
     }
 
+    if (Platforms.isMacOS) {
+      final info = await deviceInfoPlugin.macOsInfo;
+      final rawKey = utf8.encode("${info.systemGUID}${info.model}");
+      return sha256.convert(rawKey).bytes;
+    }
+
     return Uint8List(0);
   }
 
