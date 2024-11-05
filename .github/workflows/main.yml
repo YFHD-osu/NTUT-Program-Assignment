@@ -101,8 +101,6 @@ jobs:
           tag_name: "v${{ steps.parse_version.outputs.version }}"
           name: "v${{ steps.parse_version.outputs.version }}"
           files: "${{ steps.find_release_folder.outputs.release_folder }}/*"
-          body: |
-            Release Note
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -122,7 +120,7 @@ jobs:
       
       - name: Install Inno Setup
         run: choco install innosetup
-          
+
       - name: Install Flutter Distributor
         run: |
           dart pub global activate flutter_distributor
@@ -169,12 +167,10 @@ jobs:
           tag_name: "v${{ steps.parse_version.outputs.version }}"
           name: "v${{ steps.parse_version.outputs.version }}"
           files: "${{ steps.find_release_folder.outputs.release_folder }}/*"
-          body: |
-            Release Note
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # build_macos:
+  # Build-macOS:
   #   runs-on: macos-latest
   #   steps:
   #     - name: Install Checkout@v3
@@ -187,24 +183,5 @@ jobs:
   #         cache-sdk: true
   #         version: 3.24.0
   #         channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
-          
-  #     - name: Install dependencies
-  #       run: |
-  #         flutter --version
-  #         flutter config --enable-web
-  #         flutter clean
-  #         flutter pub get
-  #         flutter pub upgrade
 
-  #     - name: Build Windows
-  #       run:
-  #         flutter build windows -t lib/main.dart --release \
-  #         --dart-define VERSION=${{ github.event.inputs.version }} \
-  #         --dart-define DISTRO=${{ github.event.inputs.distro }}
-
-  #     - name: 'Upload Artifact'
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: NTUT_Program_Assigiment_${{ github.event.inputs.version }}_${{ github.event.inputs.distro }}_osx.zip
-  #         path: .\build\windows\x64\runner\Release\
-  #         retention-days: 5
+      

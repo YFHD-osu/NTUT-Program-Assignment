@@ -21,6 +21,14 @@ releases:
             profile: true
             dart-define-from-file: env.json
 
+      - name: linux-rpm
+        package:
+          platform: linux
+          target: rpm
+          build_args:
+            profile: true
+            dart-define-from-file: env.json
+
       - name: linux-pacman
         package:
           platform: linux
@@ -76,6 +84,22 @@ releases:
           build_args:
             dart-define-from-file: env.json
 
+      - name: linux-rpm
+        package:
+          platform: linux
+          target: rpm
+          build_args:
+            profile: true
+            dart-define-from-file: env.json
+      
+      - name: linux-pacman
+        package:
+          platform: linux
+          target: pacman
+          build_args:
+            profile: true
+            dart-define-from-file: env.json
+
       - name: linux-zip
         package:
           platform: linux
@@ -97,6 +121,7 @@ releases:
       #   package:
       #     platform: macos
       #     target: zip
+
       - name: windows-exe
         package:
           platform: windows
