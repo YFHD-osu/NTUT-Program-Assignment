@@ -92,9 +92,7 @@ class ThemeProvider extends ChangeNotifier {
   }
   
   Future<ThemeMode> initialize() async {
-    await setTheme(theme);
-
-    await setEffect(effect);
+    await setTheme(theme);    
 
     if (Platforms.isWindows) {
       _removeTitleBarButtons();
@@ -108,7 +106,7 @@ class ThemeProvider extends ChangeNotifier {
     GlobalSettings.prefs.windowEffect = effect;
     
     await Window.setEffect(
-      dark: false,
+      dark: isDark,
       effect: effect,
       color: isDark ? Colors.transparent : Colors.red,
     );
@@ -118,30 +116,7 @@ class ThemeProvider extends ChangeNotifier {
 
   Future<void> setTheme(ThemeMode themeMode) async {
     GlobalSettings.prefs.themeMode = themeMode;
-    // await setEffect(effect);
-    // switch(themeMode) {
-    //   case ThemeMode.dark:
-    //     await Window.setEffect(
-    //       dark: true,
-    //       effect: effect,
-    //     );
-    //     break;
-    //   case ThemeMode.light:
-    //     await Window.setEffect(
-    //       dark: false,
-    //       effect: effect,
-    //       color: const Color(0xFFF3F3F3),
-    //     );
-    //     break;
-    //   case ThemeMode.system:
-    //     await Window.setEffect(
-    //       effect: effect,
-    //       dark: isDark,
-    //       color: isDark ? Colors.transparent : const Color(0xFFF3F3F3),
-    //     );
-    //     break;
-    // }
-    
+    await setEffect(effect);
     notifyListeners();
   }
 
