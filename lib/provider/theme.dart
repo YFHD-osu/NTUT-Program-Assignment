@@ -108,9 +108,9 @@ class ThemeProvider extends ChangeNotifier {
     GlobalSettings.prefs.windowEffect = effect;
     
     await Window.setEffect(
-      dark: isDark,
+      dark: false,
       effect: effect,
-      color: isDark ? Colors.transparent : const Color(0xFFF3F3F3),
+      color: isDark ? Colors.transparent : Colors.red,
     );
 
     notifyListeners();
@@ -118,29 +118,29 @@ class ThemeProvider extends ChangeNotifier {
 
   Future<void> setTheme(ThemeMode themeMode) async {
     GlobalSettings.prefs.themeMode = themeMode;
-
-    switch(themeMode) {
-      case ThemeMode.dark:
-        await Window.setEffect(
-          dark: true,
-          effect: effect,
-        );
-        break;
-      case ThemeMode.light:
-        await Window.setEffect(
-          dark: false,
-          effect: effect,
-          color: const Color(0xFFF3F3F3),
-        );
-        break;
-      case ThemeMode.system:
-        await Window.setEffect(
-          effect: effect,
-          dark: isDark,
-          color: isDark ? Colors.transparent : const Color(0xFFF3F3F3),
-        );
-        break;
-    }
+    // await setEffect(effect);
+    // switch(themeMode) {
+    //   case ThemeMode.dark:
+    //     await Window.setEffect(
+    //       dark: true,
+    //       effect: effect,
+    //     );
+    //     break;
+    //   case ThemeMode.light:
+    //     await Window.setEffect(
+    //       dark: false,
+    //       effect: effect,
+    //       color: const Color(0xFFF3F3F3),
+    //     );
+    //     break;
+    //   case ThemeMode.system:
+    //     await Window.setEffect(
+    //       effect: effect,
+    //       dark: isDark,
+    //       color: isDark ? Colors.transparent : const Color(0xFFF3F3F3),
+    //     );
+    //     break;
+    // }
     
     notifyListeners();
   }
@@ -153,8 +153,6 @@ class ThemePack {
       case WindowEffect.acrylic:
       case WindowEffect.tabbed:
       case WindowEffect.mica: return _dark.copyWith(
-        // micaBackgroundColor: Colors.transparent,
-        // scaffoldBackgroundColor: Colors.transparent,
         navigationPaneTheme: const NavigationPaneThemeData(
           backgroundColor: Colors.transparent
         )
@@ -169,8 +167,6 @@ class ThemePack {
       case WindowEffect.acrylic:
       case WindowEffect.tabbed:
       case WindowEffect.mica: return _light.copyWith(
-        // micaBackgroundColor: Colors.transparent,
-        // scaffoldBackgroundColor: Colors.transparent,
         navigationPaneTheme: const NavigationPaneThemeData(
           backgroundColor: Colors.transparent
         )
@@ -182,24 +178,6 @@ class ThemePack {
 
   static final _dark = FluentThemeData(
     brightness: Brightness.dark,
-    /*navigationPaneTheme: NavigationPaneThemeData(
-      highlightColor: const Color.fromRGBO(76, 194, 255, 1),
-      overlayBackgroundColor: const Color.fromRGBO(32, 32, 32, 1),
-      selectedIconColor: const WidgetStatePropertyAll(Color.fromRGBO(0, 0, 0, 1)),
-      unselectedIconColor: const WidgetStatePropertyAll(Color.fromRGBO(0, 0, 0, 1)),
-      selectedTextStyle: const WidgetStatePropertyAll(TextStyle(color: Colors.white)),
-      unselectedTextStyle: WidgetStateProperty.resolveWith((states) {
-        if (states.isDisabled) return const TextStyle(color: Color.fromRGBO(255, 255, 255, .4));
-        return const TextStyle(color: Colors.white);
-      }),
-      itemHeaderTextStyle: const TextStyle(color: Colors.white),
-      selectedTopTextStyle: const WidgetStatePropertyAll(TextStyle(color: Colors.white)),
-      tileColor: WidgetStateProperty.resolveWith((states) {
-        if (states.isHovered || states.isPressed) return const Color.fromRGBO(255, 255, 255, .05);
-        if (states.isFocused) return const Color.fromRGBO(255, 255, 255, .1);
-        return Colors.transparent; 
-      }),
-    ),*/
     buttonTheme: ButtonThemeData(
       defaultButtonStyle: ButtonStyle(
         backgroundColor: WidgetStateColor.resolveWith((states) {
