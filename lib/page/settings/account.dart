@@ -392,6 +392,7 @@ class _AccountRouteState extends State<AccountRoute> {
                   } catch (e) {
                     GlobalSettings.showToast("發生錯誤", e.toString(), InfoBarSeverity.error);
                   }
+                  if (!mounted) return;
                   setState(() => _isLogging = false);
                 },
                 child: const Text("新增帳號")
