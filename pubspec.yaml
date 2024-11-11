@@ -67,6 +67,8 @@ dependencies:
   flutter_distributor: ^0.2.8
   package_info_plus: ^8.1.0
 
+  firedart: ^0.9.8
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

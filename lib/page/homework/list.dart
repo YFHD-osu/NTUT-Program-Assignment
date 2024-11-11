@@ -196,7 +196,19 @@ class _HomeworkListState extends State<HomeworkList> {
 
   @override
   Widget build(BuildContext context) {
-    
+    if (GlobalSettings.isLoggingIn) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ProgressRing(),
+            SizedBox(height: 10),
+            Text("登入中...")
+          ]
+        )
+      );
+    }
+
     if (GlobalSettings.account == null) {
       return const Center(
         child: Column(

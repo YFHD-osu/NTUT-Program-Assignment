@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:ntut_program_assignment/main.dart' show MyApp;
 
 class Tile extends StatelessWidget {
   const Tile({
@@ -414,13 +415,13 @@ class UnimplementPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(FluentIcons.auto_enhance_on, size: 50),
-          SizedBox(height: 10),
-          Text("大招還在讀取中，敬請期待...")
+          const Icon(FluentIcons.auto_enhance_on, size: 50),
+          const SizedBox(height: 10),
+          Text(MyApp.locale.unimplement_page_lore)
         ]
       )
     );

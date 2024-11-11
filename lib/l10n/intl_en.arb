@@ -50,6 +50,16 @@
   "settings_about_YFHD_desc": "Write la! Do it, don't delay anymore, the inspiration is waiting for you to make it real, turn ideas into reality!",
   "@settings_about_YFHD_desc": {
     "description": "YFHD name at about section"
+  },
+
+  "unimplement_page_lore": "This page is still not implemented, coming soon",
+  "@unimplement_page_lore": {
+    "description": "The lore of unimplement page"
+  },
+
+  "settings_breadcrumb_title": "Settings",
+  "@settings_breadcrumb_title": {
+    "description": "The breadcrumb title of settings route"
   }
   
 }

@@ -1,12 +1,10 @@
 import 'dart:async';
-
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:ntut_program_assignment/core/database.dart';
-import 'package:ntut_program_assignment/core/global.dart';
-import 'package:ntut_program_assignment/page/settings/router.dart';
 
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
+import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/core/database.dart';
 
 class LoginDialog extends StatefulWidget {
   final List<String> evenCourses, oddCourses;
@@ -157,8 +155,8 @@ class _LoginDialogState extends State<LoginDialog> {
     try {
       await acc.login();
     } catch (e) {
+      if (!mounted) return;
       await showDialog<String>(
-        // ignore: use_build_context_synchronously
         context: context,
         builder: (context) => ContentDialog(
           title: const Text("登入錯誤"),
@@ -178,7 +176,7 @@ class _LoginDialogState extends State<LoginDialog> {
 
     GlobalSettings.account = acc;
 
-    // ignore: use_build_context_synchronously
+    if (!mounted) return;
     Navigator.of(context).pop(_rememberPW);
   }
 }
@@ -223,8 +221,8 @@ class _AccountRouteState extends State<AccountRoute> {
   Future<void> _addAccount() async {
     final oddCourses = await Account.fetchCourse(true);
     final evenCourses = await Account.fetchCourse(false);
+    if (!mounted) return;
     final rememberPw = await showDialog<bool>(
-      // ignore: use_build_context_synchronously
       context: context,
       builder: (context) => LoginDialog(
         oddCourses: oddCourses,
@@ -389,7 +387,11 @@ class _AccountRouteState extends State<AccountRoute> {
               FilledButton(
                 onPressed: _isLogging ? null : () async {
                   setState(() => _isLogging = true);
-                  await _addAccount();
+                  try {
+                    await _addAccount();
+                  } catch (e) {
+                    GlobalSettings.showToast("發生錯誤", e.toString(), InfoBarSeverity.error);
+                  }
                   setState(() => _isLogging = false);
                 },
                 child: const Text("新增帳號")
@@ -421,24 +423,37 @@ class _AccountRouteState extends State<AccountRoute> {
     try {
       await GlobalSettings.login(account);
     } on RuntimeError catch (e) {
-      // ignore: use_build_context_synchronously
-      Controller.showToast(context, "登入失敗", e.message, InfoBarSeverity.error);
+      GlobalSettings.showToast(
+        "登入失敗",
+        e.message, 
+        InfoBarSeverity.error
+      );
       if (mounted) setState(() => _isLogging = false);
       return;
     } on NetworkError catch (e) {
-      // ignore: use_build_context_synchronously
-      Controller.showToast(context, "登入失敗", e.message, InfoBarSeverity.error);
+      GlobalSettings.showToast(
+        "登入失敗", 
+        e.message, 
+        InfoBarSeverity.error
+      );
       if (mounted) setState(() => _isLogging = false);
       return;
     } catch (e) {
-      // ignore: use_build_context_synchronously
-      Controller.showToast(context, "登入失敗", "發生未知錯誤: ${e.toString()}", InfoBarSeverity.error);
+      GlobalSettings.showToast(
+        "登入失敗",
+        "發生未知錯誤: ${e.toString()}",
+        InfoBarSeverity.error
+      );
       if (mounted) setState(() => _isLogging = false);
       return;
     }
 
-    // ignore: use_build_context_synchronously
-    Controller.showToast(context, "登入成功", "歡迎 ${GlobalSettings.account?.name}", InfoBarSeverity.info);
+    GlobalSettings.showToast(
+      "登入成功", 
+      "歡迎 ${GlobalSettings.account?.name}", 
+      InfoBarSeverity.info
+    );
+
     if (mounted) setState(() {});
     
   }
@@ -505,6 +520,12 @@ class _AccountRouteState extends State<AccountRoute> {
   }
 
   Widget _accountList() {
+    final accCount = 
+      _accounts.length - (GlobalSettings.isLogin ? 1 : 0);
+
+    final spaceCount = accCount > 0 ?
+       accCount - 1 : 0;
+
     if (_isDbBusy) {
       return const Align(
         child: SizedBox.square(
@@ -521,7 +542,7 @@ class _AccountRouteState extends State<AccountRoute> {
     }
 
     return SizedBox(
-      height: 65 * _accounts.length + 5 * (_accounts.length - 1),
+      height: (65 * accCount + 5 * spaceCount).toDouble(),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: _accounts

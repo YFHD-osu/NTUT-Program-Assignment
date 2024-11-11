@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:ntut_program_assignment/widget.dart';
 import 'package:logger/logger.dart' show Logger, PrettyPrinter, DateTimeFormat, Level;
 
 import 'package:provider/provider.dart';
@@ -10,6 +9,7 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
@@ -59,7 +59,8 @@ void main() async {
     //   await windowManager.setTitle("");
     // });
   }
-  
+
+  // await FireBaseData.initialize();
   await GlobalSettings.initialize();
   await ThemeProvider.instance.initialize();
   
@@ -68,6 +69,9 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
+  static late AppLocalizations locale;
+  static late BuildContext ctx;
 
   // This widget is the root of your application.
   @override
@@ -130,7 +134,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   NavigationAppBar _windowsAppBar() {
-    final locale = AppLocalizations.of(context)!;
     final FluentThemeData theme = FluentTheme.of(context);
     
     return NavigationAppBar(
@@ -152,7 +155,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             width: 20, height: 20
           )),
         const SizedBox(width: 10),
-        Text(locale.application_title)
+        Text(MyApp.locale.application_title)
       ])),
     automaticallyImplyLeading: true,
     leading: Padding(
@@ -175,9 +178,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   NavigationAppBar _macOSAppBar() {
-    final locale = AppLocalizations.of(context)!;
-    final FluentThemeData theme = FluentTheme.of(context);
-    
     return NavigationAppBar(
       height: 30,
       title: MoveWindow(
@@ -192,7 +192,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
               width: 20, height: 20
             )),
           const SizedBox(width: 10),
-          Text(locale.application_title),
+          Text(MyApp.locale.application_title),
           const Spacer(),
         ])),
       automaticallyImplyLeading: false,
@@ -204,9 +204,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       return _windowsAppBar();
     } else if (Platforms.isMacOS) {
       return _macOSAppBar();
+    } else {
+      return const NavigationAppBar();
     }
-
-    return const NavigationAppBar();
   }
 
   void _onUpdate(GlobalEvent event) {
@@ -218,40 +218,41 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final locale = AppLocalizations.of(context)!;
+    MyApp.ctx = context;
+    MyApp.locale = AppLocalizations.of(context)!;
 
     return NavigationView(
       appBar: _appBar(),
       pane: NavigationPane(
-        toggleable: false,
-        displayMode: Platforms.isMacOS ? PaneDisplayMode.open : _mode,
+        displayMode: _mode,
+        toggleable: Platforms.isMacOS,
         size: const NavigationPaneSize(
           openMinWidth: 255, openMaxWidth: 255,
         ),
         items: [
           PaneItem(
             icon: const Icon(FluentIcons.backlog_list),
-            title: Text(locale.sidebar_homework_title),
+            title: Text(MyApp.locale.sidebar_homework_title),
             body: const HomeworkRoute()
           ),
           PaneItem(
             icon: const Icon(FluentIcons.info),
-            title: Text(locale.sidebar_submitted_assignment_title),
+            title: Text(MyApp.locale.sidebar_submitted_assignment_title),
             body: const UnimplementPage()
           ),
           PaneItem(
             icon: const Icon(FluentIcons.red_eye),
-            title: Text(locale.sidebar_my_grade_title),
+            title: Text(MyApp.locale.sidebar_my_grade_title),
             body: const UnimplementPage()
           ),
           PaneItem(
             icon: const Icon(FluentIcons.comment),
-            title: Text(locale.sidebar_comment_title),
+            title: Text(MyApp.locale.sidebar_comment_title),
             body: const UnimplementPage()
           ),
           PaneItem(
             icon: const Icon(FluentIcons.erase_tool),
-            title: Text(locale.sidebar_change_password_title),
+            title: Text(MyApp.locale.sidebar_change_password_title),
             body: const UnimplementPage()
           )
         ],
@@ -259,7 +260,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           PaneItemSeparator(),
           PaneItem(
             icon: const Icon(FluentIcons.settings),
-            title: Text(locale.sidebar_settings_title),
+            title: Text(MyApp.locale.sidebar_settings_title),
             body: const SettingsPage(),
             enabled: true)
         ],

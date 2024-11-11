@@ -89,7 +89,6 @@ releases:
           platform: linux
           target: rpm
           build_args:
-            profile: true
             dart-define-from-file: env.json
       
       - name: linux-pacman
@@ -97,7 +96,6 @@ releases:
           platform: linux
           target: pacman
           build_args:
-            profile: true
             dart-define-from-file: env.json
 
       - name: linux-zip

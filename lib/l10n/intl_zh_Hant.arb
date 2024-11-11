@@ -7,5 +7,16 @@
   "sidebar_settings_title": "設定",
 
   "settings_about_YFHD_name": "YFHD",
-  "settings_about_YFHD_desc": "寫啦幹！動手吧，別再拖延，創作的靈感等著你去實現，讓想法變成現實!"
+  "settings_about_YFHD_desc": "寫啦幹！動手吧，別再拖延，創作的靈感等著你去實現，讓想法變成現實!",
+
+  "unimplement_page_lore": "大招還在讀取中，敬請期待...",
+
+  "settings_breadcrumb_title": "設定",
+
+  "sidebar_submitted_assignment_title": "已繳交作業",
+  "sidebar_my_grade_title": "我的成績",
+  "sidebar_comment_title": "留言板",
+  "sidebar_change_password_title": "變更密碼",
+  "settings_about_developer": "關於開發者"
+
 }

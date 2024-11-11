@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:ntut_program_assignment/core/global.dart';
 
+import 'package:ntut_program_assignment/main.dart' show MyApp;
+import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/page/settings/test_server.dart';
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/page/settings/about.dart';
 import 'package:ntut_program_assignment/page/settings/account.dart';
 import 'package:ntut_program_assignment/page/settings/personalize.dart';
-import 'package:toastification/toastification.dart';
+
 
 enum EventType {
   setState
@@ -18,39 +20,15 @@ class Controller {
   static final stream = update.stream.asBroadcastStream();
 
   static final items = <BreadcrumbItem<int>>[
-    const BreadcrumbItem(label: Text('設定 ', style: TextStyle(fontSize: 30)), value: -1)
+    BreadcrumbItem(
+      value: -1,
+      label: Text('${MyApp.locale.settings_breadcrumb_title} ',
+      style: const TextStyle(fontSize: 30)),
+    )
   ];
 
   static void setState() {
     update.sink.add(EventType.setState);
-  }
-
-  static ToastificationItem? showToast(BuildContext context, String title, String message, InfoBarSeverity level) {
-    if (!context.mounted) {
-      return null;
-    }
-    return toastification.showCustom(
-      // ignore: use_build_context_synchronously
-      context: context,
-      alignment: Alignment.bottomCenter,
-      autoCloseDuration: const Duration(seconds: 5),
-      builder: (BuildContext context, ToastificationItem holder) {
-        return Container(
-          width: 500,
-          margin: const EdgeInsets.symmetric(vertical: 5),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: const Color.fromRGBO(39, 39, 39, 1),
-          ),
-          child: InfoBar(
-            isLong: false,
-            title: Text(title),
-            content: Text(message),
-            severity: level
-          )
-        );
-      },
-    );
   }
 }
 
@@ -66,6 +44,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   final _routes = [
     const AccountRoute(),
+    const TestServerRoute(),
     const PersonalizeRoute(),
     const SpecialThanks(),
   ];
@@ -80,7 +59,14 @@ class _SettingsPageState extends State<SettingsPage> {
   void dispose() {
     super.dispose();
     Controller.items.clear();
-    Controller.items.add(const BreadcrumbItem(label: Text('設定 ', style: TextStyle(fontSize: 30)), value: -1));
+    Controller.items.add(
+      BreadcrumbItem(
+        label: Text('${MyApp.locale.settings_breadcrumb_title} ', 
+        style: const TextStyle(fontSize: 30)),
+        value: -1
+      )
+    );
+
     sub.cancel();
   }
 
@@ -133,7 +119,7 @@ class _SettingsPageState extends State<SettingsPage> {
         duration: const Duration(milliseconds: 300),
         child: Controller.items.last.value == -1 ? 
           const PageBase(
-            key: ValueKey(-1),
+            key: ValueKey(-1),  
             child: OptionList()
           ) : 
           PageBase(
@@ -181,6 +167,27 @@ class OptionList extends StatelessWidget {
           ),
           child: Tile.lore(
             decoration: const BoxDecoration(),
+            title: "測試環境",
+            lore: "設定本機編譯器的位置",
+            icon: const Icon(FluentIcons.server_enviroment),
+            child: const Icon(FluentIcons.chevron_right)
+          ),
+          onPressed: () {
+            Controller.items.add(const BreadcrumbItem(
+              label: Text(
+                "測試環境", style: TextStyle(fontSize: 30)),
+              value: 1
+            ));
+            Controller.setState();
+          }
+        ),
+        const SizedBox(height: 10),
+        Button(
+          style: const ButtonStyle(
+            padding: WidgetStatePropertyAll(EdgeInsets.zero)
+          ),
+          child: Tile.lore(
+            decoration: const BoxDecoration(),
             title: "個人化",
             lore: "獨特設計，專屬風格，滿足個人需求",
             icon: const Icon(FluentIcons.personalize),
@@ -189,8 +196,8 @@ class OptionList extends StatelessWidget {
           onPressed: () {
             Controller.items.add(const BreadcrumbItem(
               label: Text(
-                "關於", style: TextStyle(fontSize: 30)),
-              value: 1
+                "個人化", style: TextStyle(fontSize: 30)),
+              value: 2
             ));
             Controller.setState();
           }
@@ -211,7 +218,7 @@ class OptionList extends StatelessWidget {
             Controller.items.add(const BreadcrumbItem(
               label: Text(
                 "關於", style: TextStyle(fontSize: 30)),
-              value: 2
+              value: 3
             ));
             Controller.setState();
           }

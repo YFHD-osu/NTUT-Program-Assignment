@@ -168,7 +168,6 @@ class SpecialThanksState extends State<SpecialThanks> {
           content: FilledButton(
             onPressed: () async {
               await showDialog<String>(
-                // ignore: use_build_context_synchronously
                 context: context,
                 builder: (context) => ContentDialog(
                   constraints: const BoxConstraints(

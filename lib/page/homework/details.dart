@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:ntut_program_assignment/core/global.dart';
 import 'package:pretty_diff_text/pretty_diff_text.dart';
 import 'package:dotted_decoration/dotted_decoration.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
@@ -454,8 +455,7 @@ class _TestAllTileState extends State<TestAllTile> {
                   try {
                     await testCase.exec(selFile!);
                   } on TestException catch (e) {
-                    // ignore: use_build_context_synchronously
-                    Controller.showToast(context, "測試${index+1} ", e.message, InfoBarSeverity.error);
+                    GlobalSettings.showToast("測試${index+1} ", e.message, InfoBarSeverity.error);
                     return;
                   }
                   // print(result.output.join("\n"));

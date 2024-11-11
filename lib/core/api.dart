@@ -40,14 +40,6 @@ class Account {
 
   bool get isLogin => sessionID != null;
 
-  Map<String, String> get headers => {
-    'Host': domain.replaceAll("https://", ""),
-    'Referer': "$domain/upload/Login",
-    'Origin': domain,
-    'Cookie': sessionID ?? "",
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
-  };
-
   late final client = InnerClient(
     account: this
   );
@@ -71,7 +63,7 @@ class Account {
       "rdoCourse": course.toString()
     };
 
-    response = await client._post("/Login", body: payload, headers: headers);
+    response = await client._post("/Login", body: payload);
 
     loginTime = DateTime.now();
     BeautifulSoup bs = BeautifulSoup(response.body);
@@ -83,7 +75,7 @@ class Account {
       throw Exception(error?.text??"");
     }
 
-    response = await client._get("/TopMenu", headers: headers);
+    response = await client._get("/TopMenu");
     bs = BeautifulSoup(response.body);
 
     final studentName = bs.find("div", class_: "content");
@@ -112,17 +104,15 @@ class Account {
   }
 
   Future<List<Homework>> fetchHomeworkList() async {
-    final uri = Uri.parse("$domain/upload/HomeworkBoard");
-
     late final http.Response resp;
     try {
-      resp = await http.get(uri, headers: headers);
+      resp = await client._get("/HomeworkBoard");
     } on http.ClientException catch (e) {
       await login();
       logger.e("Perform account redfresh due to: $e");
       return await fetchHomeworkList();
     }
-  
+
     BeautifulSoup bs = BeautifulSoup(resp.body);
     final hwList = bs.find("tbody");
 
@@ -133,6 +123,27 @@ class Account {
     return hwList.contents
       .map((e) => Homework.fromSoup(e))
       .toList();
+  }
+
+  Future<List<HomeworkStatus>> fetchHanddedHomeworks() async {
+    final response = await client._get("/HwQuery");
+
+    BeautifulSoup bs = BeautifulSoup(utf8.decode(response.bodyBytes));
+    final menu = bs.find("tbody");
+
+    if (menu == null) {
+      throw RuntimeError("Cannot find the main table");
+    }
+
+    final List<HomeworkStatus> result = [];
+
+    for (var item in menu.children) {
+      final res = HomeworkStatus.fromList(item.text.split("\n"));
+      if (res != null) {
+        result.add(res);
+      }
+    }
+    return result;
   }
 
   Map<String, dynamic> toMap() {
@@ -543,18 +554,18 @@ class Homework {
 
     final account = GlobalSettings.account!;
 
-
     // This endpoint must be GET before any homework uploaded
     await _prefetch();
 
     logger.i("Prefetch completed.");
 
-    final headers = account.headers;
+    final headers = client._headers;
     headers.addAll({
       "Referer": "${account.domain}/upload/upLoadHw?hwId=$number&l=$language",
       'Content-Type': 'multipart/form-data',
     });
 
+    
     var request = http.MultipartRequest(
       'POST', Uri.parse('${account.domain}/upload/upLoadFile')
     );
@@ -727,4 +738,33 @@ class InnerClient extends http.BaseClient {
     return await post(uri, headers: newHeader, body: body, encoding: encoding);
   }
 
+}
+
+class HomeworkStatus {
+  final DateTime date;
+  final String id, description, filename, status;
+
+  HomeworkStatus({
+    required this.date, 
+    required this.id, 
+    required this.description, 
+    required this.filename, 
+    required this.status
+  });
+  
+  static HomeworkStatus? fromList(List<String> a) {
+    if (a.length < 5) {
+      return null;
+    }
+
+    final dateFormat = DateFormat("yyyy/MM/dd HH:mm:ss");
+    
+    return HomeworkStatus(
+      date: dateFormat.parse(a[0]),
+      id: a[1],
+      description: a[2],
+      filename: a[3],
+      status: a[4]
+    );
+  }
 }
