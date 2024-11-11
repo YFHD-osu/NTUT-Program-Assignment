@@ -29,13 +29,13 @@ releases:
             profile: true
             # dart-define-from-file: env.json
 
-      - name: linux-pacman
-        package:
-          platform: linux
-          target: pacman
-          build_args:
-            profile: true
-            # dart-define-from-file: env.json
+      # - name: linux-pacman
+      #   package:
+      #     platform: linux
+      #     target: pacman
+      #     build_args:
+      #       profile: true
+      #       # dart-define-from-file: env.json
 
       - name: linux-zip
         package:
@@ -91,12 +91,12 @@ releases:
           build_args:
             # dart-define-from-file: env.json
       
-      - name: linux-pacman
-        package:
-          platform: linux
-          target: pacman
-          build_args:
-            # dart-define-from-file: env.json
+      # - name: linux-pacman
+      #   package:
+      #     platform: linux
+      #     target: pacman
+      #     build_args:
+      #       # dart-define-from-file: env.json
 
       - name: linux-zip
         package:
