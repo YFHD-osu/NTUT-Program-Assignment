@@ -11,7 +11,7 @@ releases:
           target: appimage
           build_args:
             profile: true
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
 
       - name: linux-deb
         package:
@@ -19,7 +19,7 @@ releases:
           target: deb
           build_args:
             profile: true
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
 
       - name: linux-rpm
         package:
@@ -27,7 +27,7 @@ releases:
           target: rpm
           build_args:
             profile: true
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
 
       - name: linux-pacman
         package:
@@ -35,7 +35,7 @@ releases:
           target: pacman
           build_args:
             profile: true
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
 
       - name: linux-zip
         package:
@@ -43,7 +43,7 @@ releases:
           target: zip
           build_args:
             profile: true
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
 
       - name: windows-exe
         package:
@@ -51,7 +51,7 @@ releases:
           target: exe
           build_args:
             profile: true
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
 
       # msix does not support profile mode yet
       # - name: windows-msix
@@ -66,7 +66,7 @@ releases:
           target: zip
           build_args:
             profile: true
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
             
   - name: dev-release
     jobs:
@@ -75,42 +75,42 @@ releases:
           platform: linux
           target: appimage
           build_args:
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
 
       - name: linux-deb
         package:
           platform: linux
           target: deb
           build_args:
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
 
       - name: linux-rpm
         package:
           platform: linux
           target: rpm
           build_args:
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
       
       - name: linux-pacman
         package:
           platform: linux
           target: pacman
           build_args:
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
 
       - name: linux-zip
         package:
           platform: linux
           target: zip
           build_args:
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
 
       - name: macos-dmg
         package:
           platform: macos
           target: dmg
           build_args:
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
       # - name: macos-pkg
       #   package:
       #     platform: macos
@@ -125,18 +125,18 @@ releases:
           platform: windows
           target: exe
           build_args:
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json
 
       # - name: windows-msix
       #   package:
       #     platform: windows
       #     target: msix
       #     build_args:
-      #       dart-define-from-file: env.json
+      #       # dart-define-from-file: env.json
 
       - name: windows-zip
         package:
           platform: windows
           target: zip
           build_args:
-            dart-define-from-file: env.json
+            # dart-define-from-file: env.json

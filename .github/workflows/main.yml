@@ -86,14 +86,18 @@ jobs:
 
           # Get the deepest directory path
           result=$(get_deepest_path "./dist")
-          echo "release_folder=$result" >> $GITHUB_OUTPUT  # Set output
+          
+          echo "::set-output name=release_folder::$result" # Set output
+          # echo "release_folder=$result" >> $GITHUB_OUTPUT  # Set output
 
       - name: Parse Version
         id: parse_version
         run: |
           match=$(grep -E 'version: [0-9]+\.[0-9]+\.[0-9]+' pubspec.yaml)
           version=$(echo "$match" | sed 's/version: //')
-          echo "version=$version" >> $GITHUB_OUTPUT  # Set output
+
+          echo "::set-output name=version::$version" # Set output
+          # echo "version=$version" >> $GITHUB_OUTPUT  # Set output
 
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -159,6 +163,8 @@ jobs:
 
           $releaseFolder = Get-Depth(".\dist")
           $releaseFolder = $releaseFolder.FullName.replace("\", "/")
+
+          echo "::set-output name=release_folder::$releaseFolder" # Set output
           echo "::set-output name=release_folder::$releaseFolder"
 
       - name: Release
@@ -227,14 +233,18 @@ jobs:
 
           # Get the deepest directory path
           result=$(get_deepest_path "./dist")
-          echo "release_folder=$result" >> $GITHUB_OUTPUT  # Set output
+
+          # echo "::set-output name=release_folder::$result"
+          echo "::set-output name=release_folder::$result" # Set output
 
       - name: Parse Version
         id: parse_version
         run: |
           match=$(grep -E 'version: [0-9]+\.[0-9]+\.[0-9]+' pubspec.yaml)
           version=$(echo "$match" | sed 's/version: //')
+
           echo "version=$version" >> $GITHUB_OUTPUT  # Set output
+          echo "::set-output name=version::$version" # Set output
 
       - name: Release
         uses: softprops/action-gh-release@v2
