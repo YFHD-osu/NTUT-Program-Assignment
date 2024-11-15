@@ -53,11 +53,6 @@ void main() async {
     await Window.initialize();
 
     await windowManager.ensureInitialized();
-    // windowManager.waitUntilReadyToShow(const WindowOptions(), () async {
-    //   await windowManager.show();
-    //   await windowManager.focus();
-    //   await windowManager.setTitle("");
-    // });
   }
 
   // await FireBaseData.initialize();

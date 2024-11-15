@@ -284,10 +284,15 @@ class _ListItemState extends State<ListItem> {
   @override
   void initState() {
     super.initState();
-    _fetchDescription();
+    widget.homework.fetchHomeworkDetail()
+    .then((e) => _fetchDescription());
   }
 
   Future<void> _fetchDescription() async {
+    if (widget.homework.description != null) {
+      return;
+    }
+    
     try {
       await widget.homework.fetchHomeworkDetail();
     } on RuntimeError catch (e) {
