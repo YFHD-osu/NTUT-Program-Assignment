@@ -44,8 +44,13 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   late final StreamSubscription<EventType> _sub;
 
   Future<void> refresh() async {
-    final tasks = [_loadSuccess(), _loadTest()];
-    await Future.wait(tasks);
+    try {
+      final tasks = [_loadSuccess(), _loadTest()];
+      await Future.wait(tasks);
+    } catch (e) {
+      GlobalSettings.showToast("無法更新列表", e.toString(), InfoBarSeverity.error);
+      return;
+    }
   }
 
   @override
@@ -318,7 +323,7 @@ class _TestAllTileState extends State<TestAllTile> {
     final testCases = widget.homework.description!.testCases;
 
     if (selFile == null) {
-      return const Text("尚未選取檔案");
+      return const Text("請將程式檔案拖曳到此處");
     }
 
     if (_isAllTestRunning) {

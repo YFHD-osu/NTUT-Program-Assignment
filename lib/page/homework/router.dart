@@ -159,35 +159,42 @@ class _HomeworkRouteState extends State<HomeworkRoute> {
 class RouteFlyout extends StatelessWidget {
   const RouteFlyout({super.key});
 
-  Widget _testDataRow(BreadcrumbItem<BreadcrumbValue> breadcumber) {
-    return SizedBox(
-
-      child: HyperlinkButton(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 5),
-          child: Text(breadcumber.value.label, style: const TextStyle(color: Colors.white))
-        ),
-        onPressed: () {
-
-        }
-      )
+  Widget _testDataRow(BreadcrumbItem<BreadcrumbValue> breadcumber, BuildContext context) {
+    return HyperlinkButton(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Center(
+          child: Text(
+            breadcumber.value.label,
+            style: const TextStyle(color: Colors.white),
+            overflow: TextOverflow.ellipsis
+          )
+        )
+      ),
+      onPressed: () {
+        final index = Controller.routes.indexOf(breadcumber);
+        Controller.routes.removeRange(index + 1, Controller.routes.length);
+        Navigator.of(context).pop();
+        Controller.setState();
+      }
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(
-        maxWidth: 300, maxHeight: 100
+      constraints: BoxConstraints(
+        maxWidth: 180,
+        maxHeight: Controller.routes.length*36 + 10
       ),
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       decoration: BoxDecoration(
         color: FluentTheme.of(context).menuColor,
         borderRadius: BorderRadius.circular(5)
       ),
       child: Column(
         children: Controller.routes
-          .map((e) => _testDataRow(e))
+          .map((e) => _testDataRow(e, context))
           .toList()
       )
     );

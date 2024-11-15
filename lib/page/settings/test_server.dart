@@ -57,6 +57,24 @@ class _TestServerRouteState extends State<TestServerRoute> {
               borderRadius: BorderRadius.circular(10)
             ),
           ), 
+        ),
+        const SizedBox(height: 5),
+        Tile(
+          title: "測試編譯器位置",
+          lore: "設定測試程式時所使用的編譯器位置",
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10, vertical: 11.5
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(5),
+                child: Image.asset("assets/language/python.png", height: 40)
+              ),
+              const SizedBox(width: 10),
+              Text("data")
+            ]
+          )
         )
       ]
     );

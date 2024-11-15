@@ -95,6 +95,7 @@ class _HomeworkListState extends State<HomeworkList> {
 
   Widget _passedHws() {
     final passed = Controller.homeworks
+      .reversed
       .where((e) => e.isPass);
 
     if (passed.isEmpty) {
@@ -215,8 +216,8 @@ class _HomeworkListState extends State<HomeworkList> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(FluentIcons.account_management, size: 50),
-            SizedBox(height: 10),
-            Text("請先移至設定、帳戶登入帳號")
+            SizedBox(height: 15),
+            Text("請先移至設定 > 帳戶登入帳號")
           ]
         )
       );
@@ -280,6 +281,12 @@ class ListItem extends StatefulWidget {
 class _ListItemState extends State<ListItem> {
   String? _errorMsg;
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchDescription();
+  }
+
   Future<void> _fetchDescription() async {
     try {
       await widget.homework.fetchHomeworkDetail();
@@ -295,47 +302,60 @@ class _ListItemState extends State<ListItem> {
     setState(() {});
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchDescription();
+  String fetchTitle() {
+    if (_errorMsg != null && widget.homework.description == null) {
+      return "${widget.homework.number} 無法加載詳細資料";
+    }
+    return "${widget.homework.number} ${widget.homework.description?.title??''}";
+  }
+
+  String fetchDeadline() {
+    final hw = widget.homework;
+    return "繳交期限: ${formatDate(hw.deadline)}";
+  }
+
+  String formatDate(DateTime date) {
+    final now = DateTime.now();
+    
+    Duration diff = date.difference(now);
+
+    final decoration = (diff > Duration.zero) ? "後" : "前";
+    
+    diff = (diff < Duration.zero) ? now.difference(date) : diff;
+    
+    if (diff > const Duration(days: 7)) {
+      // print("[$date] ${diff.inDays} -> ${(diff.inDays / 7).toInt()}");
+      return "${diff.inDays ~/ 7} 周$decoration";
+    } else if (diff > const Duration(days: 1)) {
+      return "${diff.inDays} 天$decoration";
+    } else if (diff > const Duration(hours: 1)) {
+      return "${diff.inHours} 小時$decoration";
+    } else {
+      return "${diff.inMinutes} 分鐘$decoration";
+    }
+  }
+
+  IconData fetchIcon() {
+    final hw = widget.homework;
+
+    if (!hw.canHandIn) {
+      return hw.state == HomeworkState.passed ? FluentIcons.check_mark : FluentIcons.clear;
+    }
+
+    return FluentIcons.edit;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_errorMsg != null) {
-      return Button(
-        style: const ButtonStyle(
-          padding: WidgetStatePropertyAll(EdgeInsets.zero)
-        ),
-        child: Tile.lore(
-          decoration: const BoxDecoration(),
-          title: "${widget.homework.number} 無法加載詳細資料",
-          lore: "繳交期限: ${widget.homework.deadline}",
-          icon: const Icon(FluentIcons.delete),
-          child: const Icon(FluentIcons.chevron_right),
-        ),
-        onPressed: () {
-          Controller.routes.add(BreadcrumbItem(
-            label: Text(
-              "${widget.homework.number} ${widget.homework.description?.title??''}",
-              style: const TextStyle(fontSize: 30)),
-            value: BreadcrumbValue(label: "${widget.homework.number} ${widget.homework.description?.title??''}", index: widget.homework.id-1)
-          ));
-          Controller.setState();
-        }
-      );
-    }
-
     return Button(
       style: const ButtonStyle(
         padding: WidgetStatePropertyAll(EdgeInsets.zero)
       ),
       child: Tile.lore(
         decoration: const BoxDecoration(),
-        title: "${widget.homework.number} ${widget.homework.description?.title??''}",
-        lore: "繳交期限: ${widget.homework.deadline}",
-        icon: const Icon(FluentIcons.delete),
+        title: fetchTitle(),
+        lore: fetchDeadline(),
+        icon: Icon(fetchIcon()),
         child: const Icon(FluentIcons.chevron_right),
       ),
       onPressed: () {

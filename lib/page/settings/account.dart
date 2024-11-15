@@ -423,30 +423,15 @@ class _AccountRouteState extends State<AccountRoute> {
 
     try {
       await GlobalSettings.login(account);
-    } on RuntimeError catch (e) {
-      GlobalSettings.showToast(
-        "登入失敗",
-        e.message, 
-        InfoBarSeverity.error
-      );
-      if (mounted) setState(() => _isLogging = false);
-      return;
-    } on NetworkError catch (e) {
-      GlobalSettings.showToast(
-        "登入失敗", 
-        e.message, 
-        InfoBarSeverity.error
-      );
-      if (mounted) setState(() => _isLogging = false);
-      return;
     } catch (e) {
       GlobalSettings.showToast(
         "登入失敗",
-        "發生未知錯誤: ${e.toString()}",
+        e.toString(),
         InfoBarSeverity.error
-      );
-      if (mounted) setState(() => _isLogging = false);
+      ); 
       return;
+    } finally {
+      if (mounted) setState(() => _isLogging = false);
     }
 
     GlobalSettings.showToast(
@@ -454,8 +439,6 @@ class _AccountRouteState extends State<AccountRoute> {
       "歡迎 ${GlobalSettings.account?.name}", 
       InfoBarSeverity.info
     );
-
-    if (mounted) setState(() {});
     
   }
 
