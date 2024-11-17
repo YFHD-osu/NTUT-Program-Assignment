@@ -3,7 +3,8 @@ publisher: YFHD
 publisher_url: https://github.com/YFHD-osu/NTUT-Program-Assignment
 display_name: NTUT Program Assignment
 create_desktop_icon: true
+
 # See: https://jrsoftware.org/ishelp/index.php?topic=setup_defaultdirname
-# install_dir_name: "D:\\HELLO-WORLD"
+install_dir_name: "{userappdata}\\NTUT Program Assignment"
 locales:
   - en
