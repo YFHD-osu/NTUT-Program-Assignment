@@ -17,9 +17,9 @@ class HomeworkList extends StatefulWidget {
 
 class _HomeworkListState extends State<HomeworkList> {
   String? errMsg;
+  double? _loadPercent;
   late bool _isReady = Controller.homeworks.isNotEmpty;
   late StreamSubscription _sub;
-
 
   @override
   void initState() {
@@ -51,6 +51,7 @@ class _HomeworkListState extends State<HomeworkList> {
     Controller.homeworks.clear();
     
     errMsg = null;
+    _loadPercent = null;
     setState(() => _isReady = false);
 
     try {
@@ -64,7 +65,31 @@ class _HomeworkListState extends State<HomeworkList> {
       errMsg = e.toString();
     }
     
-    setState(() => _isReady = true);
+    await _fetchDescription();
+    _isReady = true;
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _fetchDescription() async {
+    final sum = Controller.homeworks.length;
+    int index = 0;
+    if (mounted) setState(() => _loadPercent = 0);
+
+    for (var hw in Controller.homeworks) {
+      if (hw.description != null) continue;
+      try {
+        await hw.fetchHomeworkDetail();
+      } on RuntimeError catch (e) {
+        e.message;
+      } on NetworkError catch (e) {
+        e.message;
+      } catch (e) {
+        e.toString();
+      }
+
+      index ++;
+      if (mounted) setState(() => _loadPercent = index/sum*100);
+    }
   }
 
   Widget _pendingHws() {
@@ -242,17 +267,27 @@ class _HomeworkListState extends State<HomeworkList> {
     }
 
     if (!_isReady) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ProgressRing(),
-            SizedBox(height: 10),
-            Text("題目載入中..."),
+            TweenAnimationBuilder<double>(
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.easeInOut,
+              tween: Tween<double>(
+                begin: 0,
+                end: _loadPercent ?? 0,
+              ),
+              builder: (context, value, _) =>
+                ProgressRing(value: value), 
+            ),
+            const SizedBox(height: 10),
+            const Text("題目載入中..."),
           ]
         )
       );
     }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -280,32 +315,6 @@ class ListItem extends StatefulWidget {
 
 class _ListItemState extends State<ListItem> {
   String? _errorMsg;
-
-  @override
-  void initState() {
-    super.initState();
-    widget.homework.fetchHomeworkDetail()
-    .then((e) => _fetchDescription());
-  }
-
-  Future<void> _fetchDescription() async {
-    if (widget.homework.description != null) {
-      return;
-    }
-    
-    try {
-      await widget.homework.fetchHomeworkDetail();
-    } on RuntimeError catch (e) {
-      _errorMsg = e.message;
-    } on NetworkError catch (e) {
-      _errorMsg = e.message;
-    } catch (e) {
-      _errorMsg = e.toString();
-    }
-
-    if (!mounted) return;
-    setState(() {});
-  }
 
   String fetchTitle() {
     if (_errorMsg != null && widget.homework.description == null) {
@@ -364,6 +373,9 @@ class _ListItemState extends State<ListItem> {
         child: const Icon(FluentIcons.chevron_right),
       ),
       onPressed: () {
+        if (Controller.routes.length > 1) {
+          return;
+        }
         Controller.routes.add(BreadcrumbItem(
           label: Text(
             "${widget.homework.number} ${widget.homework.description?.title??''}",

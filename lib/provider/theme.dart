@@ -197,5 +197,12 @@ class ThemePack {
     dividerTheme: const DividerThemeData(
       horizontalMargin: EdgeInsets.zero
     ),
+    infoBarTheme: InfoBarThemeData(
+      decoration: (severity) {
+        return const BoxDecoration(
+          color: Colors.white
+        );
+      },
+    )
   );
 }

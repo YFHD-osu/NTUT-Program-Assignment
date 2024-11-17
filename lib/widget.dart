@@ -4,6 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:ntut_program_assignment/main.dart' show MyApp;
+import 'package:ntut_program_assignment/provider/theme.dart';
 
 class Tile extends StatelessWidget {
   const Tile({
@@ -252,7 +253,9 @@ class CustomWidgets {
     final alertStyle = ButtonStyle(
       backgroundColor: WidgetStateProperty.resolveWith((state) {
         if (state.contains(WidgetState.disabled)) {
-          return Colors.grey;
+          return ThemeProvider.instance.isDark ? 
+            const Color.fromRGBO(81, 84, 91, 1) : 
+            const Color.fromRGBO(198, 198, 198, 1);
         }
 
         if (state.contains(WidgetState.hovered)) {

@@ -476,8 +476,10 @@ class Homework {
     if (table.children.isEmpty) {
       return [];
     }
-      
+    // print(table.children);
+
     return table.children
+      .where((soup) => soup.children.firstOrNull != null)
       .map((e) => CheckResult.fromSoup(e))
       .toList();
 

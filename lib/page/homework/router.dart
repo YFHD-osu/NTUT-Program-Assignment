@@ -21,7 +21,6 @@ class BreadcrumbValue {
     required this.label,
     required this.index
   });
-
 }
 
 class Controller {

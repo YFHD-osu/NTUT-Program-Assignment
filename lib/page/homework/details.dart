@@ -76,15 +76,14 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   }
 
   Future<void> _loadSuccess() async {
-    setState(() => _passList = null);
+    _passList = null;
+    if (mounted) setState(() {});
     
     _passList = await widget.homework.fetchPassList();
-
     if (mounted) setState(() {});
   }
 
   Future<void> _loadTest() async {
-    setState(() {});
     _testcasesVal = await widget.homework.fetchTestcases();
 
     if (mounted) setState(() {});
@@ -582,6 +581,9 @@ class _OverviewCardState extends State<OverviewCard> {
   final _testCaseFlyOut = FlyoutController();
 
   Widget _contextWidget() {
+    final colors = FluentTheme.of(context).brightness.isLight ? 
+      Colors.black : Colors.white;
+
     switch (widget.homework.state) {
       case HomeworkState.notTried: return Row(
         key: const ValueKey(0),
@@ -595,7 +597,7 @@ class _OverviewCardState extends State<OverviewCard> {
             ),
           ),
           const SizedBox(width: 10),
-          const Text("尚未繳交", style: TextStyle(fontWeight: FontWeight.bold)),
+          Text("尚未繳交", style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
           const Spacer(),
         ]
       );
@@ -619,29 +621,29 @@ class _OverviewCardState extends State<OverviewCard> {
             fractionDigits: 0,
             curve: Curves.easeInOutSine,
             duration: const Duration(milliseconds: 600),
-            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+            textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)
           ),
           Text("/${widget.testcasesVal!.length}",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)),
           const SizedBox(width: 5),
-          const Text("未通過"),
+          Text("未通過", style: TextStyle(color: colors)),
           const Spacer(),
         ]
       );
 
-      case HomeworkState.checking: return const Row(
-        key: ValueKey(2),
+      case HomeworkState.checking: return Row(
+        key: const ValueKey(2),
         children: [
-          Spacer(),
-          SizedBox.square(
+          const Spacer(),
+          const SizedBox.square(
             dimension: 20,
             child: ProgressRing(
               strokeWidth: 3.0,
             )
           ),
-          SizedBox(width: 10),
-          Text("批改中", style: TextStyle(fontWeight: FontWeight.bold)),
-          Spacer()
+          const SizedBox(width: 10),
+          Text("批改中", style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
+          const Spacer()
         ]
       );
 
@@ -664,12 +666,12 @@ class _OverviewCardState extends State<OverviewCard> {
             fractionDigits: 0,
             curve: Curves.easeInOutSine,
             duration: const Duration(milliseconds: 600),
-            textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+            textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)
           ),
           Text("/${widget.testcasesVal!.length}",
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)),
           const SizedBox(width: 5),
-          const Text("通過"),
+          Text("通過", style: TextStyle(color: colors)),
           const Spacer()
         ]
       );
@@ -693,6 +695,8 @@ class _OverviewCardState extends State<OverviewCard> {
   }
 
   Widget _completeCount() {
+    final colors = FluentTheme.of(context).brightness.isLight ? 
+      Colors.black : Colors.white;
     return Row(
       children: [
         const Spacer(),
@@ -701,10 +705,14 @@ class _OverviewCardState extends State<OverviewCard> {
           fractionDigits: 0,
           curve: Curves.easeInOutSine,
           duration: const Duration(milliseconds: 600),
-          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
+          textStyle: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: colors
+          )
         ),
         const SizedBox(width: 10),
-        const Text("完成人數"),
+        Text("完成人數", style: TextStyle(color: colors)),
         const Spacer(),
       ]
     );
@@ -1072,7 +1080,8 @@ class _UploadSectionState extends State<UploadSection> {
       Controller.update.add(EventType.refreshOverview);
     }
 
-    var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
+    // var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
+    var myFile = File(path.toString().replaceAll(r"file:///", ""));
 
     widget.homework.submitting = true;
     Controller.update.add(EventType.setStateDetail);

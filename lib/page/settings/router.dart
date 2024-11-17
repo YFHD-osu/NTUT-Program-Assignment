@@ -9,7 +9,7 @@ import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/page/settings/about.dart';
 import 'package:ntut_program_assignment/page/settings/account.dart';
 import 'package:ntut_program_assignment/page/settings/personalize.dart';
-
+import 'package:ntut_program_assignment/page/homework/router.dart' show BreadcrumbValue;
 
 enum EventType {
   setState
@@ -19,9 +19,12 @@ class Controller {
   static final StreamController<EventType> update = StreamController();
   static final stream = update.stream.asBroadcastStream();
 
-  static final items = <BreadcrumbItem<int>>[
+  static final routes = <BreadcrumbItem<BreadcrumbValue>>[
     BreadcrumbItem(
-      value: -1,
+      value: BreadcrumbValue(
+        label: '${MyApp.locale.settings_breadcrumb_title} ',
+        index: -1
+      ),
       label: Text('${MyApp.locale.settings_breadcrumb_title} ',
       style: const TextStyle(fontSize: 30)),
     )
@@ -41,6 +44,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late final StreamSubscription sub;
+  final _menuController = FlyoutController();
 
   final _routes = [
     const AccountRoute(),
@@ -58,12 +62,15 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void dispose() {
     super.dispose();
-    Controller.items.clear();
-    Controller.items.add(
+    Controller.routes.clear();
+    Controller.routes.add(
       BreadcrumbItem(
         label: Text('${MyApp.locale.settings_breadcrumb_title} ', 
         style: const TextStyle(fontSize: 30)),
-        value: -1
+        value: BreadcrumbValue(
+          index: -1,
+          label: '${MyApp.locale.settings_breadcrumb_title} ',
+        )
       )
     );
 
@@ -84,14 +91,35 @@ class _SettingsPageState extends State<SettingsPage> {
           constraints: const BoxConstraints(maxWidth: 1000),
           margin: const EdgeInsets.symmetric(
             horizontal: 10, vertical: 10),
-          child: BreadcrumbBar<int>(
-            items: Controller.items,
+          child: BreadcrumbBar<BreadcrumbValue>(
+            items: Controller.routes,
             chevronIconSize: 20,
             onItemPressed: (item) {
               setState(() {
-                final index = Controller.items.indexOf(item);
-                Controller.items.removeRange(index + 1, Controller.items.length);
+                final index = Controller.routes.indexOf(item);
+                Controller.routes.removeRange(index + 1, Controller.routes.length);
               });
+            },
+            overflowButtonBuilder: (context, openFlyout) {
+              return FlyoutTarget(
+                controller: _menuController,
+                child: IconButton(
+                  icon: const Icon(FluentIcons.more),
+                  onPressed: () {
+                    _menuController.showFlyout(
+                      autoModeConfiguration: FlyoutAutoConfiguration(
+                        preferredMode: FlyoutPlacementMode.bottomLeft,
+                      ),
+                      barrierDismissible: true,
+                      dismissOnPointerMoveAway: false,
+                      dismissWithEsc: true,
+                      navigatorKey: Navigator.of(context),
+                      builder: (context) {
+                        return const RouteFlyout();
+                    });
+                  }
+                )
+              );
             },
           )
         )
@@ -117,13 +145,13 @@ class _SettingsPageState extends State<SettingsPage> {
         switchInCurve: Curves.fastOutSlowIn,
         switchOutCurve: Curves.fastOutSlowIn,
         duration: const Duration(milliseconds: 300),
-        child: Controller.items.last.value == -1 ? 
+        child: Controller.routes.last.value.index == -1 ? 
           const PageBase(
             key: ValueKey(-1),  
             child: OptionList()
           ) : 
           PageBase(
-            child: _routes[Controller.items.last.value]
+            child: _routes[Controller.routes.last.value.index]
           )
       ));
   }
@@ -152,10 +180,16 @@ class OptionList extends StatelessWidget {
             child: const Icon(FluentIcons.chevron_right),
           ),
           onPressed: () {
-            Controller.items.add(const BreadcrumbItem(
-              label: Text(
+            if (Controller.routes.length > 1) {
+              return;
+            }
+            Controller.routes.add(BreadcrumbItem(
+              label: const Text(
                 "帳號", style: TextStyle(fontSize: 30)),
-              value: 0
+              value: BreadcrumbValue(
+                index: 0,
+                label: "帳號"
+              )
             ));
             Controller.setState();
           }
@@ -173,10 +207,16 @@ class OptionList extends StatelessWidget {
             child: const Icon(FluentIcons.chevron_right)
           ),
           onPressed: () {
-            Controller.items.add(const BreadcrumbItem(
-              label: Text(
+            if (Controller.routes.length > 1) {
+              return;
+            }
+            Controller.routes.add(BreadcrumbItem(
+              label: const Text(
                 "測試環境", style: TextStyle(fontSize: 30)),
-              value: 1
+              value: BreadcrumbValue(
+                index: 1,
+                label: "測試環境"
+              )
             ));
             Controller.setState();
           }
@@ -194,10 +234,16 @@ class OptionList extends StatelessWidget {
             child: const Icon(FluentIcons.chevron_right),
           ),
           onPressed: () {
-            Controller.items.add(const BreadcrumbItem(
-              label: Text(
+            if (Controller.routes.length > 1) {
+              return;
+            }
+            Controller.routes.add(BreadcrumbItem(
+              label: const Text(
                 "個人化", style: TextStyle(fontSize: 30)),
-              value: 2
+              value: BreadcrumbValue(
+                index: 2,
+                label: "個人化"
+              )
             ));
             Controller.setState();
           }
@@ -215,10 +261,16 @@ class OptionList extends StatelessWidget {
             child: const Icon(FluentIcons.chevron_right),
           ),
           onPressed: () {
-            Controller.items.add(const BreadcrumbItem(
-              label: Text(
+            if (Controller.routes.length > 1) {
+              return;
+            }
+            Controller.routes.add(BreadcrumbItem(
+              label: const Text(
                 "關於", style: TextStyle(fontSize: 30)),
-              value: 3
+              value: BreadcrumbValue(
+                index: 3,
+                label: "關於"
+              )
             ));
             Controller.setState();
           }
@@ -262,6 +314,51 @@ class AccountOverview extends StatelessWidget {
           ]
         )
       ]
+    );
+  }
+}
+
+class RouteFlyout extends StatelessWidget {
+  const RouteFlyout({super.key});
+
+  Widget _testDataRow(BreadcrumbItem<BreadcrumbValue> breadcumber, BuildContext context) {
+    return HyperlinkButton(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Center(
+          child: Text(
+            breadcumber.value.label,
+            style: const TextStyle(color: Colors.white),
+            overflow: TextOverflow.ellipsis
+          )
+        )
+      ),
+      onPressed: () {
+        final index = Controller.routes.indexOf(breadcumber);
+        Controller.routes.removeRange(index + 1, Controller.routes.length);
+        Navigator.of(context).pop();
+        Controller.setState();
+      }
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: 180,
+        maxHeight: Controller.routes.length*36 + 10
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      decoration: BoxDecoration(
+        color: FluentTheme.of(context).menuColor,
+        borderRadius: BorderRadius.circular(5)
+      ),
+      child: Column(
+        children: Controller.routes
+          .map((e) => _testDataRow(e, context))
+          .toList()
+      )
     );
   }
 }

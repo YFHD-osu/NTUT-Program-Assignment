@@ -72,7 +72,10 @@ class _TestServerRouteState extends State<TestServerRoute> {
                 child: Image.asset("assets/language/python.png", height: 40)
               ),
               const SizedBox(width: 10),
-              Text("data")
+              const Text("Python 環境"),
+              const Spacer(),
+              Text(_testEnvironmentOk ?? false ? "已偵測到 Python 環境" : "無法偵測到 Python 環境"),
+              const SizedBox(width: 10)
             ]
           )
         )
