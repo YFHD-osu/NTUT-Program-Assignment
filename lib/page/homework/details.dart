@@ -1068,7 +1068,6 @@ class _UploadSectionState extends State<UploadSection> {
   }
 
   Future<void> _upload(path) async {
-
     if ([HomeworkState.passed, HomeworkState.notPassed].contains(widget.homework.state)) {
       final isConfirmed = await showDialog<bool>(
         context: context,
@@ -1081,7 +1080,7 @@ class _UploadSectionState extends State<UploadSection> {
     }
 
     // var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
-    var myFile = File(path.toString().replaceAll(r"file:///", ""));
+    var myFile = File(path.toString().replaceAll(r"file:///", "").replaceAll("%20", " "));
 
     widget.homework.submitting = true;
     Controller.update.add(EventType.setStateDetail);
