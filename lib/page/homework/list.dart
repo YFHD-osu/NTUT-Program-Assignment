@@ -7,8 +7,8 @@ import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/page/homework/router.dart';
 import 'package:ntut_program_assignment/widget.dart';
 
-
 class HomeworkList extends StatefulWidget {
+
   const HomeworkList({super.key});
 
   @override
@@ -37,13 +37,19 @@ class _HomeworkListState extends State<HomeworkList> {
   }
 
   void _onGlobalEvent(GlobalEvent e) {
-    if (e == GlobalEvent.accountSwitch) {
+    if (e == GlobalEvent.refreshHwList) {
       _refresh();
+      setState(() => {});
+    } else if (e == GlobalEvent.setHwState) {
       setState(() {});
     }
   }
 
   Future<void> _refresh() async {
+    if (_loadPercent != null) {
+      return;
+    }
+
     if (GlobalSettings.account == null) {
       return;
     }
@@ -51,7 +57,7 @@ class _HomeworkListState extends State<HomeworkList> {
     Controller.homeworks.clear();
     
     errMsg = null;
-    _loadPercent = null;
+    _loadPercent = 0;
     setState(() => _isReady = false);
 
     try {
@@ -67,6 +73,8 @@ class _HomeworkListState extends State<HomeworkList> {
     
     await _fetchDescription();
     _isReady = true;
+    _loadPercent = null;
+
     if (mounted) setState(() {});
   }
 
@@ -74,12 +82,11 @@ class _HomeworkListState extends State<HomeworkList> {
     final sum = Controller.homeworks.length;
     int index = 0;
     if (mounted) setState(() => _loadPercent = 0);
-
     for (var hw in Controller.homeworks) {
       if (hw.description != null) continue;
       try {
         await hw.fetchHomeworkDetail();
-      } on RuntimeError catch (e) {
+      } on LoginProcessingError catch (e) {
         e.message;
       } on NetworkError catch (e) {
         e.message;
@@ -110,7 +117,9 @@ class _HomeworkListState extends State<HomeworkList> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: notPasses
-              .map((e) => ListItem(homework: e))
+              .map((e) => ListItem(
+                homework: e
+              ))
               .toList()
           )
         )
@@ -376,6 +385,7 @@ class _ListItemState extends State<ListItem> {
         if (Controller.routes.length > 1) {
           return;
         }
+        
         Controller.routes.add(BreadcrumbItem(
           label: Text(
             "${widget.homework.number} ${widget.homework.description?.title??''}",

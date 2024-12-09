@@ -206,7 +206,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   void _onUpdate(GlobalEvent event) {
     // Listen for account switch
-    if (![GlobalEvent.accountSwitch].contains(event)) return;
+    if (![GlobalEvent.refreshHwList].contains(event)) return;
 
     setState(() {});
   }

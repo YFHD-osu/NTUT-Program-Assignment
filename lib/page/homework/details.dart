@@ -845,7 +845,7 @@ class _DetailRouteState extends State<DetailRoute> {
       return const Text("Index out of range");
     }
 
-    final homework = Controller.homeworks[Controller.routes.last.value.index];
+    final homework = Controller.homeworks[0];
     return PageBase(
       child: HomeworkDetail(
         homework: homework
@@ -1054,6 +1054,7 @@ class _UploadSectionState extends State<UploadSection> {
     }
 
     await _upload(outputFile!.paths.first);
+
     setState(() => _explorerOpen = false);
   }
 
@@ -1085,9 +1086,22 @@ class _UploadSectionState extends State<UploadSection> {
     widget.homework.submitting = true;
     Controller.update.add(EventType.setStateDetail);
 
-    await widget.homework.upload(myFile);
+    await _uploadFile(myFile);
 
+    GlobalSettings.update.add(GlobalEvent.setHwState);
     Controller.update.add(EventType.refreshOverview);
+  }
+
+  Future<void> _uploadFile(File file) async{
+    try {
+      return await widget.homework.upload(file);
+    } on LoginProcessingError catch (_) {
+      return await widget.homework.upload(file);
+    } catch (e) {
+      GlobalSettings.showToast("無法上傳作業", e.toString(), InfoBarSeverity.error);
+      return;
+    }
+    
   }
 
   void _onDropLeave(DropEvent event) {

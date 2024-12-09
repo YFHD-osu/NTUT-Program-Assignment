@@ -214,7 +214,7 @@ class _AccountRouteState extends State<AccountRoute> {
   }
 
   void _onUpdate(GlobalEvent event) {
-    if (![GlobalEvent.accountSwitch].contains(event)) return;
+    if (![GlobalEvent.refreshHwList].contains(event)) return;
     setState(() {});
   }
 
@@ -237,7 +237,7 @@ class _AccountRouteState extends State<AccountRoute> {
     }
 
     await _refreshDB();
-    GlobalSettings.update.add(GlobalEvent.accountSwitch);
+    GlobalSettings.update.add(GlobalEvent.refreshHwList);
   }
 
   Future<void> _refreshDB() async {

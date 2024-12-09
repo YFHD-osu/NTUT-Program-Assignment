@@ -47,7 +47,7 @@ class Controller {
   }
 
   static onGlobalEvent(GlobalEvent e) {
-    if (e == GlobalEvent.accountSwitch) {
+    if (e == GlobalEvent.refreshHwList) {
       homeworks.clear();
     }
   }
@@ -177,6 +177,7 @@ class RouteFlyout extends StatelessWidget {
         Controller.setState();
       }
     );
+    
   }
 
   @override

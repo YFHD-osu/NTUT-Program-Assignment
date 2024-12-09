@@ -7,7 +7,10 @@ import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
 import 'package:toastification/toastification.dart';
 
 enum GlobalEvent {
-  accountSwitch
+  refreshHwList,
+
+  // Refresh homework state, (Used while homework upload complete)
+  setHwState,
 }
 
 class GlobalSettings {
@@ -28,12 +31,12 @@ class GlobalSettings {
     
     logger.d("Logged in with session: ${acc.username}");
     account = acc;
-    update.sink.add(GlobalEvent.accountSwitch);
+    update.sink.add(GlobalEvent.refreshHwList);
   }
 
   static void logout() {
     account = null;
-    update.sink.add(GlobalEvent.accountSwitch);
+    update.sink.add(GlobalEvent.refreshHwList);
   }
 
   static void _autoLogin() async {
@@ -43,13 +46,13 @@ class GlobalSettings {
     if (acc == null) {
       logger.e("Account with id: ${prefs.autoLogin} does not exists");
       isLoggingIn = false;
-      update.sink.add(GlobalEvent.accountSwitch);
+      update.sink.add(GlobalEvent.refreshHwList);
 
       return;
     }
 
     isLoggingIn = true;
-    update.sink.add(GlobalEvent.accountSwitch);
+    update.sink.add(GlobalEvent.refreshHwList);
     
     try {
       await GlobalSettings.login(Account.fromMap(acc));
@@ -58,10 +61,8 @@ class GlobalSettings {
       showToast("無法自動登入", e.toString(), InfoBarSeverity.error);
     } finally {
       isLoggingIn = false;
-      update.sink.add(GlobalEvent.accountSwitch);
+      update.sink.add(GlobalEvent.refreshHwList);
     }
-    
-
   }
 
   static Future<void> initialize() async {

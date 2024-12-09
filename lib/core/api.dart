@@ -179,15 +179,13 @@ class RuntimeError {
   }
 }
 
-class NetworkError {
-  final String message;
+class NetworkError extends RuntimeError {
+  NetworkError(super.message);
+}
 
-  NetworkError(this.message);
+class LoginProcessingError extends RuntimeError {
+  LoginProcessingError(super.message);
 
-  @override
-  String toString() {
-    return message;
-  }
 }
 
 class TestException {
@@ -326,7 +324,9 @@ class Description {
       ?.replaceAll(homework.number, "")
       .trim();
     
-    final desc = filtered.replaceAll(homework.number, "").trim();
+    
+    
+    final desc = filtered.replaceFirst(homework.number, "").trim();
 
     final regExp = RegExp(r"【測試資料.+】");
     final res = desc.split(regExp);
@@ -436,6 +436,7 @@ class Homework {
     final hwDesc = bs.find("p");
 
     description = Description.fromRaw(hwDesc!.text, this);
+
     return;
   }
 
@@ -688,7 +689,7 @@ class InnerClient extends http.BaseClient {
       logger.e("SocketException occured with ${request.method} ${request.url}");
 
       if (timestamp.compareTo(account.loginTime) < 0) {
-        throw RuntimeError("Login is processing, please resend request");
+        throw LoginProcessingError("Login is processing, please resend request");
       }
 
       account.logout();
