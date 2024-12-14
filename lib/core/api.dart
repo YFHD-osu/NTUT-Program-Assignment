@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:intl/intl.dart';
 
@@ -313,8 +314,10 @@ class Description {
     required this.testCases
   });
 
-  factory Description.fromRaw(String raw, Homework homework) {
-    final filtered = raw.split("\n")
+  factory Description.fromRaw(Bs4Element raw, Homework homework) {
+    final meta = raw.children.map((e) => e.name);
+
+    final filtered = raw.text.split("\n")
       .map((e) => e.trim())
       .join("\n");
 
@@ -323,8 +326,6 @@ class Description {
     final title = (titleList.isEmpty ? null : titleList.first)
       ?.replaceAll(homework.number, "")
       .trim();
-    
-    
     
     final desc = filtered.replaceFirst(homework.number, "").trim();
 
@@ -376,14 +377,17 @@ class Homework {
   final DateTime deadline;
   final bool canHandIn;
   final String language;
+
+  String? title;
+  List<Testcase> testCases = [];
+  List<String> problem = [];
+
   String status;
 
-  Description? description;
-
   bool get isAllTesting =>
-    description?.testCases.every((e) => e.testing) ?? false;
+    testCases.every((e) => e.testing);
 
-  bool _deleting = false;
+  bool deleting = false;
   bool submitting = false;
 
   bool get isPass =>
@@ -394,7 +398,7 @@ class Homework {
       return HomeworkState.checking;
     }
 
-    if (_deleting) {
+    if (deleting) {
       return HomeworkState.delete;
     }
 
@@ -408,8 +412,6 @@ class Homework {
 
     return HomeworkState.notTried;
   }
-
-
 
   final client = InnerClient(
     account: GlobalSettings.account!
@@ -433,9 +435,55 @@ class Homework {
     }
 
     BeautifulSoup bs = BeautifulSoup(resp.body);
-    final hwDesc = bs.find("p");
+    final hwDesc = bs.find("span")!;
 
-    description = Description.fromRaw(hwDesc!.text, this);
+    final ctx = hwDesc.innerHtml.split("<br>");
+
+    int index = 0;
+    int start = 0;
+
+    while (index < ctx.length) {
+      if (problem.isEmpty && ctx[index].trim().replaceAll("\n", "").isEmpty) {
+        index++;
+        continue;
+      }
+
+      if (title == null && ctx[index].contains(number)) {
+        title = ctx[index]
+          .replaceAll(number, "")
+          .trim();
+        index++;
+        continue;
+      }
+
+      if (ctx[index].contains(RegExp(r"【測試資料.+】"))) {
+        index++;
+        start = index;
+        break;
+      }
+      
+      problem.add(ctx[index].trim());
+      index++;
+    }
+
+    while (problem.last.replaceAll("\n", "").isEmpty) {
+      problem.removeLast();
+    }
+    
+    while (index < ctx.length) {
+      if (ctx[index].contains(RegExp(r"【測試資料.+】"))) {
+        testCases.add(Testcase.parse(
+          ctx
+            .sublist(start, index)
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .join("\n")
+        ));
+        start = index + 1;
+      }
+      
+      index++;
+    }
 
     return;
   }
@@ -487,7 +535,7 @@ class Homework {
   }
 
   Future<void> delete() async {
-    _deleting = true;
+    deleting = true;
     final resp = await client._get("/delHw?title=$number&l=$language");
 
     if (resp.statusCode != 200) {
@@ -497,17 +545,18 @@ class Homework {
     await _refresh();
 
     status = "未繳交";
-    _deleting = false;
+    deleting = false;
 
     return;
   }
 
-  Future<void> _refresh() async {
+  Future<String> _refresh() async {
     final result = (await GlobalSettings.account!.fetchHomeworkList())
       .where((e) => e.number == number)
       .first;
 
     status = result.status;
+    return result.status;
   }
 
   Future<void> _prefetch() async {
@@ -548,7 +597,7 @@ class Homework {
   }
 
   Future<void> upload(File file) async {
-    submitting = true;
+
 
     if (!await file.exists()) {
       submitting = false;
@@ -578,15 +627,32 @@ class Homework {
     request.headers.addAll(headers);
 
     logger.d("Start uploading file to server");
-    http.StreamedResponse response = await request.send();
 
-    logger.d("Upload process completed with status code ${response.statusCode}");
 
-    await _refresh();
+    int attempts = 1;
+
+    try {
+      await request
+        .send()
+        .timeout(const Duration(seconds: 15));
+    } on TimeoutException catch (_) {
+      attempts = 90;
+    }
+    
+    while (attempts > 0) {
+      final state = await _refresh();
+      if (state != "批改中") break;
+      
+      await Future.delayed(const Duration(seconds: 1));
+      attempts--;
+    }
+
     submitting = false;
 
-    if (response.statusCode != 200) {
-      throw RuntimeError(response.reasonPhrase.toString());
+    logger.d("Upload process completed ");
+
+    if (attempts <= 0) {
+      throw RuntimeError("批改時間超時");
     }
 
     return;
@@ -699,6 +765,8 @@ class InnerClient extends http.BaseClient {
       return _send(_copyRequest(request), depth + 1, timestamp);
     } on HandshakeException catch (_) {
       throw RuntimeError("Unable to locate to the server...");
+    } on http.ClientException catch (_) {
+      throw RuntimeError("網路連線中斷");
     }
 
     return response;

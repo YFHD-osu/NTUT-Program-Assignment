@@ -6,6 +6,7 @@ import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/page/homework/details.dart';
 import 'package:ntut_program_assignment/page/homework/list.dart';
+import 'package:win32/win32.dart';
 
 enum EventType {
   setStateRouter,
@@ -64,6 +65,28 @@ class _HomeworkRouteState extends State<HomeworkRoute> {
   late StreamSubscription _localSub;
   final _menuController = FlyoutController();
 
+  final _route = <String>["hwList"];
+
+  List<BreadcrumbItem<int>> get breadcumber {
+    return _route.map((e) => 
+      BreadcrumbItem(label: Text('${fetchBreadTitle(e)} ', style: const TextStyle(fontSize: 30)), value: 0)
+    ).toList();
+  }
+
+  String fetchBreadTitle(String e) {
+    if (e.contains("hwList")) {
+      return "作業列表";
+    }
+
+    if (e.contains("hwDetail")) {
+      final id = int.parse(e.split("?").last);
+      final hws = Controller.homeworks;
+      return "${hws[id].number} ${hws[id].title}";
+    }
+
+    return e;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -91,13 +114,12 @@ class _HomeworkRouteState extends State<HomeworkRoute> {
           constraints: const BoxConstraints(maxWidth: 1000),
           margin: const EdgeInsets.symmetric(
             horizontal: 10, vertical: 10),
-          child: BreadcrumbBar<BreadcrumbValue>(
-            items: Controller.routes,
+          child: BreadcrumbBar<int>(
+            items: breadcumber,
             chevronIconSize: 20,
             onItemPressed: (item) {
               setState(() {
-                final index = Controller.routes.indexOf(item);
-                Controller.routes.removeRange(index + 1, Controller.routes.length);
+                _route.removeRange(1, _route.length);
               });
             },
             overflowButtonBuilder: (context, openFlyout) {
@@ -115,7 +137,9 @@ class _HomeworkRouteState extends State<HomeworkRoute> {
                       dismissWithEsc: true,
                       navigatorKey: Navigator.of(context),
                       builder: (context) {
-                        return const RouteFlyout();
+                        return RouteFlyout(
+                          route: _route,
+                        );
                     });
                   }
                 )
@@ -124,39 +148,19 @@ class _HomeworkRouteState extends State<HomeworkRoute> {
           )
         )
       ),
-      content: AnimatedSwitcher(
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(animation);
-
-          final slideAnimation = child.key == const ValueKey(1)
-              // Fade out from left to right
-              ? Tween<Offset>(begin: const Offset(-1, 0), end: const Offset(0, 0)).animate(animation)
-              // Fade in from left to right
-              : Tween<Offset>(begin: const Offset(1, 0), end: const Offset(0, 0)).animate(animation);
-
-          return FadeTransition(
-            opacity: fadeAnimation,
-            child: SlideTransition(
-              position: slideAnimation,
-              child: child
-            ),
-          );
-        },
-        switchInCurve: Curves.fastOutSlowIn,
-        switchOutCurve: Curves.fastOutSlowIn,
-        duration: const Duration(milliseconds: 300),
-        child: Controller.routes.last.value.index == -1 ? 
-          const PageBase(
-            key: ValueKey(1),
-            child: HomeworkList()
-          ) : 
-          const DetailRoute()
+      content: Router(
+        route: _route,
+        struct: {
+          "hwList": HomeworkList(route: _route),
+          "hwDetail": HomeworkDetail(route: _route)
+        }
       ));
   }
 }
 
 class RouteFlyout extends StatelessWidget {
-  const RouteFlyout({super.key});
+  final List route; 
+  const RouteFlyout({super.key, required this.route});
 
   Widget _testDataRow(BreadcrumbItem<BreadcrumbValue> breadcumber, BuildContext context) {
     return HyperlinkButton(
@@ -171,8 +175,7 @@ class RouteFlyout extends StatelessWidget {
         )
       ),
       onPressed: () {
-        final index = Controller.routes.indexOf(breadcumber);
-        Controller.routes.removeRange(index + 1, Controller.routes.length);
+        route.removeRange(1, route.length);
         Navigator.of(context).pop();
         Controller.setState();
       }
@@ -196,6 +199,54 @@ class RouteFlyout extends StatelessWidget {
         children: Controller.routes
           .map((e) => _testDataRow(e, context))
           .toList()
+      )
+    );
+  }
+}
+
+class Router extends StatefulWidget {
+  final List<String> route;
+  final Map<String, Widget> struct;
+
+  const Router({
+    super.key,
+    required this.route,
+    required this.struct
+  });
+
+  @override
+  State<Router> createState() => _RouterState();
+}
+
+class _RouterState extends State<Router> {
+  String get cRoute => widget.route.last;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(animation);
+
+        final slideAnimation = (ValueKey(cRoute) != child.key) ^ widget.route.length.isOdd
+          // Fade out from left to right
+          ? Tween<Offset>(begin: const Offset(-1, 0), end: const Offset(0, 0)).animate(animation)
+          // Fade in from left to right
+          : Tween<Offset>(begin: const Offset(1, 0), end: const Offset(0, 0)).animate(animation);
+
+        return FadeTransition(
+          opacity: fadeAnimation,
+          child: SlideTransition(
+            position: slideAnimation,
+            child: child
+          ),
+        );
+      },
+      switchInCurve: Curves.fastOutSlowIn,
+      switchOutCurve: Curves.fastOutSlowIn,
+      duration: const Duration(milliseconds: 300),
+      child: PageBase(
+        key: ValueKey(cRoute),
+        child: widget.struct[cRoute.split("?").first] ?? const SizedBox()
       )
     );
   }

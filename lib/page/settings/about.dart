@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:ntut_program_assignment/core/updater.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:ntut_program_assignment/widget.dart';
@@ -66,6 +67,13 @@ class SpecialThanksState extends State<SpecialThanks> {
     return packageInfo.version;
   }
 
+  Future<void> _checkUpdate() async {
+    try {
+      await Updater.needUpdate();
+    } catch (_) {}
+    setState(() {});
+  }
+
   List<String> getInfo() {
     return [version??"載入中...", "Stable", kDebugMode ? 'Debug' : 'Release'];
   }
@@ -77,6 +85,8 @@ class SpecialThanksState extends State<SpecialThanks> {
     getAppVersion()
       .then((e) => version = e)
       .then((e) {if (mounted) setState(() {});});
+
+    _checkUpdate();
   }
 
   @override
@@ -86,6 +96,73 @@ class SpecialThanksState extends State<SpecialThanks> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Text("關於程式"),
+        const SizedBox(height: 5),
+        ThanksCard(
+          title: Updater.available.value ? "有可用的新版本" : "您處於最新版本",
+          lore: "最新版本: ${Updater.latest??'尚未檢查'}",
+          image: Container(
+            decoration: BoxDecoration(
+              color: Updater.available.value ? Colors.yellow.darkest : Colors.green.lighter,
+              borderRadius: BorderRadius.circular(30)
+            ),
+            child: Icon(Updater.available.value ? FluentIcons.upload : FluentIcons.check_mark)
+          ),
+          content: HyperlinkButton(
+            onPressed: () async {
+              final uri = Uri.parse("https://github.com/YFHD-osu/NTUT-Program-Assignment/releases/latest");
+              await launchUrl(uri);
+            },
+            child: const Text("Download"))
+        ),
+        const SizedBox(height: 5),
+        ThanksCard(
+          title: "NTUT Program Assignment",
+          lore: getInfo().join(" | "),
+          image: Image.asset(r"assets/icon@x500.png"),
+          content: HyperlinkButton(
+            onPressed: () async {
+              final uri = Uri.parse("https://github.com/YFHD-osu/NTUT-Program-Assignment");
+              await launchUrl(uri);
+            },
+            child: const Text("Source Code"))
+        ),
+        const SizedBox(height: 5),
+        ThanksCard(
+          title: "使用者條約",
+          lore: "規範用戶使用軟體的法律文件",
+          image: const Icon(FluentIcons.business_rule),
+          content: FilledButton(
+            onPressed: () async {
+              await showDialog<String>(
+                context: context,
+                builder: (context) => ContentDialog(
+                  constraints: const BoxConstraints(
+                    maxWidth: 450, maxHeight: 800
+                  ),
+                  title: const Text("使用者條約"),
+                  content: const SingleChildScrollView(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(termOfUse)
+                    )
+                  ),
+                  actions: [
+                    Button(
+                      child: const Text("同意"),
+                      onPressed: () => Navigator.of(context).pop()
+                    )
+                  ],
+                )
+              );
+            },
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 1),
+              child: Text("檢視")
+            ),
+          )
+        ),
+        const SizedBox(height: 20),
         Text(locale.settings_about_developer,),
         const SizedBox(height: 5),
         ThanksCard(
@@ -143,57 +220,6 @@ class SpecialThanksState extends State<SpecialThanks> {
           title: "428",
           lore: "我不會打程式，郭忠義我恨你。",
           image: Image.asset(r"assets/acknowledge/428.png")
-        ),
-        const SizedBox(height: 20),
-        const Text("關於程式"),
-        const SizedBox(height: 5),
-        ThanksCard(
-          title: "NTUT Program Assignment",
-          lore: getInfo().join(" | "),
-          image: Image.asset(r"assets/icon@x500.png"),
-          content: HyperlinkButton(
-            onPressed: () async {
-              final uri = Uri.parse("https://github.com/YFHD-osu/NTUT-Program-Assignment");
-              await launchUrl(uri);
-            },
-            child: const Text("Source Code"))
-        ),
-        const SizedBox(height: 20),
-        const Text("相關條款"),
-        const SizedBox(height: 5),
-        ThanksCard(
-          title: "使用者條約",
-          lore: "規範用戶使用軟體的法律文件",
-          image: const Icon(FluentIcons.business_rule),
-          content: FilledButton(
-            onPressed: () async {
-              await showDialog<String>(
-                context: context,
-                builder: (context) => ContentDialog(
-                  constraints: const BoxConstraints(
-                    maxWidth: 450, maxHeight: 800
-                  ),
-                  title: const Text("使用者條約"),
-                  content: const SingleChildScrollView(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text(termOfUse)
-                    )
-                  ),
-                  actions: [
-                    Button(
-                      child: const Text("同意"),
-                      onPressed: () => Navigator.of(context).pop()
-                    )
-                  ],
-                )
-              );
-            },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 1),
-              child: Text("檢視")
-            ),
-          )
         )
       ]
     );

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:ntut_program_assignment/core/updater.dart';
 
 import 'package:ntut_program_assignment/main.dart' show MyApp;
 import 'package:ntut_program_assignment/core/global.dart';
@@ -157,15 +158,81 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 }
 
+class UpadteNotify extends StatefulWidget {
+  const UpadteNotify({super.key});
+
+  @override
+  State<UpadteNotify> createState() => _UpadteNotifyState();
+}
+
+class _UpadteNotifyState extends State<UpadteNotify> {
+  void _onUpdateChange() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    Updater.available.addListener(_onUpdateChange);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    Updater.available.removeListener(_onUpdateChange);
+  }
+
+  Widget _context() {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10, vertical: 5
+      ),
+      decoration: BoxDecoration(
+        color: Colors.yellow.darker.withOpacity(.75),
+        borderRadius: BorderRadius.circular(8)
+      ),
+      child: const Row(
+        children: [
+          Icon(FluentIcons.upgrade_analysis),
+          SizedBox(width: 5),
+          Text("有可用的更新")
+        ]
+      )
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSlide(
+      offset: Updater.available.value ? const Offset(0, 0) : const Offset(0, 1.25),
+      duration: const Duration(milliseconds: 150),
+      child: AnimatedOpacity(
+        opacity: Updater.available.value ? 1 : 0,
+        duration: const Duration(milliseconds: 150),
+        child: _context()
+      )
+    );
+  }
+}
+
 class OptionList extends StatelessWidget {
   const OptionList({super.key});
 
   @override
   Widget build(BuildContext context) {
+    const a = true;
     return Column(
       children: [
-        AccountOverview(
-          account: GlobalSettings.account,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AccountOverview(
+              account: GlobalSettings.account,
+            ),
+            const Spacer(),
+            const UpadteNotify()
+          ]
         ),
         const SizedBox(height: 20),
         Button(
@@ -255,7 +322,7 @@ class OptionList extends StatelessWidget {
           ),
           child: Tile.lore(
             decoration: const BoxDecoration(),
-            title: "關於",
+            title: "軟體資訊",
             lore: "關於這支程式與它的貢獻者",
             icon: const Icon(FluentIcons.info),
             child: const Icon(FluentIcons.chevron_right),
@@ -266,10 +333,10 @@ class OptionList extends StatelessWidget {
             }
             Controller.routes.add(BreadcrumbItem(
               label: const Text(
-                "關於", style: TextStyle(fontSize: 30)),
+                "軟體資訊", style: TextStyle(fontSize: 30)),
               value: BreadcrumbValue(
                 index: 3,
-                label: "關於"
+                label: "軟體資訊"
               )
             ));
             Controller.setState();

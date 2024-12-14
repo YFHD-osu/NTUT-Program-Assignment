@@ -16,11 +16,11 @@ import 'package:ntut_program_assignment/main.dart' show logger;
 import 'package:ntut_program_assignment/page/homework/router.dart';
 
 class HomeworkDetail extends StatefulWidget {
-  final Homework homework;
-  
+  final List<String> route;
+
   const HomeworkDetail({
     super.key,
-    required this.homework
+    required this.route
   });
 
   @override
@@ -28,6 +28,11 @@ class HomeworkDetail extends StatefulWidget {
 }
 
 class _HomeworkDetailState extends State<HomeworkDetail> {
+  Homework get homework {
+    final index = int.parse(widget.route.last.split("?").last);
+    return Controller.homeworks[index];
+  }
+
   File? selFile;
 
   // Store the list of all student ID that passes this homework 
@@ -48,7 +53,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
       final tasks = [_loadSuccess(), _loadTest()];
       await Future.wait(tasks);
     } catch (e) {
-      GlobalSettings.showToast("無法更新列表", e.toString(), InfoBarSeverity.error);
+      GlobalSettings.showToast("資訊更新失敗", e.toString(), InfoBarSeverity.error);
       return;
     }
   }
@@ -79,21 +84,21 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
     _passList = null;
     if (mounted) setState(() {});
     
-    _passList = await widget.homework.fetchPassList();
+    _passList = await homework.fetchPassList();
     if (mounted) setState(() {});
   }
 
   Future<void> _loadTest() async {
-    _testcasesVal = await widget.homework.fetchTestcases();
+    _testcasesVal = await homework.fetchTestcases();
 
     if (mounted) setState(() {});
   }
 
   bool canDelete() {
-    switch (widget.homework.state) {
+    switch (homework.state) {
       case HomeworkState.notPassed:
       case HomeworkState.passed:
-        return DateTime.now().compareTo(widget.homework.deadline) <= 0;
+        return DateTime.now().compareTo(homework.deadline) <= 0;
 
       default:
         return false;
@@ -124,19 +129,13 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (widget.homework.description == null) {
-      return const Center(
-        child: ProgressRing()
-      );
-    }
-    
+  Widget build(BuildContext context) {   
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 5),
         OverviewCard(
-          homework: widget.homework,
+          homework: homework,
           passVal: _passList,
           testcasesVal: _testcasesVal,
 
@@ -146,7 +145,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
           style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         UploadSection(
-          homework: widget.homework
+          homework: homework
         ),
         const SizedBox(height: 10),
         const Text("題目",
@@ -154,19 +153,16 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
         const SizedBox(height: 5),
         Tile(
           width: double.infinity,
-          child: SelectableTextBox(
-            text: widget.homework.description!.problem
+          child: ProblemTextBox(
+            problem: homework.problem
           )
         ),
         const SizedBox(height: 10),
         const Text("測試",
           style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
-        const SizedBox(height: 5),
-        
-
         TestAllTile(
-          homework: widget.homework
+          homework: homework
         ),
         const SizedBox(height: 5),
         const SizedBox(height: 10),
@@ -189,17 +185,55 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
 
               logger.i("Homework deleted!");
 
-              final task = widget.homework.delete();
+              final task = homework.delete();
               setState(() {});
-              await task;
+              
+              try {
+                await task;
+              } catch (e) {
+                GlobalSettings.showToast("刪除失敗", e.toString(), InfoBarSeverity.error);
+                setState(() => homework.deleting = false);
+                return;
+              }
 
               refresh();
-              
               setState(() {});
             }
           )
         )
       ]
+    );
+  }
+}
+
+class ProblemTextBox extends StatelessWidget {
+  final List<String> problem; 
+
+  const ProblemTextBox({
+    super.key, 
+    required this.problem
+  });
+
+  InlineSpan _fetchSpan(String line) {
+    if (line.contains(RegExp("<img src=.+>"))) {
+      return WidgetSpan(child: Image.network(line.substring(10, line.length-2)));
+    }
+
+    return TextSpan(text: line);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    
+    return SelectableText.rich(
+      selectionControls: fluentTextSelectionControls,
+      TextSpan(
+        children: problem
+          .map((e) => _fetchSpan(e))
+          .expand((element) => [element, const TextSpan(text: "\n")])
+          .toList()
+          .sublist(0, problem.length*2-1)
+      )
     );
   }
 }
@@ -250,7 +284,7 @@ class _TestAllTileState extends State<TestAllTile> {
         crossAxisSpacing: 5,
         mainAxisSpacing: 5
     ),
-    children: List<int>.generate(widget.homework.description!.testCases.length, (e) => e)
+    children: List<int>.generate(widget.homework.testCases.length, (e) => e)
       .map((e) => _testcaseBtn(e))
       .toList()
   );
@@ -319,7 +353,7 @@ class _TestAllTileState extends State<TestAllTile> {
   }
 
   Widget _loreWidget() {
-    final testCases = widget.homework.description!.testCases;
+    final testCases = widget.homework.testCases;
 
     if (selFile == null) {
       return const Text("請將程式檔案拖曳到此處");
@@ -339,7 +373,7 @@ class _TestAllTileState extends State<TestAllTile> {
   }
 
   Future<void> _testAll() async {
-    final testCases = widget.homework.description!.testCases;
+    final testCases = widget.homework.testCases;
 
     setState(() => _isAllTestRunning = true);
     
@@ -356,7 +390,7 @@ class _TestAllTileState extends State<TestAllTile> {
   }
 
   Widget _testCaseOutput(int index) {
-    final testCase = widget.homework.description!.testCases[index];
+    final testCase = widget.homework.testCases[index];
 
     if (testCase.result?.error.isNotEmpty??false) {
       return Text("發生錯誤: ${testCase.result!.error.join("\n")} (${testCase.result!.error.length})");
@@ -374,7 +408,7 @@ class _TestAllTileState extends State<TestAllTile> {
   }
 
   Widget _testcaseSection(int index) {
-    final testCase = widget.homework.description!.testCases[index];
+    final testCase = widget.homework.testCases[index];
 
     return Tile(
       key: ValueKey(index),
@@ -478,7 +512,7 @@ class _TestAllTileState extends State<TestAllTile> {
   }
 
   Widget _testcaseBtn(int index) {
-    final testCase = widget.homework.description!.testCases[index];
+    final testCase = widget.homework.testCases[index];
 
     return Button(
       child: Row(
@@ -801,6 +835,7 @@ class _OverviewCardState extends State<OverviewCard> {
                 child: AnimatedSwitcher(
                   transitionBuilder: (Widget child, Animation<double> animation) {
                     final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(animation);
+                    child.key;
 
                     final slideAnimation = [const ValueKey(1), const ValueKey(3)].contains(child.key) 
                         // Fade out from left to right
@@ -827,29 +862,6 @@ class _OverviewCardState extends State<OverviewCard> {
           )
         )
       ]
-    );
-  }
-}
-
-class DetailRoute extends StatefulWidget {
-  const DetailRoute({super.key});
-
-  @override
-  State<DetailRoute> createState() => _DetailRouteState();
-}
-
-class _DetailRouteState extends State<DetailRoute> {
-  @override
-  Widget build(BuildContext context) {
-    if (Controller.routes.last.value.index >= Controller.homeworks.length) {
-      return const Text("Index out of range");
-    }
-
-    final homework = Controller.homeworks[0];
-    return PageBase(
-      child: HomeworkDetail(
-        homework: homework
-      )
     );
   }
 }
@@ -1076,7 +1088,19 @@ class _UploadSectionState extends State<UploadSection> {
       );
       if (!(isConfirmed??false)) return;
 
-      await widget.homework.delete();
+      widget.homework.deleting = true;
+      Controller.update.add(EventType.refreshOverview);
+
+      try {
+        await widget.homework.delete();
+      } on RuntimeError catch (e) {
+        widget.homework.deleting = false;
+        GlobalSettings.showToast("無法刪除作業", e.toString(), InfoBarSeverity.error);
+        Controller.update.add(EventType.refreshOverview);
+        return;
+      }
+      
+      widget.homework.deleting = false;
       Controller.update.add(EventType.refreshOverview);
     }
 

@@ -77,6 +77,7 @@ class GlobalSettings {
     if (!MyApp.ctx.mounted) {
       return null;
     }
+    
     return toastification.showCustom(
       context: MyApp.ctx,
       alignment: Alignment.bottomCenter,

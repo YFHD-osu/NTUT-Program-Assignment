@@ -8,14 +8,18 @@ import 'package:ntut_program_assignment/page/homework/router.dart';
 import 'package:ntut_program_assignment/widget.dart';
 
 class HomeworkList extends StatefulWidget {
+  final List<String> route;
 
-  const HomeworkList({super.key});
+  const HomeworkList({
+    super.key,
+    required this.route
+  });
 
   @override
   State<HomeworkList> createState() => _HomeworkListState();
 }
 
-class _HomeworkListState extends State<HomeworkList> {
+class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClientMixin{
   String? errMsg;
   double? _loadPercent;
   late bool _isReady = Controller.homeworks.isNotEmpty;
@@ -62,16 +66,16 @@ class _HomeworkListState extends State<HomeworkList> {
 
     try {
       Controller.homeworks =
-      await GlobalSettings.account!.fetchHomeworkList();
-    } on NetworkError catch (e) {
-      errMsg = e.message;
+        await GlobalSettings.account!.fetchHomeworkList();
+      await _fetchDescription();
     } on RuntimeError catch (e) {
       errMsg = e.message;
-    } catch (e) {
-      errMsg = e.toString();
+      _loadPercent = null;
+      if (mounted) setState(() {});
+      return;
     }
     
-    await _fetchDescription();
+    
     _isReady = true;
     _loadPercent = null;
 
@@ -83,16 +87,7 @@ class _HomeworkListState extends State<HomeworkList> {
     int index = 0;
     if (mounted) setState(() => _loadPercent = 0);
     for (var hw in Controller.homeworks) {
-      if (hw.description != null) continue;
-      try {
-        await hw.fetchHomeworkDetail();
-      } on LoginProcessingError catch (e) {
-        e.message;
-      } on NetworkError catch (e) {
-        e.message;
-      } catch (e) {
-        e.toString();
-      }
+      await hw.fetchHomeworkDetail();
 
       index ++;
       if (mounted) setState(() => _loadPercent = index/sum*100);
@@ -118,6 +113,7 @@ class _HomeworkListState extends State<HomeworkList> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: notPasses
               .map((e) => ListItem(
+                route: widget.route,
                 homework: e
               ))
               .toList()
@@ -146,7 +142,10 @@ class _HomeworkListState extends State<HomeworkList> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: passed
-              .map((e) => ListItem(homework: e))
+              .map((e) => ListItem(
+                route: widget.route,
+                homework: e
+              ))
               .toList()
           )
         )
@@ -231,6 +230,8 @@ class _HomeworkListState extends State<HomeworkList> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     if (GlobalSettings.isLoggingIn) {
       return const Center(
         child: Column(
@@ -307,15 +308,20 @@ class _HomeworkListState extends State<HomeworkList> {
         _passedHws()
     ]);
   }
+  
+  @override
+  bool get wantKeepAlive => true;
 
 }
 
 class ListItem extends StatefulWidget {
   final Homework homework;
+  final List<String> route;
 
   const ListItem({
     super.key,
-    required this.homework
+    required this.homework,
+    required this.route
   });
 
   @override
@@ -323,13 +329,9 @@ class ListItem extends StatefulWidget {
 }
 
 class _ListItemState extends State<ListItem> {
-  String? _errorMsg;
 
   String fetchTitle() {
-    if (_errorMsg != null && widget.homework.description == null) {
-      return "${widget.homework.number} 無法加載詳細資料";
-    }
-    return "${widget.homework.number} ${widget.homework.description?.title??''}";
+    return "${widget.homework.number} ${widget.homework.title??''}";
   }
 
   String fetchDeadline() {
@@ -382,16 +384,17 @@ class _ListItemState extends State<ListItem> {
         child: const Icon(FluentIcons.chevron_right),
       ),
       onPressed: () {
-        if (Controller.routes.length > 1) {
+        if (widget.route.length > 1) {
           return;
         }
         
-        Controller.routes.add(BreadcrumbItem(
-          label: Text(
-            "${widget.homework.number} ${widget.homework.description?.title??''}",
-            style: const TextStyle(fontSize: 30)),
-          value: BreadcrumbValue(label: "${widget.homework.number} ${widget.homework.description?.title??''}", index: widget.homework.id-1)
-        ));
+        // Controller.routes.add(BreadcrumbItem(
+        //   label: Text(
+        //     "${widget.homework.number} ${widget.homework.description?.title??''}",
+        //     style: const TextStyle(fontSize: 30)),
+        //   value: BreadcrumbValue(label: "${widget.homework.number} ${widget.homework.description?.title??''}", index: widget.homework.id-1)
+        // ));
+        widget.route.add("hwDetail?${widget.homework.id-1}");
         Controller.setState();
       }
     );

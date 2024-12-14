@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:logger/logger.dart' show Logger, PrettyPrinter, DateTimeFormat, Level;
+import 'package:ntut_program_assignment/core/updater.dart';
 
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -58,7 +59,7 @@ void main() async {
   // await FireBaseData.initialize();
   await GlobalSettings.initialize();
   await ThemeProvider.instance.initialize();
-  
+
   runApp(const MyApp());
 }
 
@@ -103,11 +104,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   int _index = 0;
   PaneDisplayMode _mode = PaneDisplayMode.compact;
   
+  Future<void> _fetchUpdate() async {
+    final need = await Updater.needUpdate();
+    if (!need) return;
+
+    GlobalSettings.showToast("更新可用", "有新的版本可用", InfoBarSeverity.info);
+  }
+
   @override
   void initState() {
     super.initState();
     _sub = GlobalSettings.stream.listen(_onUpdate);
     WidgetsBinding.instance.addObserver(this);
+    _fetchUpdate();
   }
 
   @override
@@ -257,7 +266,19 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             icon: const Icon(FluentIcons.settings),
             title: Text(MyApp.locale.sidebar_settings_title),
             body: const SettingsPage(),
-            enabled: true)
+            enabled: true,
+            infoBadge: ListenableBuilder(
+              listenable: Updater.available,
+              builder: (context, child) => Container(
+                width: Updater.available.value ? 11 : 0,
+                height: Updater.available.value ? 11 : 0,
+                decoration: BoxDecoration(
+                  color: Colors.yellow.darkest,
+                  borderRadius: BorderRadius.circular(20)
+                ),
+              )
+            )
+          )
         ],
         selected: _index,
         onChanged: (i) => setState(() => _index=i) 
