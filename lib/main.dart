@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:logger/logger.dart' show Logger, PrettyPrinter, DateTimeFormat, Level;
-import 'package:ntut_program_assignment/core/updater.dart';
 
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -13,9 +12,10 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/core/updater.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
-import 'package:ntut_program_assignment/page/homework/router.dart';
-import 'package:ntut_program_assignment/page/settings/router.dart';
+import 'package:ntut_program_assignment/page/homework/page.dart';
+import 'package:ntut_program_assignment/page/settings/page.dart';
 import 'package:ntut_program_assignment/core/logger.dart' show FileOutput;
 
 late final Logger logger;
@@ -101,8 +101,16 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   late StreamSubscription _sub;
   
-  int _index = 0;
   PaneDisplayMode _mode = PaneDisplayMode.compact;
+
+  final routeMap = {
+    "hwlist": 0,
+    "handdedIn": 1,
+    "score": 2,
+    "comments": 3,
+    "changePassword": 4,
+    "settings": 5
+  };
   
   Future<void> _fetchUpdate() async {
     final need = await Updater.needUpdate();
@@ -111,11 +119,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     GlobalSettings.showToast("更新可用", "有新的版本可用，移至設定查看", InfoBarSeverity.info);
   }
 
+  void _setState() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
     _sub = GlobalSettings.stream.listen(_onUpdate);
     WidgetsBinding.instance.addObserver(this);
+    GlobalSettings.route.addListener(_setState);
     _fetchUpdate();
   }
 
@@ -123,6 +137,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void dispose() {
     _sub.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    GlobalSettings.route.removeListener(_setState);
     super.dispose();
   }
   
@@ -237,7 +252,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           PaneItem(
             icon: const Icon(FluentIcons.backlog_list),
             title: Text(MyApp.locale.sidebar_homework_title),
-            body: const HomeworkRoute()
+            body: const HomeworkPage()
           ),
           PaneItem(
             icon: const Icon(FluentIcons.info),
@@ -280,8 +295,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             )
           )
         ],
-        selected: _index,
-        onChanged: (i) => setState(() => _index=i) 
+        selected: routeMap[GlobalSettings.route.root]??0,
+        onChanged: (i) => GlobalSettings.route.root = routeMap.keys.toList()[i] 
       ));
   }
 }

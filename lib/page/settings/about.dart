@@ -52,14 +52,14 @@ const String termOfUse = """
 8.1 如對本使用者條款有任何疑問或需要進一步資訊，請聯絡我們的客服部門：[沒有聯絡資訊]。
 """;
 
-class SpecialThanks extends StatefulWidget {
-  const SpecialThanks({super.key});
+class AboutRoute extends StatefulWidget {
+  const AboutRoute({super.key});
 
   @override
-  State<SpecialThanks> createState() => SpecialThanksState();
+  State<AboutRoute> createState() => AboutRouteState();
 }
 
-class SpecialThanksState extends State<SpecialThanks> {
+class AboutRouteState extends State<AboutRoute> {
   String? version;
 
   Future<String> getAppVersion() async {

@@ -4,6 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/core/database.dart';
 import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
+import 'package:ntut_program_assignment/router.dart';
 import 'package:toastification/toastification.dart';
 
 enum GlobalEvent {
@@ -22,6 +23,7 @@ class GlobalSettings {
   static final stream = update.stream.asBroadcastStream();
 
   static final prefs = Preferences();
+  static final route = RouterController(root: "hwList");
 
   static bool get isLogin =>
     account != null ;

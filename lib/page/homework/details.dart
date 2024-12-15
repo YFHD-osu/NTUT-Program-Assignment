@@ -13,14 +13,11 @@ import 'package:animated_flip_counter/animated_flip_counter.dart';
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/main.dart' show logger;
-import 'package:ntut_program_assignment/page/homework/router.dart';
+import 'package:ntut_program_assignment/page/homework/page.dart';
 
 class HomeworkDetail extends StatefulWidget {
-  final List<String> route;
-
   const HomeworkDetail({
-    super.key,
-    required this.route
+    super.key
   });
 
   @override
@@ -28,10 +25,8 @@ class HomeworkDetail extends StatefulWidget {
 }
 
 class _HomeworkDetailState extends State<HomeworkDetail> {
-  Homework get homework {
-    final index = int.parse(widget.route.last.split("?").last);
-    return Controller.homeworks[index];
-  }
+  Homework get homework =>
+    homeworks[GlobalSettings.route.current.parameter?["id"]??0];
 
   File? selFile;
 
@@ -61,7 +56,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   @override
   void initState() {
     super.initState();
-    _sub = Controller.stream.listen(_onEvent);
+    _sub = stream.listen(_onEvent);
     refresh();
   }
 
@@ -1124,31 +1119,31 @@ class _UploadSectionState extends State<UploadSection> {
       if (!(isConfirmed??false)) return;
 
       widget.homework.deleting = true;
-      Controller.update.add(EventType.refreshOverview);
+      update.add(EventType.refreshOverview);
 
       try {
         await widget.homework.delete();
       } on RuntimeError catch (e) {
         widget.homework.deleting = false;
         GlobalSettings.showToast("無法刪除作業", e.toString(), InfoBarSeverity.error);
-        Controller.update.add(EventType.refreshOverview);
+        update.add(EventType.refreshOverview);
         return;
       }
       
       widget.homework.deleting = false;
-      Controller.update.add(EventType.refreshOverview);
+      update.add(EventType.refreshOverview);
     }
 
     // var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
     var myFile = File(path.toString().replaceAll(r"file:///", "").replaceAll("%20", " "));
 
     widget.homework.submitting = true;
-    Controller.update.add(EventType.setStateDetail);
+    update.add(EventType.setStateDetail);
 
     await _uploadFile(myFile);
 
     GlobalSettings.update.add(GlobalEvent.setHwState);
-    Controller.update.add(EventType.refreshOverview);
+    update.add(EventType.refreshOverview);
   }
 
   Future<void> _uploadFile(File file) async{

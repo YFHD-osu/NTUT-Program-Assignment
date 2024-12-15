@@ -4,16 +4,11 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 
-import 'package:ntut_program_assignment/page/homework/router.dart';
 import 'package:ntut_program_assignment/widget.dart';
+import 'package:ntut_program_assignment/page/homework/page.dart';
 
 class HomeworkList extends StatefulWidget {
-  final List<String> route;
-
-  const HomeworkList({
-    super.key,
-    required this.route
-  });
+  const HomeworkList({super.key});
 
   @override
   State<HomeworkList> createState() => _HomeworkListState();
@@ -22,14 +17,14 @@ class HomeworkList extends StatefulWidget {
 class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClientMixin{
   String? errMsg;
   double? _loadPercent;
-  late bool _isReady = Controller.homeworks.isNotEmpty;
+  late bool _isReady = homeworks.isNotEmpty;
   late StreamSubscription _sub;
 
   @override
   void initState() {
     super.initState();
     _sub = GlobalSettings.stream.listen(_onGlobalEvent);
-    if (Controller.homeworks.isEmpty) {
+    if (homeworks.isEmpty) {
       _refresh();
     }
   }
@@ -58,14 +53,14 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
       return;
     }
 
-    Controller.homeworks.clear();
+    homeworks.clear();
     
     errMsg = null;
     _loadPercent = 0;
     setState(() => _isReady = false);
 
     try {
-      Controller.homeworks =
+      homeworks =
         await GlobalSettings.account!.fetchHomeworkList();
       await _fetchDescription();
     } on RuntimeError catch (e) {
@@ -83,10 +78,10 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   }
 
   Future<void> _fetchDescription() async {
-    final sum = Controller.homeworks.length;
+    final sum = homeworks.length;
     int index = 0;
     if (mounted) setState(() => _loadPercent = 0);
-    for (var hw in Controller.homeworks) {
+    for (var hw in homeworks) {
       await hw.fetchHomeworkDetail();
 
       index ++;
@@ -95,7 +90,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   }
 
   Widget _pendingHws() {
-    final notPasses = Controller.homeworks
+    final notPasses = homeworks
       .where((e) => !e.isPass);
 
     if (notPasses.isEmpty) {
@@ -112,10 +107,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: notPasses
-              .map((e) => ListItem(
-                route: widget.route,
-                homework: e
-              ))
+              .map((e) => ListItem(homework: e))
               .toList()
           )
         )
@@ -124,7 +116,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   }
 
   Widget _passedHws() {
-    final passed = Controller.homeworks
+    final passed = homeworks
       .reversed
       .where((e) => e.isPass);
 
@@ -142,10 +134,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: passed
-              .map((e) => ListItem(
-                route: widget.route,
-                homework: e
-              ))
+              .map((e) => ListItem(homework: e))
               .toList()
           )
         )
@@ -154,9 +143,9 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   }
 
   Widget _overviewCard() {
-    final passes = Controller.homeworks.where((e) => e.isPass);
+    final passes = homeworks.where((e) => e.isPass);
 
-    final passRate = passes.length / Controller.homeworks.length * 100;
+    final passRate = passes.length / homeworks.length * 100;
     return Row(
       children: [
         Container(
@@ -186,7 +175,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
               Row(
                 children: [
                   const Spacer(),
-                  Text("${passes.length}/${Controller.homeworks.length}",
+                  Text("${passes.length}/${homeworks.length}",
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 10),
                   const Text("完成比"),
@@ -213,7 +202,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Spacer(),
-                  Text("${Controller.homeworks.length-passes.length}",
+                  Text("${homeworks.length-passes.length}",
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 10),
                   const Text("未通過"),
@@ -246,13 +235,21 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
     }
 
     if (GlobalSettings.account == null) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(FluentIcons.account_management, size: 50),
-            SizedBox(height: 15),
-            Text("請先移至設定 > 帳戶登入帳號")
+            const Icon(FluentIcons.account_management, size: 50),
+            const SizedBox(height: 15),
+            const Text("尚未登入任何帳號"),
+            const SizedBox(height: 5),
+            HyperlinkButton(
+              onPressed: () {
+                GlobalSettings.route.root = "settings";
+                GlobalSettings.route.push("account", title: "帳號");
+              },
+              child: const Text("前往登入"),
+            )
           ]
         )
       );
@@ -316,12 +313,10 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
 
 class ListItem extends StatefulWidget {
   final Homework homework;
-  final List<String> route;
 
   const ListItem({
     super.key,
-    required this.homework,
-    required this.route
+    required this.homework
   });
 
   @override
@@ -384,18 +379,14 @@ class _ListItemState extends State<ListItem> {
         child: const Icon(FluentIcons.chevron_right),
       ),
       onPressed: () {
-        if (widget.route.length > 1) {
+        if (GlobalSettings.route.current.name == "hwDetail") {
           return;
         }
-        
-        // Controller.routes.add(BreadcrumbItem(
-        //   label: Text(
-        //     "${widget.homework.number} ${widget.homework.description?.title??''}",
-        //     style: const TextStyle(fontSize: 30)),
-        //   value: BreadcrumbValue(label: "${widget.homework.number} ${widget.homework.description?.title??''}", index: widget.homework.id-1)
-        // ));
-        widget.route.add("hwDetail?${widget.homework.id-1}");
-        Controller.setState();
+        GlobalSettings.route.push(
+          "hwDetail",
+          title: "${widget.homework.number} ${widget.homework.title}", 
+          parameter: {"id": widget.homework.id-1},
+        );
       }
     );
   }
