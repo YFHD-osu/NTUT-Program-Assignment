@@ -85,7 +85,7 @@ void main() async {
     await hws.first.fetchHomeworkDetail();
     logger.i(hws.first);
 
-    expect(hws.first != null, true);
+    expect(hws.first, true);
   });
 
   test('Fetch success list', () async {

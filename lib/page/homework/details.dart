@@ -151,20 +151,35 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
         const Text("題目",
           style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
-        Tile(
-          width: double.infinity,
-          child: ProblemTextBox(
-            problem: homework.problem
-          )
+        ProblemBox(
+          problem: homework.problem
         ),
         const SizedBox(height: 10),
         const Text("測試",
           style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
-        TestAllTile(
+        TestArea(
           homework: homework
         ),
+        const SizedBox(height: 10),
+        const Text("複製區域",
+          style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
+        Row(
+          children: [
+            CopyButton(
+              title: "複製整個題目",
+              context: homework.problem.join("\n")
+            ),
+            const SizedBox(width: 10),
+            CopyButton(
+              title: "複製所有測資",
+              context: List<int>.generate(homework.testCases.length, (i) => i)
+                .map((i) => "測試資料 ${i+1}\n${homework.testCases[i]}")
+                .join("\n\n")
+            )
+          ]
+        ),
         const SizedBox(height: 10),
         const Text("危險區域",
           style: TextStyle(fontWeight: FontWeight.bold)),
@@ -206,62 +221,25 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   }
 }
 
-class ProblemTextBox extends StatelessWidget {
-  final List<String> problem; 
-
-  const ProblemTextBox({
-    super.key, 
-    required this.problem
-  });
-
-  InlineSpan _fetchSpan(String line) {
-    if (line.contains(RegExp("<img src=.+>"))) {
-      return WidgetSpan(child: Image.network(line.substring(10, line.length-2)));
-    }
-
-    return TextSpan(text: line);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    
-    return SelectableText.rich(
-      selectionControls: fluentTextSelectionControls,
-      TextSpan(
-        children: problem
-          .map((e) => _fetchSpan(e))
-          .expand((element) => [element, const TextSpan(text: "\n")])
-          .toList()
-          .sublist(0, problem.length*2-1)
-      )
-    );
-  }
-}
-
-class TestAllTile extends StatefulWidget {
-  final Homework homework;
-
-  const TestAllTile({
+class CopyButton extends StatefulWidget {
+  final String? title;
+  final String context;
+  
+  const CopyButton({
     super.key,
-    required this.homework
+    this.title,
+    required this.context
   });
 
   @override
-  State<TestAllTile> createState() => _TestAllTileState();
+  State<CopyButton> createState() => _CopyButtonState();
 }
 
-class _TestAllTileState extends State<TestAllTile> {
-  File? selFile;
-  bool _isAllTestRunning = false;
+class _CopyButtonState extends State<CopyButton> {
+  bool copyState = false;
 
-  bool _isDragOver = false;
-
-  int _selectTestcase = 0;
-
-  List<bool> copyState = [false, false];
-
-  Widget _copyIcon(bool key) {
-    if (!key) {
+  Widget _copyIcon() {
+    if (!copyState) {
       return const SizedBox.square(
         key: ValueKey(1),
         dimension: 25,
@@ -275,6 +253,93 @@ class _TestAllTileState extends State<TestAllTile> {
       child:  Icon(FluentIcons.check_mark)
     );
   }
+
+  List<Widget> _title() {
+    if (widget.title == null) return [];
+    return [
+      const SizedBox(width: 10),
+      Text(widget.title!)
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Button(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 100),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _copyIcon(),
+            ..._title()
+          ]
+        )
+      ),
+      onPressed: () async {
+        await Clipboard.setData(ClipboardData(text: widget.context));
+        setState(() => copyState = true);
+        await Future.delayed(const Duration(milliseconds: 800));
+        setState(() => copyState = false);
+      }
+    );
+  }
+}
+
+class ProblemBox extends StatelessWidget {
+  final List<String> problem;
+
+  const ProblemBox({
+    super.key,
+    required this.problem
+  });
+
+  InlineSpan _fetchSpan(String line) {
+    if (line.contains(RegExp("<img src=.+>"))) {
+      return WidgetSpan(child: Image.network(line.substring(10, line.length-2)));
+    }
+    return TextSpan(text: line, style: const TextStyle(fontFamily: "FiraCode"));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    
+    return Tile(
+      width: double.infinity,
+      child: SelectableText.rich(
+        selectionControls: fluentTextSelectionControls,
+        TextSpan(
+          style: TextStyle(
+            fontSize: 14 * GlobalSettings.prefs.problemTextFactor
+          ),
+          children: problem
+            .map((e) => _fetchSpan(e))
+            .expand((element) => [element, const TextSpan(text: "\n")])
+            .toList()
+            .sublist(0, problem.length*2-1)
+        )
+      ) 
+    );
+  }
+}
+
+class TestArea extends StatefulWidget {
+  final Homework homework;
+
+  const TestArea({
+    super.key,
+    required this.homework
+  });
+
+  @override
+  State<TestArea> createState() => _TestAreaState();
+}
+
+class _TestAreaState extends State<TestArea> {
+  bool _isAllTestRunning = false;
+
+  bool _isDragOver = false;
+
+  int _selectTestcase = 0;
 
   Widget _testcaseBtns() => GridView(
     shrinkWrap : true,
@@ -335,7 +400,7 @@ class _TestAllTileState extends State<TestAllTile> {
   Future<void> _onLoad(path) async {
     var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
 
-    selFile = myFile;
+    widget.homework.testFile = myFile;
     // final tasks = [_homework.upload(myFile), _setKeyState()];
     // await Future.wait(tasks);
 
@@ -355,7 +420,7 @@ class _TestAllTileState extends State<TestAllTile> {
   Widget _loreWidget() {
     final testCases = widget.homework.testCases;
 
-    if (selFile == null) {
+    if (widget.homework.testFile == null) {
       return const Text("請將程式檔案拖曳到此處");
     }
 
@@ -378,7 +443,7 @@ class _TestAllTileState extends State<TestAllTile> {
     setState(() => _isAllTestRunning = true);
     
     final tasks = testCases
-      .map((e) => e.exec(selFile!));
+      .map((e) => e.exec(widget.homework.testFile!));
     
     try {
       await Future.wait(tasks);
@@ -398,6 +463,7 @@ class _TestAllTileState extends State<TestAllTile> {
 
     if (testCase.hasOutput) {
       return PrettyDiffText(
+        textWidthBasis: TextWidthBasis.longestLine,
         defaultTextStyle: const TextStyle(color: Colors.white, fontFamily: "FiraCode"),
         oldText: testCase.result!.output.join("\n"),
         newText: testCase.output
@@ -433,65 +499,33 @@ class _TestAllTileState extends State<TestAllTile> {
           const SizedBox(height: 10),
           const Text("輸入"),
           const SizedBox(height: 5),
-          Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: SelectableTextBox(text: testCase.input)
-              ),
-              Button(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 100),
-                  child: _copyIcon(copyState.first)
-                ),
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: testCase.input));
-                  setState(() => copyState.first = true);
-                  await Future.delayed(const Duration(milliseconds: 800));
-                  setState(() => copyState.first = false);
-                }
-              )
-            ]
+          SizedBox(
+            width: double.infinity,
+            child: SelectableTextBox(
+              text: testCase.input,
+              suffix: CopyButton(context: testCase.input)
+            )
           ),
           const SizedBox(height: 10),
           const Text("輸出"),
           const SizedBox(height: 5),
-          Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: SelectableTextBox(text: testCase.output)
-              ),
-              Button(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 100),
-                  child: _copyIcon(copyState.last)
-                ),
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: testCase.output));
-                  setState(() => copyState.last = true);
-                  await Future.delayed(const Duration(milliseconds: 800));
-                  setState(() => copyState.last = false);
-                }
-              )
-            ]
+          SizedBox(
+            width: double.infinity,
+            child: SelectableTextBox(
+            text: testCase.output,
+            suffix: CopyButton(context: testCase.output)
+          )
           ),
           const SizedBox(height: 10),
           const Text("測試結果"),
           const SizedBox(height: 5),
-          Stack(
-            alignment: Alignment.bottomRight,
+          Row(
             children: [
-              SizedBox(
-                width: double.infinity,
-                child: _testCaseOutput(index)
-              ),
+              Expanded(child: _testCaseOutput(index)),
               Button(
-                onPressed: selFile==null ? null : () async {
+                onPressed: widget.homework.testFile==null ? null : () async {
                   try {
-                    await testCase.exec(selFile!);
+                    await testCase.exec(widget.homework.testFile!);
                   } on TestException catch (e) {
                     GlobalSettings.showToast("測試${index+1} ", e.message, InfoBarSeverity.error);
                     return;
@@ -503,7 +537,8 @@ class _TestAllTileState extends State<TestAllTile> {
                   dimension: 25,
                   child: Icon(FluentIcons.play)
                 )
-              )
+              ),
+              const SizedBox(width: 5)
             ]
           )
         ]
@@ -552,7 +587,7 @@ class _TestAllTileState extends State<TestAllTile> {
               _loreWidget(),
               const SizedBox(width: 10),
               FilledButton(
-                onPressed: selFile == null ? null : _testAll,
+                onPressed: widget.homework.testFile == null ? null : _testAll,
                 child: const Text("開始測試")
               )
             ]

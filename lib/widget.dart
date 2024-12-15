@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
+import 'package:ntut_program_assignment/core/global.dart';
 
 import 'package:ntut_program_assignment/main.dart' show MyApp;
 import 'package:ntut_program_assignment/provider/theme.dart';
@@ -312,11 +313,15 @@ class PageBase extends StatelessWidget {
 }
 
 class SelectableTextBox extends StatelessWidget {
+  final Widget? suffix;
   final String text;
+  final double? textFactor;
   
   const SelectableTextBox({
     super.key,
-    required this.text
+    required this.text,
+    this.suffix,
+    this.textFactor = 1
   });
 
   @override
@@ -327,8 +332,9 @@ class SelectableTextBox extends StatelessWidget {
 
     return IntrinsicWidth(
       child: TextBox(
-        style: const TextStyle(
-          fontFamily: "FiraCode"
+        style: TextStyle(
+          fontFamily: "FiraCode",
+          fontSize: 14 * GlobalSettings.prefs.testcaseTextFactor
         ),
         readOnly: true,
         maxLength: 9999,
@@ -349,7 +355,8 @@ class SelectableTextBox extends StatelessWidget {
         ),
         controller: TextEditingController(
           text: text
-        )
+        ),
+        suffix: suffix,
       )
     );
   }

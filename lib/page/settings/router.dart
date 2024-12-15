@@ -221,7 +221,6 @@ class OptionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const a = true;
     return Column(
       children: [
         Row(

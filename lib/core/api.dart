@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:intl/intl.dart';
 
@@ -301,46 +300,10 @@ class Testcase {
 
     return result!;
   }
-}
 
-class Description {
-  final String? title;
-  final String problem;
-  final List<Testcase> testCases;
-
-  Description({
-    required this.title,
-    required this.problem,
-    required this.testCases
-  });
-
-  factory Description.fromRaw(Bs4Element raw, Homework homework) {
-    final meta = raw.children.map((e) => e.name);
-
-    final filtered = raw.text.split("\n")
-      .map((e) => e.trim())
-      .join("\n");
-
-    final lines = filtered.split("\n");
-    final titleList = lines.where((e) => e .contains(homework.number));
-    final title = (titleList.isEmpty ? null : titleList.first)
-      ?.replaceAll(homework.number, "")
-      .trim();
-    
-    final desc = filtered.replaceFirst(homework.number, "").trim();
-
-    final regExp = RegExp(r"【測試資料.+】");
-    final res = desc.split(regExp);
-
-    return Description(
-      title: title,
-      problem: res.first
-        .replaceFirst(title??"", "")
-        .trim(),
-      testCases: res.sublist(1)
-        .map((e) => Testcase.parse(e.trim()))
-        .toList()
-    );
+  @override
+  String toString() {
+    return "輸入: \n$input \n\n輸出:\n$output";
   }
 }
 
@@ -389,6 +352,8 @@ class Homework {
 
   bool deleting = false;
   bool submitting = false;
+
+  File? testFile;
 
   bool get isPass =>
     status == "通過";
@@ -484,6 +449,14 @@ class Homework {
       
       index++;
     }
+
+    testCases.add(Testcase.parse(
+      ctx
+        .sublist(start, index)
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .join("\n")
+    ));
 
     return;
   }

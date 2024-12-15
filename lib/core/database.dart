@@ -117,6 +117,26 @@ class Preferences {
     database.put("autoLogin", v);
   }
 
+  late double _problemTextFactor;
+
+  double get problemTextFactor =>
+    _problemTextFactor;
+  
+  set problemTextFactor(double v) {
+    _problemTextFactor = v;
+    database.put("problemTextFactor", v);
+  }
+  
+  late double _testcaseTextFactor;
+
+  double get testcaseTextFactor =>
+    _testcaseTextFactor;
+  
+  set testcaseTextFactor(double v) {
+    _testcaseTextFactor = v;
+    database.put("testcaseTextFactor", v);
+  }
+
   Future<void> initialize() async {
     await database.initialize();
     await refresh();
@@ -131,5 +151,8 @@ class Preferences {
     _themeMode = ThemeMode.values[map['themeMode']??0];
     _windowEffect = WindowEffect.values[map['windowEffect'] ?? defaultEffect.index];
     _autoLogin = map['autoLogin'];
+
+    _problemTextFactor = map['problemTextFactor'] ?? 1.0;
+    _testcaseTextFactor = map['problemTextFactor'] ?? 1.0;
   }
 }
