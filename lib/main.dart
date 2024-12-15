@@ -108,7 +108,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final need = await Updater.needUpdate();
     if (!need) return;
 
-    GlobalSettings.showToast("更新可用", "有新的版本可用", InfoBarSeverity.info);
+    GlobalSettings.showToast("更新可用", "有新的版本可用，移至設定查看", InfoBarSeverity.info);
   }
 
   @override

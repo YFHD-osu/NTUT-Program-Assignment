@@ -196,7 +196,7 @@ class _UpadteNotifyState extends State<UpadteNotify> {
         children: [
           Icon(FluentIcons.upgrade_analysis),
           SizedBox(width: 5),
-          Text("有可用的更新")
+          Text("有可用的更新，請至軟體資訊查看更新")
         ]
       )
     );
