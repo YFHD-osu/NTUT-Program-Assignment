@@ -12,7 +12,7 @@ import 'package:animated_flip_counter/animated_flip_counter.dart';
 
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
-import 'package:ntut_program_assignment/main.dart' show logger;
+import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
 import 'package:ntut_program_assignment/page/homework/page.dart';
 
 class HomeworkDetail extends StatefulWidget {
@@ -48,7 +48,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
       final tasks = [_loadSuccess(), _loadTest()];
       await Future.wait(tasks);
     } catch (e) {
-      GlobalSettings.showToast("資訊更新失敗", e.toString(), InfoBarSeverity.error);
+      MyApp.showToast("資訊更新失敗", e.toString(), InfoBarSeverity.error);
       return;
     }
   }
@@ -176,6 +176,13 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
           ]
         ),
         const SizedBox(height: 10),
+        const Text("作業狀態",
+          style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        StateSection(
+          homework: homework
+        ),
+        const SizedBox(height: 10),
         const Text("危險區域",
           style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
@@ -201,7 +208,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
               try {
                 await task;
               } catch (e) {
-                GlobalSettings.showToast("刪除失敗", e.toString(), InfoBarSeverity.error);
+                MyApp.showToast("刪除失敗", e.toString(), InfoBarSeverity.error);
                 setState(() => homework.deleting = false);
                 return;
               }
@@ -211,6 +218,51 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
             }
           )
         )
+      ]
+    );
+  }
+}
+
+class StateSection extends StatefulWidget {
+  final Homework homework;
+
+  const StateSection({
+    super.key,
+    required this.homework
+  });
+
+  @override
+  State<StateSection> createState() => _StateSectionState();
+}
+
+class _StateSectionState extends State<StateSection> {
+  HomeworkStatus get state =>
+    widget.homework.fileState!;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Tile.lore(
+          title: "修編檔案名稱",
+          lore: "這份作業在伺服器端的修編檔案名稱",
+          icon: const Icon(FluentIcons.rename),
+          child: Text(state.filename)
+        ),
+        const SizedBox(height: 5),
+        Tile.lore(
+          title: "檔案處理狀態",
+          lore: "目前檔案在伺服器的人工處理階段狀態",
+          icon: const Icon(FluentIcons.process),
+          child: Text(state.status.replaceAll("刪除", "可以變更"))
+        ),
+        const SizedBox(height: 5),
+        Tile.lore(
+          title: "檔案上傳時間",
+          lore: "最新一份程式碼的上傳時間",
+          icon: const Icon(FluentIcons.date_time),
+          child: Text(state.date.toString())
+        ),
       ]
     );
   }
@@ -522,7 +574,7 @@ class _TestAreaState extends State<TestArea> {
                   try {
                     await testCase.exec(widget.homework.testFile!);
                   } on TestException catch (e) {
-                    GlobalSettings.showToast("測試${index+1} ", e.message, InfoBarSeverity.error);
+                    MyApp.showToast("測試${index+1} ", e.message, InfoBarSeverity.error);
                     return;
                   }
                   // print(result.output.join("\n"));
@@ -1125,7 +1177,7 @@ class _UploadSectionState extends State<UploadSection> {
         await widget.homework.delete();
       } on RuntimeError catch (e) {
         widget.homework.deleting = false;
-        GlobalSettings.showToast("無法刪除作業", e.toString(), InfoBarSeverity.error);
+        MyApp.showToast("無法刪除作業", e.toString(), InfoBarSeverity.error);
         update.add(EventType.refreshOverview);
         return;
       }
@@ -1152,7 +1204,7 @@ class _UploadSectionState extends State<UploadSection> {
     } on LoginProcessingError catch (_) {
       return await widget.homework.upload(file);
     } catch (e) {
-      GlobalSettings.showToast("無法上傳作業", e.toString(), InfoBarSeverity.error);
+      MyApp.showToast("無法上傳作業", e.toString(), InfoBarSeverity.error);
       return;
     }
     

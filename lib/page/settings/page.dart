@@ -16,6 +16,7 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const FluentNavigation(
+      title: "設定",
       struct: {
           "default": OptionList(),
           "account": AccountRoute(),

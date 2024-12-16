@@ -4,6 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:logger/logger.dart' show Logger, PrettyPrinter, DateTimeFormat, Level;
 
 import 'package:provider/provider.dart';
+import 'package:toastification/toastification.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -66,8 +67,64 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  static late AppLocalizations locale;
   static late BuildContext ctx;
+  static late AppLocalizations locale;
+
+  static ToastificationItem? showToast(String title, String message, InfoBarSeverity level) {
+    if (!MyApp.ctx.mounted) {
+      return null;
+    }
+    
+    return toastification.showCustom(
+      context: MyApp.ctx,
+      alignment: Alignment.bottomCenter,
+      autoCloseDuration: const Duration(seconds: 5),
+      builder: (BuildContext context, ToastificationItem holder) {
+        return Container(
+          width: 500,
+          margin: const EdgeInsets.symmetric(vertical: 5),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: const Color.fromRGBO(39, 39, 39, 1),
+          ),
+          child: InfoBar(
+            isLong: false,
+            title: Text(title),
+            content: Text(message),
+            severity: level
+          )
+        );
+      },
+    );
+  }
+
+  static ToastificationItem? showSpanToast(InlineSpan title, InlineSpan message, InfoBarSeverity level) {
+    if (!MyApp.ctx.mounted) {
+      return null;
+    }
+    
+    return toastification.showCustom(
+      context: MyApp.ctx,
+      alignment: Alignment.bottomCenter,
+      autoCloseDuration: const Duration(seconds: 5),
+      builder: (BuildContext context, ToastificationItem holder) {
+        return Container(
+          width: 500,
+          margin: const EdgeInsets.symmetric(vertical: 5),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: const Color.fromRGBO(39, 39, 39, 1),
+          ),
+          child: InfoBar(
+            isLong: false,
+            title: RichText(text: title),
+            content: RichText(text: message),
+            severity: level
+          )
+        );
+      },
+    );
+  }
 
   // This widget is the root of your application.
   @override
@@ -105,18 +162,39 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   final routeMap = {
     "hwlist": 0,
-    "handdedIn": 1,
-    "score": 2,
-    "comments": 3,
-    "changePassword": 4,
-    "settings": 5
+    "score": 1,
+    "comments": 2,
+    "changePassword": 3,
+    "settings": 4
   };
   
   Future<void> _fetchUpdate() async {
     final need = await Updater.needUpdate();
     if (!need) return;
 
-    GlobalSettings.showToast("更新可用", "有新的版本可用，移至設定查看", InfoBarSeverity.info);
+    MyApp.showSpanToast(
+      const TextSpan(text: "更新可用"),
+      TextSpan(
+        children: [
+          const WidgetSpan(child: Padding(
+            padding: EdgeInsets.only(bottom: 3.5),
+            child: Text("新的版本已經推出,")
+          )),
+          WidgetSpan(child: HyperlinkButton(
+            child: const Text("前往設定"),
+            onPressed: () {
+              GlobalSettings.route.root = "settings";
+              GlobalSettings.route.push("about", title: "軟體資訊");
+            }
+          )),
+          const WidgetSpan(child: Padding(
+            padding: EdgeInsets.only(bottom: 3.5),
+            child: Text("查看細節")
+          ))
+        ]
+      ),
+      InfoBarSeverity.info
+    );
   }
 
   void _setState() {
@@ -255,11 +333,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             body: const HomeworkPage()
           ),
           PaneItem(
-            icon: const Icon(FluentIcons.info),
-            title: Text(MyApp.locale.sidebar_submitted_assignment_title),
-            body: const UnimplementPage()
-          ),
-          PaneItem(
             icon: const Icon(FluentIcons.red_eye),
             title: Text(MyApp.locale.sidebar_my_grade_title),
             body: const UnimplementPage()
@@ -281,12 +354,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             icon: const Icon(FluentIcons.settings),
             title: Text(MyApp.locale.sidebar_settings_title),
             body: const SettingsPage(),
-            enabled: true,
             infoBadge: ListenableBuilder(
               listenable: Updater.available,
               builder: (context, child) => Container(
-                width: Updater.available.value ? 11 : 0,
-                height: Updater.available.value ? 11 : 0,
+                constraints: BoxConstraints(
+                  maxHeight: Updater.available.value ? 7 : 0,
+                  maxWidth: Updater.available.value ? 7 : 0,  
+                ), 
                 decoration: BoxDecoration(
                   color: Colors.yellow.darkest,
                   borderRadius: BorderRadius.circular(20)

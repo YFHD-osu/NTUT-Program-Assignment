@@ -437,3 +437,47 @@ class UnimplementPage extends StatelessWidget {
     );
   }
 }
+
+class LoginBlock extends StatelessWidget {
+  const LoginBlock({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(FluentIcons.account_management, size: 50),
+          const SizedBox(height: 15),
+          const Text("尚未登入任何帳號"),
+          const SizedBox(height: 5),
+          HyperlinkButton(
+            onPressed: () {
+              GlobalSettings.route.root = "settings";
+              GlobalSettings.route.push("account", title: "帳號");
+            },
+            child: const Text("前往登入"),
+          )
+        ]
+      )
+    );
+  }
+}
+
+class LoggingInBlock extends StatelessWidget {
+  const LoggingInBlock({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ProgressRing(),
+          SizedBox(height: 10),
+          Text("登入中...")
+        ]
+      )
+    );
+  }
+}

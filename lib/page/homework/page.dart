@@ -21,6 +21,7 @@ class HomeworkPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const FluentNavigation(
+      title: "作業列表",
       struct: {
         "default": HomeworkList(),
         "hwDetail": HomeworkDetail()

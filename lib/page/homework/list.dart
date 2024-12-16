@@ -60,16 +60,15 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
     setState(() => _isReady = false);
 
     try {
-      homeworks =
-        await GlobalSettings.account!.fetchHomeworkList();
+      homeworks = await GlobalSettings.account!.fetchHomeworkList();
       await _fetchDescription();
+      await Homework.refreshHandedIn(homeworks);
     } on RuntimeError catch (e) {
       errMsg = e.message;
       _loadPercent = null;
       if (mounted) setState(() {});
       return;
     }
-    
     
     _isReady = true;
     _loadPercent = null;
@@ -222,37 +221,11 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
     super.build(context);
 
     if (GlobalSettings.isLoggingIn) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ProgressRing(),
-            SizedBox(height: 10),
-            Text("登入中...")
-          ]
-        )
-      );
+      return const LoggingInBlock();
     }
 
     if (GlobalSettings.account == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(FluentIcons.account_management, size: 50),
-            const SizedBox(height: 15),
-            const Text("尚未登入任何帳號"),
-            const SizedBox(height: 5),
-            HyperlinkButton(
-              onPressed: () {
-                GlobalSettings.route.root = "settings";
-                GlobalSettings.route.push("account", title: "帳號");
-              },
-              child: const Text("前往登入"),
-            )
-          ]
-        )
-      );
+      return const LoginBlock();
     }
 
     if (errMsg != null) {

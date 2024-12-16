@@ -114,11 +114,13 @@ class _CustomRouterState extends State<CustomRouter> {
 }
 
 class FluentNavigation extends StatefulWidget {
+  final String title;
   final Map<String, Widget> struct;
 
   const FluentNavigation({
     super.key,
-    required this.struct
+    required this.struct,
+    required this.title
   });
 
   @override
@@ -155,7 +157,7 @@ class _FluentNavigationState extends State<FluentNavigation> {
           margin: const EdgeInsets.symmetric(
             horizontal: 10, vertical: 10),
           child: BreadcrumbBar<int>(
-            items: GlobalSettings.route.breadcumber('作業列表'),
+            items: GlobalSettings.route.breadcumber(widget.title),
             chevronIconSize: 20,
             onItemPressed: (item) {
               GlobalSettings.route.removeRange(0, GlobalSettings.route.length);
@@ -175,7 +177,7 @@ class _FluentNavigationState extends State<FluentNavigation> {
                       dismissWithEsc: true,
                       navigatorKey: Navigator.of(context),
                       builder: (context) {
-                        return const RouteFlyout(root: "作業列表");
+                        return RouteFlyout(root: widget.title);
                     });
                   }
                 )

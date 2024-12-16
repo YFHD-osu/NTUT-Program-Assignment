@@ -342,10 +342,12 @@ class Homework {
   final String language;
 
   String? title;
-  List<Testcase> testCases = [];
   List<String> problem = [];
+  List<Testcase> testCases = [];
 
   String status;
+
+  HomeworkStatus? fileState;
 
   bool get isAllTesting =>
     testCases.every((e) => e.testing);
@@ -631,6 +633,28 @@ class Homework {
     return;
   }
 
+  static Future<List<Homework>> refreshState(List<Homework> hws) async {
+    final map = Map<String, Homework>.fromEntries(hws.map((e) => MapEntry(e.number, e)));
+    final updated = await GlobalSettings.account!.fetchHomeworkList();
+    
+    for (var hw in updated.where((e) => map.keys.contains(e.number))) {
+      map[hw.number]!.status = hw.status;
+    }
+
+    return map.values.toList();
+  }
+
+  static Future<List<Homework>> refreshHandedIn(List<Homework> hws) async {
+    final map = Map<String, Homework>.fromEntries(hws.map((e) => MapEntry(e.number, e)));
+    final updated = await GlobalSettings.account!.fetchHanddedHomeworks();
+    
+    for (var hw in updated.where((e) => map.keys.contains(e.id))) {
+      map[hw.id]!.fileState = hw;
+    }
+
+    return map.values.toList();
+  }
+
   factory Homework.fromSoup(Bs4Element e) {
     DateFormat dateFormat = DateFormat("yyyy/MM/dd HH:mm");
     return Homework(
@@ -808,7 +832,7 @@ class HomeworkStatus {
       id: a[1],
       description: a[2],
       filename: a[3],
-      status: a[4]
+      status: a[4].trim()
     );
   }
 }

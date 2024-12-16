@@ -5,7 +5,6 @@ import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/core/database.dart';
 import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
 import 'package:ntut_program_assignment/router.dart';
-import 'package:toastification/toastification.dart';
 
 enum GlobalEvent {
   refreshHwList,
@@ -60,7 +59,7 @@ class GlobalSettings {
       await GlobalSettings.login(Account.fromMap(acc));
     } catch (e) {
       logger.e(e.toString());
-      showToast("無法自動登入", e.toString(), InfoBarSeverity.error);
+      MyApp.showToast("無法自動登入", e.toString(), InfoBarSeverity.error);
     } finally {
       isLoggingIn = false;
       update.sink.add(GlobalEvent.refreshHwList);
@@ -73,33 +72,5 @@ class GlobalSettings {
     if (prefs.autoLogin != null) {
       _autoLogin();
     }
-  }
-
-  static ToastificationItem? showToast(String title, String message, InfoBarSeverity level) {
-    if (!MyApp.ctx.mounted) {
-      return null;
-    }
-    
-    return toastification.showCustom(
-      context: MyApp.ctx,
-      alignment: Alignment.bottomCenter,
-      autoCloseDuration: const Duration(seconds: 5),
-      builder: (BuildContext context, ToastificationItem holder) {
-        return Container(
-          width: 500,
-          margin: const EdgeInsets.symmetric(vertical: 5),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: const Color.fromRGBO(39, 39, 39, 1),
-          ),
-          child: InfoBar(
-            isLong: false,
-            title: Text(title),
-            content: Text(message),
-            severity: level
-          )
-        );
-      },
-    );
   }
 }

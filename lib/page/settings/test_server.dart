@@ -10,7 +10,7 @@ class TestServerRoute extends StatefulWidget {
 }
 
 class _TestServerRouteState extends State<TestServerRoute> {
-  bool? _testEnvironmentOk;
+  bool? _pythonOk, _gccOk;
 
   @override
   void initState() {
@@ -19,18 +19,20 @@ class _TestServerRouteState extends State<TestServerRoute> {
   }
 
   Future<void> _refreshEnv() async {
-    _testEnvironmentOk = await TestServer.findPython();
+    _gccOk = await TestServer.findGCC();
+    _pythonOk = await TestServer.findPython();
+
 
     if (!mounted) return;
     setState(() {});
   }
 
   Color get statusColor {
-    if (_testEnvironmentOk == null) {
+    if (_pythonOk == null) {
       return Colors.yellow;
     }
 
-    if (_testEnvironmentOk!) {
+    if (_pythonOk!) {
       return Colors.green.lighter;
     }
 
@@ -56,8 +58,6 @@ class _TestServerRouteState extends State<TestServerRoute> {
         ),
         const SizedBox(height: 5),
         Tile(
-          title: "測試編譯器位置",
-          lore: "設定測試程式時所使用的編譯器位置",
           padding: const EdgeInsets.symmetric(
             horizontal: 10, vertical: 11.5
           ),
@@ -70,11 +70,30 @@ class _TestServerRouteState extends State<TestServerRoute> {
               const SizedBox(width: 10),
               const Text("Python 環境"),
               const Spacer(),
-              Text(_testEnvironmentOk ?? false ? "已偵測到 Python 環境" : "無法偵測到 Python 環境"),
+              Text(_pythonOk ?? false ? "已偵測到 Python 環境" : "無法偵測到 Python 環境"),
               const SizedBox(width: 10)
             ]
           )
-        )
+        ),
+        const SizedBox(height: 5),
+        Tile(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10, vertical: 11.5
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(5),
+                child: Image.asset("assets/language/c.png", height: 40)
+              ),
+              const SizedBox(width: 10),
+              const Text("C 語言 環境"),
+              const Spacer(),
+              Text(_gccOk ?? false ? "已偵測到 C 語言 環境" : "無法偵測到 C 語言 環境"),
+              const SizedBox(width: 10)
+            ]
+          )
+        ),
       ]
     );
   }

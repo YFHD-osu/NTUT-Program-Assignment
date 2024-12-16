@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 
+import 'package:ntut_program_assignment/main.dart' show MyApp;
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/core/global.dart';
@@ -390,7 +391,7 @@ class _AccountRouteState extends State<AccountRoute> {
                   try {
                     await _addAccount();
                   } catch (e) {
-                    GlobalSettings.showToast("發生錯誤", e.toString(), InfoBarSeverity.error);
+                    MyApp.showToast("發生錯誤", e.toString(), InfoBarSeverity.error);
                   }
                   if (!mounted) return;
                   setState(() => _isLogging = false);
@@ -424,7 +425,7 @@ class _AccountRouteState extends State<AccountRoute> {
     try {
       await GlobalSettings.login(account);
     } catch (e) {
-      GlobalSettings.showToast(
+      MyApp.showToast(
         "登入失敗",
         e.toString(),
         InfoBarSeverity.error
@@ -434,7 +435,7 @@ class _AccountRouteState extends State<AccountRoute> {
       if (mounted) setState(() => _isLogging = false);
     }
 
-    GlobalSettings.showToast(
+    MyApp.showToast(
       "登入成功", 
       "歡迎 ${GlobalSettings.account?.name}", 
       InfoBarSeverity.info
