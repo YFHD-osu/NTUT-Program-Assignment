@@ -60,6 +60,96 @@
   "settings_breadcrumb_title": "Settings",
   "@settings_breadcrumb_title": {
     "description": "The breadcrumb title of settings route"
-  }
+  },
+
+  "hwDetails_refresh_failed": "Information refresh failed",
+  "@hwDetails_refresh_failed": {
+    "description": "Toast shown while failed to refresh details"
+  },
+
+  "hwDetails_deleteDialog_title": "Operation Confirm",
+  "@hwDetails_deleteDialog_title": {
+    "description": "Title of confirm homework delete operation ContentDialog"
+  },
+  "hwDetails_deleteDialog_delete_btn": "Delete",
+  "@hwDetails_deleteDialog_delete_btn": {
+    "description": "Button text of confirm homework delete operation Button"
+  },
+  "hwDetails_deleteDialog_context": "Are you sure you want to delete the homework ?",
+  "@hwDetails_deleteDialog_context": {
+    "description": "Context of the delete operation ContentDialog"
+  },
+  
+  "hwDetails_subtitle_copyarea": "Information Copy",
+  "@hwDetails_subtitle_copyarea": {
+    
+  },
+
+  "hwDetails_widget_copyWholeProblem": "Copy Problem",
+  "@hwDetails_widget_copyWholeProblem": {},
+
+  "hwDetails_widget_copyWholeTestcase": "Copy Testcases",
+  "@hwDetails_widget_copyWholeTestcase": {},
+
+  "hwDetails_subtitle_homeworkStatus": "Homework status",
+  "@hwDetails_subtitle_homeworkStatus": {},
+
+  "hwDetails_subtitle_dangerZone": "Dangerous Zone",
+  "@hwDetails_subtitle_dangerZone": {},
+
+  "hwDetails_widget_deleteHw_title": "Delete Homework",
+  "@hwDetails_widget_deleteHw_title": {},
+
+  "hwDetails_widget_deleteHw_context": "Delete the currently uploaded assignment file.",
+  "@hwDetails_widget_deleteHw_context": {},
+
+  "toast_delete_failed": "Homework Deleted",
+  "@toast_delete_failed": {},
+
+  "hwDetails_widget_editFileName_title": "Edit Filename",
+  "@hwDetails_widget_editFileName_title": {},
+  "hwDetails_widget_editFileName_lore": "The edited file name of this assignment on the server end",
+  "@hwDetails_widget_editFileName_lore": {},
+
+  "hwDetails_widget_fileStatus_title": "File Upload Status",
+  "@hwDetails_widget_fileStatus_title": {},
+  "hwDetails_widget_fileStatus_lore": "The current file's manual processing status on the server.",
+  "@hwDetails_widget_fileStatus_lore": {},
+
+  "hwDetails_widget_uploadTime_title": "File Upload Date",
+  "@hwDetails_widget_uploadTime_title": {},
+  "hwDetails_widget_uploadTime_lore": "The latest code upload time.",
+  "@hwDetails_widget_uploadTime_lore": {},
+
+  "hwDetails_testArea_dropfileHere": "Please drag the program file here",
+  "@hwDetails_testArea_dropfileHere": {},
+  "hwDetails_testArea_testRunning": "Testing...",
+  "@hwDetails_testArea_testRunning": {},
+  "hwDetails_testArea_allPass": "Pass all testcases",
+  "@hwDetails_testArea_allPass": {},
+  "hwDetails_testArea_stillNotPass": "Still have %#% not passed",
+  "@hwDetails_testArea_stillNotPass": {},
+  "hwDetails_testArea_testError": "Error: %#% (%#%)",
+  "@hwDetails_testArea_testError": {},
+  "hwDetails_testArea_haveNotRun": "Test not run yet",
+  "@hwDetails_testArea_haveNotRun": {},
+  "hwDetails_testArea_testAll_title": "Test All",
+  "@hwDetails_testArea_testAll_title": {},
+  "hwDetails_testArea_testAll_lore": "Validate all example test data once",
+  "@hwDetails_testArea_testAll_lore": {},
+  "hwDetails_testArea_startTest": "Start Test",
+  "@hwDetails_testArea_startTest": {},
+
+  "test": "Test", "@test": {},
+  "upload": "Upload", "@upload": {},
+  "problem": "Problem", "@problem": {},
+  "testcase": "Testcase", "@testcase": {},
+  "cancel_button": "Cancel", "@cancel_button": {},
+  "delete": "Delete", "@delete": {},
+  "input": "Input", "@input": {},
+  "output": "Output", "@output": {},
+  "test_result": "Test Result", "@test_result": {},
+  "data": "Data", "@data": {}
+  
   
 }

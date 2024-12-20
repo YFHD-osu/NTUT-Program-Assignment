@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:ntut_program_assignment/core/extension.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:pretty_diff_text/pretty_diff_text.dart';
 import 'package:dotted_decoration/dotted_decoration.dart';
@@ -48,7 +49,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
       final tasks = [_loadSuccess(), _loadTest()];
       await Future.wait(tasks);
     } catch (e) {
-      MyApp.showToast("資訊更新失敗", e.toString(), InfoBarSeverity.error);
+      MyApp.showToast(MyApp.locale.hwDetails_refresh_failed, e.toString(), InfoBarSeverity.error);
       return;
     }
   }
@@ -104,20 +105,20 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
     return ContentDialog(
       constraints: const BoxConstraints(
         minHeight: 0, minWidth: 0, maxHeight: 400, maxWidth: 400),
-      title: const Text("刪除操作確認"),
-      content: const Text("您確定要刪除此作業嗎?"),
+      title: Text(MyApp.locale.hwDetails_deleteDialog_title),
+      content: Text(MyApp.locale.hwDetails_deleteDialog_context),
       actions: [
         CustomWidgets.alertButton(
           onPressed: () {
             Navigator.pop(context, true);
           },
-          child: const Text('刪除'),
+          child: Text(MyApp.locale.hwDetails_deleteDialog_delete_btn),
         ),
         Button(
           onPressed: () {
             Navigator.pop(context, false);
           },
-          child: const Text('取消'),
+          child: Text(MyApp.locale.cancel_button),
         )
       ],
     );
@@ -136,62 +137,62 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
 
         ),
         const SizedBox(height: 10),
-        const Text("上傳",
-          style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(MyApp.locale.upload,
+          style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         UploadSection(
           homework: homework
         ),
         const SizedBox(height: 10),
-        const Text("題目",
-          style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(MyApp.locale.problem,
+          style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         ProblemBox(
           problem: homework.problem
         ),
         const SizedBox(height: 10),
-        const Text("測試",
-          style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(MyApp.locale.test,
+          style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         TestArea(
           homework: homework
         ),
         const SizedBox(height: 10),
-        const Text("複製區域",
-          style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(MyApp.locale.hwDetails_subtitle_copyarea,
+          style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         Row(
           children: [
             CopyButton(
-              title: "複製整個題目",
+              title: MyApp.locale.hwDetails_widget_copyWholeProblem,
               context: homework.problem.join("\n")
             ),
             const SizedBox(width: 10),
             CopyButton(
-              title: "複製所有測資",
+              title: MyApp.locale.hwDetails_widget_copyWholeTestcase,
               context: List<int>.generate(homework.testCases.length, (i) => i)
-                .map((i) => "測試資料 ${i+1}\n${homework.testCases[i]}")
+                .map((i) => "${MyApp.locale.testcase} ${i+1}\n${homework.testCases[i]}")
                 .join("\n\n")
             )
           ]
         ),
         const SizedBox(height: 10),
-        const Text("作業狀態",
-          style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(MyApp.locale.hwDetails_subtitle_homeworkStatus,
+          style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         StateSection(
           homework: homework
         ),
         const SizedBox(height: 10),
-        const Text("危險區域",
-          style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(MyApp.locale.hwDetails_subtitle_dangerZone,
+          style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         Tile.lore(
-          title: "刪除作業",
-          lore: "將目前所上傳的作業檔案刪除",
+          title: MyApp.locale.hwDetails_widget_deleteHw_title,
+          lore: MyApp.locale.hwDetails_widget_deleteHw_context,
           icon: const Icon(FluentIcons.delete),
           child: CustomWidgets.alertButton(
-            child: const Text("刪除作業"),
+            child: Text(MyApp.locale.delete),
             onPressed: !canDelete() ? null : () async {
               final isConfirmed = await showDialog<bool>(
                 context: context,
@@ -208,7 +209,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
               try {
                 await task;
               } catch (e) {
-                MyApp.showToast("刪除失敗", e.toString(), InfoBarSeverity.error);
+                MyApp.showToast(MyApp.locale.toast_delete_failed, e.toString(), InfoBarSeverity.error);
                 setState(() => homework.deleting = false);
                 return;
               }
@@ -241,25 +242,36 @@ class _StateSectionState extends State<StateSection> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.homework.fileState == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Tile.lore(
+          title: "尚未繳交",
+          lore: "伺服器上沒此作業的檔案紀錄",
+          icon: const Icon(FluentIcons.not_executed),
+        )
+      );
+    }
+
     return Column(
       children: [
         Tile.lore(
-          title: "修編檔案名稱",
-          lore: "這份作業在伺服器端的修編檔案名稱",
+          title: MyApp.locale.hwDetails_widget_editFileName_title,
+          lore: MyApp.locale.hwDetails_widget_editFileName_lore,
           icon: const Icon(FluentIcons.rename),
           child: Text(state.filename)
         ),
         const SizedBox(height: 5),
         Tile.lore(
-          title: "檔案處理狀態",
-          lore: "目前檔案在伺服器的人工處理階段狀態",
+          title: MyApp.locale.hwDetails_widget_fileStatus_title,
+          lore: MyApp.locale.hwDetails_widget_fileStatus_lore,
           icon: const Icon(FluentIcons.process),
           child: Text(state.status.replaceAll("刪除", "可以變更"))
         ),
         const SizedBox(height: 5),
         Tile.lore(
-          title: "檔案上傳時間",
-          lore: "最新一份程式碼的上傳時間",
+          title: MyApp.locale.hwDetails_widget_uploadTime_title,
+          lore: MyApp.locale.hwDetails_widget_uploadTime_lore,
           icon: const Icon(FluentIcons.date_time),
           child: Text(state.date.toString())
         ),
@@ -468,20 +480,20 @@ class _TestAreaState extends State<TestArea> {
     final testCases = widget.homework.testCases;
 
     if (widget.homework.testFile == null) {
-      return const Text("請將程式檔案拖曳到此處");
+      return Text(MyApp.locale.hwDetails_testArea_dropfileHere);
     }
 
     if (_isAllTestRunning) {
-      return const Text("測試中...");
+      return Text(MyApp.locale.hwDetails_testArea_testRunning);
     }
 
     final notPass = testCases.where((e) => !e.isPass).length;
 
     if (notPass == 0) {
-      return const Text("通過所有測資");
+      return Text(MyApp.locale.hwDetails_testArea_allPass);
     }
 
-    return Text("尚有 $notPass 個未通過");
+    return Text(MyApp.locale.hwDetails_testArea_stillNotPass.format([notPass]));
   }
 
   Future<void> _testAll() async {
@@ -505,7 +517,8 @@ class _TestAreaState extends State<TestArea> {
     final testCase = widget.homework.testCases[index];
 
     if (testCase.result?.error.isNotEmpty??false) {
-      return Text("發生錯誤: ${testCase.result!.error.join("\n")} (${testCase.result!.error.length})");
+      return Text(MyApp.locale.hwDetails_testArea_testError
+        .format([testCase.result!.error.join("\n"), testCase.result!.error.length]));
     }
 
     if (testCase.hasOutput) {
@@ -517,7 +530,7 @@ class _TestAreaState extends State<TestArea> {
       );
     }
     
-    return const Text("尚未執行測試"); 
+    return Text(MyApp.locale.hwDetails_testArea_haveNotRun); 
   }
 
   Widget _testcaseSection(int index) {
@@ -540,11 +553,15 @@ class _TestAreaState extends State<TestArea> {
                 )
               ),
               const SizedBox(width: 10),
-              Text("測試資料 ${index+1}", style: const TextStyle(color: Colors.white))
+              Text(
+                "${MyApp.locale.testcase}"
+                " ${index+1}",
+                style: const TextStyle(color: Colors.white)
+              )
             ]
           ),
           const SizedBox(height: 10),
-          const Text("輸入"),
+          Text(MyApp.locale.input),
           const SizedBox(height: 5),
           SizedBox(
             width: double.infinity,
@@ -554,7 +571,7 @@ class _TestAreaState extends State<TestArea> {
             )
           ),
           const SizedBox(height: 10),
-          const Text("輸出"),
+          Text(MyApp.locale.output),
           const SizedBox(height: 5),
           SizedBox(
             width: double.infinity,
@@ -564,7 +581,7 @@ class _TestAreaState extends State<TestArea> {
           )
           ),
           const SizedBox(height: 10),
-          const Text("測試結果"),
+          Text(MyApp.locale.test_result),
           const SizedBox(height: 5),
           Row(
             children: [
@@ -574,7 +591,7 @@ class _TestAreaState extends State<TestArea> {
                   try {
                     await testCase.exec(widget.homework.testFile!);
                   } on TestException catch (e) {
-                    MyApp.showToast("測試${index+1} ", e.message, InfoBarSeverity.error);
+                    MyApp.showToast("${MyApp.locale.test}${index+1}", e.message, InfoBarSeverity.error);
                     return;
                   }
                   // print(result.output.join("\n"));
@@ -610,7 +627,7 @@ class _TestAreaState extends State<TestArea> {
                 Colors.grey
           )),
           const SizedBox(width: 10),
-          Text("資料 ${index+1}", style: const TextStyle(fontWeight: FontWeight.bold))
+          Text("${MyApp.locale.data} ${index+1}", style: const TextStyle(fontWeight: FontWeight.bold))
         ]
       ),
       onPressed: () => setState(() => _selectTestcase = index)
@@ -626,8 +643,8 @@ class _TestAreaState extends State<TestArea> {
         _testcaseWindow(),
         const SizedBox(height: 5),
         Tile.lore(
-          title: "全部測試",
-          lore: "將所有範例測試資料全部驗證過一次",
+          title: MyApp.locale.hwDetails_testArea_testAll_title,
+          lore: MyApp.locale.hwDetails_testArea_testAll_lore,
           icon: const Icon(FluentIcons.test_case),
           child: Row(
             children: [
@@ -635,7 +652,7 @@ class _TestAreaState extends State<TestArea> {
               const SizedBox(width: 10),
               FilledButton(
                 onPressed: widget.homework.testFile == null ? null : _testAll,
-                child: const Text("開始測試")
+                child: Text(MyApp.locale.hwDetails_testArea_startTest)
               )
             ]
           )
@@ -657,7 +674,7 @@ class _TestAreaState extends State<TestArea> {
       onPerformDrop: _onPerformDrop,
       child: Container(
         foregroundDecoration: _isDragOver ? BoxDecoration(
-          color: Colors.white.withOpacity(.075),
+          color: Colors.white.withValues(alpha: .075),
           borderRadius: BorderRadius.circular(5),
           border: Border.all(
             color: Colors.white,
@@ -967,7 +984,7 @@ class DropItemInfo extends StatelessWidget {
       child: Container(
         alignment: Alignment.center,
         width: double.infinity,
-        color: Colors.black.withOpacity(.25),
+        color: Colors.black.withValues(alpha: .075),
         child: const Row(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.center,

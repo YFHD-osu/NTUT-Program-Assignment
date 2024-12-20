@@ -17,6 +17,54 @@
   "sidebar_my_grade_title": "我的成績",
   "sidebar_comment_title": "留言板",
   "sidebar_change_password_title": "變更密碼",
-  "settings_about_developer": "關於開發者"
+  "settings_about_developer": "關於開發者",
 
+  "hwDetails_refresh_failed": "資訊更新失敗",
+  "hwDetails_deleteDialog_title": "刪除操作確認",
+  "hwDetails_deleteDialog_context": "您確定要刪除此作業嗎?",
+  "hwDetails_deleteDialog_delete_btn": "刪除",
+
+  "hwDetails_subtitle_copyarea": "複製區域",
+  "hwDetails_widget_copyWholeProblem": "複製整個題目",
+  "hwDetails_widget_copyWholeTestcase": "複製所有測資",
+
+  "hwDetails_subtitle_homeworkStatus": "作業狀態",
+  "hwDetails_subtitle_dangerZone": "危險區域",
+
+  "hwDetails_widget_deleteHw_title": "刪除作業",
+  "hwDetails_widget_deleteHw_context": "將目前所上傳的作業檔案刪除",
+
+  "toast_delete_failed": "刪除失敗",
+
+  "hwDetails_widget_editFileName_title": "修編檔案名稱",
+  "hwDetails_widget_editFileName_lore": "這份作業在伺服器端的修編檔案名稱",
+
+  "hwDetails_widget_fileStatus_title": "檔案處理狀態",
+  "hwDetails_widget_fileStatus_lore": "目前檔案在伺服器的人工處理階段狀態",
+  
+  "hwDetails_widget_uploadTime_title": "檔案上傳時間",
+  "hwDetails_widget_uploadTime_lore": "最新一份程式碼的上傳時間",
+  
+  "hwDetails_testArea_dropfileHere": "請將程式檔案拖曳到此處",
+  "hwDetails_testArea_testRunning": "測試中...",
+  "hwDetails_testArea_allPass": "通過所有測資",
+  "hwDetails_testArea_stillNotPass": "尚有 %#% 個未通過",
+
+  "hwDetails_testArea_testError": "發生錯誤: %#% (%#%)",
+  "hwDetails_testArea_haveNotRun": "尚未執行測試",
+  "hwDetails_testArea_testAll_title": "全部測試",
+  "hwDetails_testArea_testAll_lore": "將所有範例測試資料全部驗證過一次",
+  "hwDetails_testArea_startTest": "開始測試",
+  
+
+  "cancel_button": "取消",
+  "upload": "上傳",
+  "problem": "題目",
+  "test": "測試",
+  "testcase": "測試資料",
+  "delete": "刪除",
+  "input": "輸入",
+  "output": "輸出",
+  "test_result": "測試結果",
+  "data": "資料"
 }
