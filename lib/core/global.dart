@@ -40,7 +40,7 @@ class GlobalSettings {
     update.sink.add(GlobalEvent.refreshHwList);
   }
 
-  static void _autoLogin() async {
+  static void autoLogin() async {
     final db = Database(name: "accounts");
     await db.initialize();
     final acc = await db.get(prefs.autoLogin!);
@@ -68,9 +68,5 @@ class GlobalSettings {
 
   static Future<void> initialize() async {
     await prefs.initialize();
-
-    if (prefs.autoLogin != null) {
-      _autoLogin();
-    }
   }
 }

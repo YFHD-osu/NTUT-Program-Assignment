@@ -7,6 +7,13 @@ import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/page/homework/page.dart';
 
+class HomeworkInstance {
+  static final StreamController<EventType> update = StreamController();
+  static final stream = update.stream.asBroadcastStream();
+  static List<Homework> homeworks = [];
+}
+
+
 class HomeworkList extends StatefulWidget {
   const HomeworkList({super.key});
 
@@ -17,14 +24,14 @@ class HomeworkList extends StatefulWidget {
 class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClientMixin{
   String? errMsg;
   double? _loadPercent;
-  late bool _isReady = homeworks.isNotEmpty;
+  late bool _isReady = HomeworkInstance.homeworks.isNotEmpty;
   late StreamSubscription _sub;
 
   @override
   void initState() {
     super.initState();
     _sub = GlobalSettings.stream.listen(_onGlobalEvent);
-    if (homeworks.isEmpty) {
+    if (HomeworkInstance.homeworks.isEmpty) {
       _refresh();
     }
   }
@@ -53,19 +60,20 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
       return;
     }
 
-    homeworks.clear();
+    HomeworkInstance.homeworks.clear();
     
     errMsg = null;
     _loadPercent = 0;
     setState(() => _isReady = false);
 
     try {
-      homeworks = await GlobalSettings.account!.fetchHomeworkList();
+      HomeworkInstance.homeworks = await GlobalSettings.account!.fetchHomeworkList();
       await _fetchDescription();
-      await Homework.refreshHandedIn(homeworks);
+      await Homework.refreshHandedIn(HomeworkInstance.homeworks);
     } on RuntimeError catch (e) {
       errMsg = e.message;
       _loadPercent = null;
+      
       if (mounted) setState(() {});
       return;
     }
@@ -77,10 +85,11 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   }
 
   Future<void> _fetchDescription() async {
-    final sum = homeworks.length;
+    final sum = HomeworkInstance.homeworks.length;
     int index = 0;
     if (mounted) setState(() => _loadPercent = 0);
-    for (var hw in homeworks) {
+    for (var hw in HomeworkInstance.homeworks) {
+      if (hw.id == 39) continue;
       await hw.fetchHomeworkDetail();
 
       index ++;
@@ -89,7 +98,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   }
 
   Widget _pendingHws() {
-    final notPasses = homeworks
+    final notPasses = HomeworkInstance.homeworks
       .where((e) => !e.isPass);
 
     if (notPasses.isEmpty) {
@@ -115,7 +124,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   }
 
   Widget _passedHws() {
-    final passed = homeworks
+    final passed = HomeworkInstance.homeworks
       .reversed
       .where((e) => e.isPass);
 
@@ -142,9 +151,9 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   }
 
   Widget _overviewCard() {
-    final passes = homeworks.where((e) => e.isPass);
+    final passes = HomeworkInstance.homeworks.where((e) => e.isPass);
 
-    final passRate = passes.length / homeworks.length * 100;
+    final passRate = passes.length / HomeworkInstance.homeworks.length * 100;
     return Row(
       children: [
         Container(
@@ -163,6 +172,13 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
             Text(GlobalSettings.account!.username.toString())
           ]
         ),
+        const SizedBox(width: 15),
+        IconButton(
+          icon: const Icon(FluentIcons.refresh),
+          onPressed: () async {
+            _refresh();
+          }
+        ),
         const Spacer(),
         Tile(
           alignment: Alignment.center,
@@ -174,7 +190,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
               Row(
                 children: [
                   const Spacer(),
-                  Text("${passes.length}/${homeworks.length}",
+                  Text("${passes.length}/${HomeworkInstance.homeworks.length}",
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 10),
                   const Text("完成比"),
@@ -201,7 +217,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Spacer(),
-                  Text("${homeworks.length-passes.length}",
+                  Text("${HomeworkInstance.homeworks.length-passes.length}",
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 10),
                   const Text("未通過"),
@@ -235,10 +251,10 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
           children: [
             const Icon(FluentIcons.error, size: 50),
             const SizedBox(height: 10),
-            Text("發生錯誤\n$errMsg", textAlign: TextAlign.center,),
+            Text("發生錯誤\n$errMsg", textAlign: TextAlign.center),
             const SizedBox(height: 10),
             FilledButton(
-              onPressed: _refresh, 
+              onPressed: _refresh,
               child: const Text("重新整理"),
             )
           ]
@@ -357,7 +373,7 @@ class _ListItemState extends State<ListItem> {
         }
         GlobalSettings.route.push(
           "hwDetail",
-          title: "${widget.homework.number} ${widget.homework.title}", 
+          title: "${widget.homework.number} ${widget.homework.title??'未命名'}", 
           parameter: {"id": widget.homework.id-1},
         );
       }

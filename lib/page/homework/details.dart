@@ -6,6 +6,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:ntut_program_assignment/core/extension.dart';
 import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/page/homework/list.dart';
 import 'package:pretty_diff_text/pretty_diff_text.dart';
 import 'package:dotted_decoration/dotted_decoration.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
@@ -27,7 +28,7 @@ class HomeworkDetail extends StatefulWidget {
 
 class _HomeworkDetailState extends State<HomeworkDetail> {
   Homework get homework =>
-    homeworks[GlobalSettings.route.current.parameter?["id"]??0];
+    HomeworkInstance.homeworks[GlobalSettings.route.current.parameter?["id"]??0];
 
   File? selFile;
 
@@ -57,7 +58,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   @override
   void initState() {
     super.initState();
-    _sub = stream.listen(_onEvent);
+    _sub = HomeworkInstance.stream.listen(_onEvent);
     refresh();
   }
 
@@ -361,6 +362,16 @@ class ProblemBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    if (problem.isEmpty) {
+      return const Tile(
+        width: double.infinity,
+        height: 50,
+        child: Center(
+          child: Text("你敢信這題沒有題目?")
+        ),
+      );
+    }
     
     return Tile(
       width: double.infinity,
@@ -497,19 +508,21 @@ class _TestAreaState extends State<TestArea> {
   }
 
   Future<void> _testAll() async {
-    final testCases = widget.homework.testCases;
-
-    setState(() => _isAllTestRunning = true);
+    for (var testCase in widget.homework.testCases) {
+      testCase.result = null;
+      testCase.testing = true;
+    }
     
-    final tasks = testCases
-      .map((e) => e.exec(widget.homework.testFile!));
+    _isAllTestRunning = true;
+    if (mounted) setState(() {});
     
     try {
-      await Future.wait(tasks);
+      await widget.homework.testAll(widget.homework.testFile!);
     } on TestException catch (e) {
       logger.e(e.message);
     } finally {
-      setState(() => _isAllTestRunning = false);
+      _isAllTestRunning = false;
+      if (mounted) setState(() {});
     }
   }
 
@@ -529,11 +542,38 @@ class _TestAreaState extends State<TestArea> {
         newText: testCase.output
       );
     }
+
+    if (testCase.testing) {
+      return const Text("測試執行中...");
+    }
     
     return Text(MyApp.locale.hwDetails_testArea_haveNotRun); 
   }
 
+  Future<void> _startTest(int index) async {
+    final testCases = widget.homework.testCases;
+    testCases[index].testing = true;
+    testCases[index].result = null;
+
+    setState(() {});
+
+    try {
+      await widget.homework.test(widget.homework.testFile!, index);
+    } on TestException catch (e) {
+      MyApp.showToast("${MyApp.locale.test}${index+1}", e.message, InfoBarSeverity.error);
+      return;
+    }
+    
+    setState(() {});
+  }
+
   Widget _testcaseSection(int index) {
+    if (widget.homework.testCases.isEmpty) {
+      return const Center(
+        child: Text("無法解析測試資料")
+      );
+    }
+    
     final testCase = widget.homework.testCases[index];
 
     return Tile(
@@ -587,16 +627,9 @@ class _TestAreaState extends State<TestArea> {
             children: [
               Expanded(child: _testCaseOutput(index)),
               Button(
-                onPressed: widget.homework.testFile==null ? null : () async {
-                  try {
-                    await testCase.exec(widget.homework.testFile!);
-                  } on TestException catch (e) {
-                    MyApp.showToast("${MyApp.locale.test}${index+1}", e.message, InfoBarSeverity.error);
-                    return;
-                  }
-                  // print(result.output.join("\n"));
-                  setState(() {});
-                },
+                onPressed: widget.homework.testFile==null ? 
+                  null : 
+                  () => _startTest(index),
                 child: const SizedBox.square(
                   dimension: 25,
                   child: Icon(FluentIcons.play)
@@ -630,7 +663,13 @@ class _TestAreaState extends State<TestArea> {
           Text("${MyApp.locale.data} ${index+1}", style: const TextStyle(fontWeight: FontWeight.bold))
         ]
       ),
-      onPressed: () => setState(() => _selectTestcase = index)
+      onPressed: () {
+        if (widget.homework.testCases.any((e) => e.testing)) {
+          return;
+        }
+        _selectTestcase = index;
+        setState(() {});
+      }
     );
   }
 
@@ -651,7 +690,7 @@ class _TestAreaState extends State<TestArea> {
               _loreWidget(),
               const SizedBox(width: 10),
               FilledButton(
-                onPressed: widget.homework.testFile == null ? null : _testAll,
+                onPressed: widget.homework.testFile == null || _isAllTestRunning ? null : _testAll,
                 child: Text(MyApp.locale.hwDetails_testArea_startTest)
               )
             ]
@@ -1157,7 +1196,8 @@ class _UploadSectionState extends State<UploadSection> {
       type: FileType.custom,
       lockParentWindow: true,
       allowedExtensions: ["py"],
-      dialogTitle: '選取作業');
+      dialogTitle: '選取作業'
+    );
 
     if (outputFile?.paths.first == null) {
       setState(() => _explorerOpen = false);
@@ -1188,31 +1228,31 @@ class _UploadSectionState extends State<UploadSection> {
       if (!(isConfirmed??false)) return;
 
       widget.homework.deleting = true;
-      update.add(EventType.refreshOverview);
+      HomeworkInstance.update.add(EventType.refreshOverview);
 
       try {
         await widget.homework.delete();
       } on RuntimeError catch (e) {
         widget.homework.deleting = false;
         MyApp.showToast("無法刪除作業", e.toString(), InfoBarSeverity.error);
-        update.add(EventType.refreshOverview);
+        HomeworkInstance.update.add(EventType.refreshOverview);
         return;
       }
       
       widget.homework.deleting = false;
-      update.add(EventType.refreshOverview);
+      HomeworkInstance.update.add(EventType.refreshOverview);
     }
 
     // var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
     var myFile = File(path.toString().replaceAll(r"file:///", "").replaceAll("%20", " "));
 
     widget.homework.submitting = true;
-    update.add(EventType.setStateDetail);
+    HomeworkInstance.update.add(EventType.setStateDetail);
 
     await _uploadFile(myFile);
 
     GlobalSettings.update.add(GlobalEvent.setHwState);
-    update.add(EventType.refreshOverview);
+    HomeworkInstance.update.add(EventType.refreshOverview);
   }
 
   Future<void> _uploadFile(File file) async{

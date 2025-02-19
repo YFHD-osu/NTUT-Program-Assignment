@@ -137,6 +137,26 @@ class Preferences {
     database.put("testcaseTextFactor", v);
   }
 
+  late String? _pythonPath;
+
+  String? get pythonPath =>
+    _pythonPath;
+  
+  set pythonPath(String? v) {
+    _pythonPath = v;
+    database.put("pythonPath", v);
+  }
+
+  late String? _gccPath;
+
+  String? get gccPath =>
+    _gccPath;
+  
+  set gccPath(String? v) {
+    _gccPath = v;
+    database.put("gccPath", v);
+  }
+
   Future<void> initialize() async {
     await database.initialize();
     await refresh();
@@ -154,5 +174,8 @@ class Preferences {
 
     _problemTextFactor = map['problemTextFactor'] ?? 1.0;
     _testcaseTextFactor = map['problemTextFactor'] ?? 1.0;
+
+    _gccPath = map['gccPath'];
+    _pythonPath = map['pythonPath'];
   }
 }

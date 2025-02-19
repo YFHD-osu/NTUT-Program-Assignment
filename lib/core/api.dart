@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:intl/intl.dart';
+import 'package:html_character_entities/html_character_entities.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:beautiful_soup_dart/beautiful_soup.dart';
@@ -19,11 +20,13 @@ class DevHttpOverrides extends HttpOverrides {
 
 class Account {
   int course;
+  String courseName;
   String username, password;
   String? sessionID, name;
 
   Account({
     required this.course,
+    required this.courseName,
     required this.username,
     required this.password
   });
@@ -146,10 +149,56 @@ class Account {
     return result;
   }
 
+  Future<void> changePasswd(String pass) async {
+    final data = {
+      "pass": pass,
+      "submit": "sumit"
+    };
+    final resp = await client._post("/changePasswd", body: data);
+
+    if (resp.statusCode != 200) {
+      throw RuntimeError("Unable to change password (Status: ${resp.statusCode})");
+    }
+
+  }
+
+  Future<void> addMsgBoard(String content) async {
+    final data = {
+      "body": content
+    };
+
+    final resp = await client._post("/AddMsgBoard", body: data);
+
+    if (resp.statusCode != 302) {
+      throw RuntimeError("Unable to add message (Status: ${resp.statusCode})");
+    }
+  }
+
+  Future<void> replyMsgBoard(String ctx, String content) async {
+    final data = {
+      "masterTime": ctx,
+      "replyContent": content
+    };
+
+    final resp = await client._post("/MessageAjax?case=replySomeone", body: data);
+
+    if (resp.statusCode != 200) {
+      throw RuntimeError("Unable to reply (Status: ${resp.statusCode})");
+    }
+
+  }
+
+  Future fetchMsgBoard() async {
+    await client._get("/MessageBoard");
+
+    throw UnimplementedError();
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'course': course,
+      'courseName': courseName,
       'username': username,
       'password': password,
       'sessionID': sessionID,
@@ -159,6 +208,7 @@ class Account {
   factory Account.fromMap(Map res) {
     final instance = Account(
       course: res['course'],
+      courseName: res['courseName'] ?? "NULL",
       username: res['username'],
       password: res['password']
     );
@@ -241,64 +291,6 @@ class Testcase {
         .replaceFirst("\n", ""), // Replace the first '\n' to empty string 
       original: message
     );
-  }
-
-  Future<TestResult> exec(File target) async {
-    if (!await target.exists()) {
-      throw TestException("指定的測試檔案不存在");
-    }
-
-    testing = true;
-    result = null;
-
-    final process = await Process.start("python", [target.path]);
-
-    for (var line in input.split("\n")) {
-      // print("Feeding: $line");
-      process.stdin.write(line);
-      process.stdin.write(ascii.decode([10]));
-    }
-
-    try {
-      await process.exitCode
-        .timeout(const Duration(seconds: 10));
-    } on TimeoutException catch (_) {
-      result = TestResult(
-        error: ["測試時間超時，已強制結束"],
-        output: ["測試時間超時，已強制結束"]
-      );
-      throw TestException("測試時間超時，已強制結束");
-    } on OSError catch (e) {
-      result = TestResult(
-        error: ["測試檔案無效: ${e.message}"],
-        output: ["測試時間超時，已強制結束"]
-      );
-    } catch (e) {
-      logger.e(e);
-      return result!;
-    } 
-    finally {
-      process.kill();
-    }
-
-    final out = await process.stdout
-      .map((e) => utf8.decode(e))
-      .toList();
-
-    final err = await process.stderr
-      .map((e) => utf8.decode(e))
-      .toList();
-    
-    result = TestResult(
-      error: err,
-      output: out.firstOrNull
-        ?.split("\n")
-        .map((e) => e.replaceAll(ascii.decode([13]), ""))
-        .toList() ?? []
-    );
-    testing = false;
-
-    return result!;
   }
 
   @override
@@ -416,8 +408,10 @@ class Homework {
       }
 
       if (title == null && ctx[index].contains(number)) {
-        title = ctx[index]
-          .replaceAll(number, "")
+        title = HtmlCharacterEntities.decode(ctx[index])
+          .split(number)
+          .sublist(1)
+          .join("")
           .trim();
         index++;
         continue;
@@ -429,7 +423,10 @@ class Homework {
         break;
       }
       
-      problem.add(ctx[index].trim());
+      problem.add(HtmlCharacterEntities
+        .decode(ctx[index].trim())
+      );
+      
       index++;
     }
 
@@ -438,27 +435,40 @@ class Homework {
     }
     
     while (index < ctx.length) {
-      if (ctx[index].contains(RegExp(r"【測試資料.+】"))) {
-        testCases.add(Testcase.parse(
-          ctx
-            .sublist(start, index)
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .join("\n")
-        ));
+      if (!ctx[index].contains(RegExp(r"【測試資料.+】"))) {
+        index++;
+        continue;
+      }
+
+      try {
+        final data = Testcase.parse(
+          ctx.sublist(start, index)
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .join("\n")
+        );
+        testCases.add(data);
+      } on RuntimeError catch (e) {
+        logger.d(e);
+        continue;
+      } finally {
         start = index + 1;
       }
-      
+
       index++;
     }
 
-    testCases.add(Testcase.parse(
-      ctx
-        .sublist(start, index)
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .join("\n")
-    ));
+    try {
+      final data = Testcase.parse(
+        ctx.sublist(start, index)
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .join("\n")
+      );
+      testCases.add(data);
+    } on RuntimeError catch (e) {
+      logger.d(e);
+    }
 
     return;
   }
@@ -517,7 +527,7 @@ class Homework {
       throw RuntimeError("Failed to delete homework");
     }
 
-    await _refresh();
+    await _fetchState();
 
     status = "未繳交";
     deleting = false;
@@ -525,7 +535,9 @@ class Homework {
     return;
   }
 
-  Future<String> _refresh() async {
+
+  // Fetch the homework status on web
+  Future<String> _fetchState() async {
     final result = (await GlobalSettings.account!.fetchHomeworkList())
       .where((e) => e.number == number)
       .first;
@@ -534,45 +546,43 @@ class Homework {
     return result.status;
   }
 
-  Future<void> _prefetch() async {
-    final account = GlobalSettings.account!;
-
-    /*
-    Login (Ref: "https://140.124.181.25/upload/Login")
-      -> MainMenu
-        -> DownMenu, TopMenu
-          -> HomeworkBoard (TopMenu)
-            -> ${account.domain}/upload/upLoadHw?hwId=$number&l=$language
-              -> Final UPLOAD 
-    */
-
-    logger.d("Upload prefetching with session: ${account.sessionID}");
-
-    await client._get("/MainMenu", headers: {
-      "Referer": "${account.domain}/upload/Login"
-    });
-    
-    await client._get("/DownMenu", headers: {
-      "Referer": "${account.domain}/upload/MainMenu"
-    });
-
-    await client._get("/TopMenu", headers: {
-      "Referer": "${account.domain}/upload/MainMenu"
-    });
-
-    await client._get("/HomeworkBoard", headers: {
-      "Referer": "${account.domain}/upload/TopMenu"
-    });
-
-    await client._get("/upLoadHw?hwId=$number&l=$language", headers: {
-      "Referer": "${account.domain}/upload/HomeworkBoard"
-    });
-
-    return;
-  }
-
   Future<void> upload(File file) async {
+    Future<void> prefetch() async {
+      final account = GlobalSettings.account!;
 
+      /*
+      Login (Ref: "https://140.124.181.25/upload/Login")
+        -> MainMenu
+          -> DownMenu, TopMenu
+            -> HomeworkBoard (TopMenu)
+              -> ${account.domain}/upload/upLoadHw?hwId=$number&l=$language
+                -> Final UPLOAD 
+      */
+
+      logger.d("Upload prefetching with session: ${account.sessionID}");
+
+      await client._get("/MainMenu", headers: {
+        "Referer": "${account.domain}/upload/Login"
+      });
+      
+      await client._get("/DownMenu", headers: {
+        "Referer": "${account.domain}/upload/MainMenu"
+      });
+
+      await client._get("/TopMenu", headers: {
+        "Referer": "${account.domain}/upload/MainMenu"
+      });
+
+      await client._get("/HomeworkBoard", headers: {
+        "Referer": "${account.domain}/upload/TopMenu"
+      });
+
+      await client._get("/upLoadHw?hwId=$number&l=$language", headers: {
+        "Referer": "${account.domain}/upload/HomeworkBoard"
+      });
+
+      return;
+    }
 
     if (!await file.exists()) {
       submitting = false;
@@ -582,7 +592,7 @@ class Homework {
     final account = GlobalSettings.account!;
 
     // This endpoint must be GET before any homework uploaded
-    await _prefetch();
+    await prefetch();
 
     logger.i("Prefetch completed.");
 
@@ -592,7 +602,6 @@ class Homework {
       'Content-Type': 'multipart/form-data',
     });
 
-    
     var request = http.MultipartRequest(
       'POST', Uri.parse('${account.domain}/upload/upLoadFile')
     );
@@ -602,7 +611,6 @@ class Homework {
     request.headers.addAll(headers);
 
     logger.d("Start uploading file to server");
-
 
     int attempts = 1;
 
@@ -615,7 +623,7 @@ class Homework {
     }
     
     while (attempts > 0) {
-      final state = await _refresh();
+      final state = await _fetchState();
       if (state != "批改中") break;
       
       await Future.delayed(const Duration(seconds: 1));
@@ -666,6 +674,148 @@ class Homework {
       language: e.contents[5].text.trim(),
       status: e.contents[6].text.trim()
     );
+  }
+
+  Future<void> testAll(File target) async {
+    for (int i=0; i<testCases.length; i++) {
+      await test(target, i);
+    }
+  }
+
+  Future<TestResult> test(File target, int index) async {
+    if (!await target.exists()) {
+      throw TestException("指定的測試檔案不存在");
+    }
+
+    switch (language) {
+      case "Python":
+        await _testPython(target, index);
+
+
+      case "C":
+        await _testC(target, index);
+        
+
+      default: 
+        testCases[index].testing = false;
+        throw TestException("尚未支援此測試模式: $language");
+    }
+    testCases[index].testing = false;
+
+    return testCases[index].result!;
+  }
+
+  Future<void> _testPython(File target, int index) async {
+    final process = await Process.start(GlobalSettings.prefs.pythonPath ?? "python", [target.path]);
+
+    for (var line in testCases[index].input.split("\n")) {
+      // print("Feeding: $line");
+      process.stdin.write(line);
+      process.stdin.write(ascii.decode([10]));
+    }
+
+    await process.exitCode
+      .timeout(const Duration(seconds: 10))
+      .onError((error, trace) => _onTestError(error, trace, index));
+
+    if (await process.exitCode != 0) {
+      testCases[index].testing = false;
+      return;
+    }
+
+    process.kill();
+
+    final out = await process.stdout
+      .map((e) => utf8.decode(e))
+      .toList();
+
+    final err = await process.stderr
+      .map((e) => utf8.decode(e))
+      .toList();
+    
+    testCases[index].result = TestResult(
+      error: err,
+      output: out.firstOrNull
+        ?.split("\n")
+        .map((e) => e.replaceAll(ascii.decode([13]), ""))
+        .toList() ?? []
+    );
+
+    testCases[index].testing = false;
+
+    return;
+  }
+
+  Future<void> _testC(File target, int index) async {
+    final compile = await Process.start(GlobalSettings.prefs.gccPath ?? "gcc", [target.path, '-o', 'test']);
+    
+    await compile.exitCode
+      .timeout(const Duration(seconds: 10))
+      .onError((error, trace) => _onTestError(error, trace, index));
+
+    if (await compile.exitCode != 0) {
+      testCases[index].testing = false;
+      logger.e("failed to compile: ${target.path}");
+      return;
+    } 
+
+    compile.kill();
+
+    final process = await Process.start("test", []);
+
+    for (var line in testCases[index].input.split("\n")) {
+      // print("Feeding: $line");
+      process.stdin.write(line);
+      process.stdin.write(ascii.decode([10]));
+    }
+
+    await process.exitCode
+      .timeout(const Duration(seconds: 10))
+      .onError((error, trace) => _onTestError(error, trace, index));
+
+    process.kill();
+
+    final out = await process.stdout
+      .map((e) => utf8.decode(e))
+      .toList();
+
+    final err = await process.stderr
+      .map((e) => utf8.decode(e))
+      .toList();
+    
+    testCases[index].result = TestResult(
+      error: err,
+      output: out.firstOrNull
+        ?.split("\n")
+        .map((e) => e.replaceAll(ascii.decode([13]), ""))
+        .toList() ?? []
+    );
+
+    testCases[index].testing = false;
+
+    return;
+  }
+
+  Future<int> _onTestError(Object? error, StackTrace trace, int index) async {
+    switch (error.runtimeType) {
+      case TimeoutException _:
+        testCases[index].result = TestResult(
+          error: ["測試時間超時，已強制結束"],
+          output: ["測試時間超時，已強制結束"]
+        );
+        throw TestException("測試時間超時，已強制結束");
+      
+      case OSError _:
+        testCases[index].result = TestResult(
+          error: ["測試檔案無效: ${(error as OSError).message}"],
+          output: ["測試時間超時，已強制結束"]
+        );
+
+      default:
+        throw TestException("發生例外狀況: $error");
+    }
+
+    return 0;
   }
 }
 
@@ -749,7 +899,7 @@ class InnerClient extends http.BaseClient {
       }
 
       await checkConnect();
-      logger.e("SocketException occured with ${request.method} ${request.url}");
+      logger.e("SocketException occured with ${request.method} ${request.url} ($depth)");
 
       if (timestamp.compareTo(account.loginTime) < 0) {
         throw LoginProcessingError("Login is processing, please resend request");

@@ -1,7 +1,8 @@
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:ntut_program_assignment/core/global.dart';
+
 import 'package:ntut_program_assignment/widget.dart';
+import 'package:ntut_program_assignment/core/global.dart';
 
 class RouteItem {
   final String name, title;

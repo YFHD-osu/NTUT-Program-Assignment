@@ -20,6 +20,7 @@ void main() async {
   
   final account = Account(
     course: 1,
+    courseName: "123456",
     username: username,
     password: password
   );
@@ -39,6 +40,7 @@ void main() async {
   test('Account wrong username test', () async {
     final acc = Account(
       course: 1,
+      courseName: "12345",
       username: "112334456",
       password: "1234567812345678912345678" 
     );
@@ -59,6 +61,7 @@ void main() async {
   test('Account wrong password test', () async {
     final acc = Account(
       course: 1,
+      courseName: "IDK",
       username: username,
       password: "1234567812345678912345678" 
     );

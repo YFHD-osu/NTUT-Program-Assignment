@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:logger/logger.dart' show Logger, PrettyPrinter, DateTimeFormat, Level;
+import 'package:ntut_program_assignment/core/test_server.dart';
 
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
@@ -57,9 +58,9 @@ void main() async {
     await windowManager.ensureInitialized();
   }
 
-  // await FireBaseData.initialize();
   await GlobalSettings.initialize();
   await ThemeProvider.instance.initialize();
+  await TestServer.initialize();
 
   runApp(const MyApp());
 }
@@ -164,8 +165,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     "hwlist": 0,
     "score": 1,
     "comments": 2,
-    "changePassword": 3,
-    "settings": 4
+    "settings": 3
   };
   
   Future<void> _fetchUpdate() async {
@@ -208,6 +208,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _sub = GlobalSettings.stream.listen(_onUpdate);
     WidgetsBinding.instance.addObserver(this);
     GlobalSettings.route.addListener(_setState);
+    GlobalSettings.autoLogin();
     _fetchUpdate();
   }
 
@@ -340,11 +341,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           PaneItem(
             icon: const Icon(FluentIcons.comment),
             title: Text(MyApp.locale.sidebar_comment_title),
-            body: const UnimplementPage()
-          ),
-          PaneItem(
-            icon: const Icon(FluentIcons.erase_tool),
-            title: Text(MyApp.locale.sidebar_change_password_title),
             body: const UnimplementPage()
           )
         ],

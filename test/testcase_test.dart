@@ -3,8 +3,8 @@ import 'package:ntut_program_assignment/core/test_server.dart';
 
 void main() async {
   test('Check python is in environment', () async {
-    final resp = await TestServer.findPython();
-    expect(resp, true);
+    await TestServer.findPython();
+    expect(TestServer.pythonOK, true);
   });
   
 }

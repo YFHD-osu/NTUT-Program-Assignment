@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 
 import 'package:ntut_program_assignment/main.dart' show MyApp;
+import 'package:ntut_program_assignment/page/homework/list.dart';
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/core/global.dart';
@@ -39,7 +40,10 @@ class _LoginDialogState extends State<LoginDialog> {
     String a = _username.text;
     a = a.length > 3 ? a.substring(a.length-3) : a;
     return (int.tryParse(a)??0).isEven;
-  } 
+  }
+
+  List<String> get courseList =>
+    isEven ? widget.evenCourses : widget.oddCourses;
 
   @override
   void initState() {
@@ -53,8 +57,6 @@ class _LoginDialogState extends State<LoginDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final courseList = isEven ? widget.evenCourses : widget.oddCourses;
-
     return ContentDialog(
       constraints: const BoxConstraints(
         minHeight: 0, minWidth: 0, maxHeight: 400, maxWidth: 400),
@@ -145,9 +147,9 @@ class _LoginDialogState extends State<LoginDialog> {
   }
 
   Future<void> _login() async {
-    final course = isEven ? widget.evenCourses : widget.oddCourses; 
     final acc = Account(
-      course: selCourse ==null ? 1 : course.indexOf(selCourse!) + 1,
+      course: selCourse ==null ? 1 : courseList.indexOf(selCourse!) + 1,
+      courseName: selCourse??courseList.first,
       username: _username.text,
       password: _password.text
     );
@@ -179,6 +181,45 @@ class _LoginDialogState extends State<LoginDialog> {
 
     if (!mounted) return;
     Navigator.of(context).pop(_rememberPW);
+  }
+}
+
+class ChangePasswordDialog extends StatelessWidget {
+  ChangePasswordDialog({super.key});
+
+  final _controller = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return ContentDialog(
+      constraints: const BoxConstraints(
+        minHeight: 0, minWidth: 0, maxHeight: 215, maxWidth: 400),
+      title: const Text("變更密碼"),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("輸入新的密碼"),
+          const SizedBox(height: 5),
+          TextBox(
+            controller: _controller
+          )
+        ]
+      ),
+      actions: [
+        Button(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.pop(context, _controller.text);
+          },
+          child: const Text('更改'),
+        ),
+      ],
+    );
   }
 }
 
@@ -239,6 +280,29 @@ class _AccountRouteState extends State<AccountRoute> {
 
     await _refreshDB();
     GlobalSettings.update.add(GlobalEvent.refreshHwList);
+  }
+
+  Future<void> _changePasswd() async {
+    final newPass = await showDialog<String>(
+      context: context,
+      builder: (context) => ChangePasswordDialog()
+    );
+
+    if (newPass == null) {
+      return;
+    }
+
+    try {
+      await GlobalSettings.account!.changePasswd(newPass);
+    } on RuntimeError catch (e) {
+      MyApp.showToast("變更失敗", e.message, InfoBarSeverity.error);
+      return;
+    } catch (e) {
+      MyApp.showToast("變更失敗", "例外情況: $e", InfoBarSeverity.error);
+      return;
+    }
+
+    MyApp.showToast("變更成功", "密碼已更新，下次請用新密碼登入", InfoBarSeverity.success);
   }
 
   Future<void> _refreshDB() async {
@@ -365,6 +429,18 @@ class _AccountRouteState extends State<AccountRoute> {
             )
           )
         ),
+        const SizedBox(height: 5),
+        Tile.lore(
+          icon: const Icon(FluentIcons.password_field),
+          title: "變更密碼",
+          lore: "變更登入作業繳交系統的密碼 (必須處於登入狀態)",
+          child: Button(
+            onPressed: GlobalSettings.account == null ? 
+              null :
+              _changePasswd,
+            child: const Text("變更"),
+          )
+        ),
         const SizedBox(height: 10),
         const Text("其他使用者"),
         const SizedBox(height: 5),
@@ -435,6 +511,7 @@ class _AccountRouteState extends State<AccountRoute> {
       if (mounted) setState(() => _isLogging = false);
     }
 
+    HomeworkInstance.homeworks.clear();
     MyApp.showToast(
       "登入成功", 
       "歡迎 ${GlobalSettings.account?.name}", 
