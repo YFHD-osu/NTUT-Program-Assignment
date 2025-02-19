@@ -342,16 +342,20 @@ class SelectableTextBox extends StatelessWidget {
         maxLines: null,
         padding: EdgeInsets.zero,
         scrollPhysics: const NeverScrollableScrollPhysics(),
-        foregroundDecoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.transparent
+        foregroundDecoration: WidgetStatePropertyAll(
+          BoxDecoration(
+            border: Border.all(
+              color: Colors.transparent
+            )
           )
         ),
-        decoration: BoxDecoration(
-          border: Border.all(
+        decoration: WidgetStatePropertyAll(
+          BoxDecoration(
+            border: Border.all(
+              color: Colors.transparent
+            ),
             color: Colors.transparent
-          ),
-          color: Colors.transparent
+          )
         ),
         controller: TextEditingController(
           text: text
