@@ -173,6 +173,8 @@ class ThemePack {
     mediumAnimationDuration: const Duration(milliseconds: 250),
     fastAnimationDuration: const Duration(milliseconds: 200),
     fasterAnimationDuration: const Duration(milliseconds: 100),
+    scaffoldBackgroundColor: Colors.transparent,
+    micaBackgroundColor: Colors.transparent,
   );
 
   static final _light = FluentThemeData(
@@ -191,6 +193,8 @@ class ThemePack {
     mediumAnimationDuration: const Duration(milliseconds: 250),
     fastAnimationDuration: const Duration(milliseconds: 200),
     fasterAnimationDuration: const Duration(milliseconds: 100),
+    scaffoldBackgroundColor: Colors.transparent,
+    micaBackgroundColor: Colors.transparent,
     scrollbarTheme: const ScrollbarThemeData(
       backgroundColor: Colors.transparent
     ),
