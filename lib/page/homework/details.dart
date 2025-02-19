@@ -774,6 +774,40 @@ class _OverviewCardState extends State<OverviewCard> {
         ]
       );
 
+      case HomeworkState.compileFailed: return Row(
+        key: const ValueKey(0),
+        children: [
+          const Spacer(),
+          Container(
+            height: 10, width: 10,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.red.lighter
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text("編譯失敗", style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
+          const Spacer(),
+        ]
+      );
+
+      case HomeworkState.preparing: return Row(
+        key: const ValueKey(0),
+        children: [
+          const Spacer(),
+          Container(
+            height: 10, width: 10,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.orange.lighter
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text("準備中", style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
+          const Spacer(),
+        ]
+      );
+
       case HomeworkState.notPassed: return Row(
         key: const ValueKey(1),
         children: [
@@ -896,6 +930,8 @@ class _OverviewCardState extends State<OverviewCard> {
       case HomeworkState.notTried:
       case HomeworkState.checking:
       case HomeworkState.delete:
+      case HomeworkState.compileFailed:
+      case HomeworkState.preparing:
         return false;
 
       case HomeworkState.notPassed:
@@ -1187,6 +1223,7 @@ class _UploadSectionState extends State<UploadSection> {
 
   bool _explorerOpen = false;
 
+
   Future<void> _browseHomework() async {
     if (_explorerOpen) return;
 
@@ -1195,7 +1232,7 @@ class _UploadSectionState extends State<UploadSection> {
     final FilePickerResult? outputFile = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       lockParentWindow: true,
-      allowedExtensions: ["py"],
+      allowedExtensions: widget.homework.allowedExtensions,
       dialogTitle: '選取作業'
     );
 

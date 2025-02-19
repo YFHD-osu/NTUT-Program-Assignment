@@ -322,7 +322,9 @@ enum HomeworkState {
   notPassed,
   passed,
   checking,
-  delete
+  delete,
+  compileFailed,
+  preparing
 }
 
 class Homework {
@@ -352,6 +354,18 @@ class Homework {
   bool get isPass =>
     status == "通過";
 
+  List<String> get allowedExtensions {
+
+    if (language == "C") {
+      return ["c"];
+    }
+
+    if (language == "Python") {
+      return ["py"];
+    }
+    return ['*'];
+  }
+
   HomeworkState get state {
     if (submitting) {
       return HomeworkState.checking;
@@ -367,6 +381,14 @@ class Homework {
 
     if (status == "未通過") {
       return HomeworkState.notPassed;
+    }
+
+    if (status == "編譯失敗") {
+      return HomeworkState.compileFailed;
+    }
+
+    if (status == "準備中") {
+      return HomeworkState.preparing;
     }
 
     return HomeworkState.notTried;
@@ -624,6 +646,7 @@ class Homework {
     
     while (attempts > 0) {
       final state = await _fetchState();
+      print(state);
       if (state != "批改中") break;
       
       await Future.delayed(const Duration(seconds: 1));
