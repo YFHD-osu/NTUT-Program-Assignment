@@ -1257,7 +1257,7 @@ class _UploadSectionState extends State<UploadSection> {
   }
 
   Future<void> _upload(path) async {
-    if ([HomeworkState.passed, HomeworkState.notPassed].contains(widget.homework.state)) {
+    if ([HomeworkState.passed, HomeworkState.notPassed, HomeworkState.compileFailed].contains(widget.homework.state)) {
       final isConfirmed = await showDialog<bool>(
         context: context,
         builder: (context) => _showDeleteAlert()
