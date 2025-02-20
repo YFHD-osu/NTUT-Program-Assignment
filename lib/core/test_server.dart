@@ -82,7 +82,16 @@ class TestServer {
   }
 
   static Future<void> findGCC() async {
-    final result = await Process.run(GlobalSettings.prefs.gccPath ?? "gcc", ["--version"]);
+    late final ProcessResult result;
+    
+    final ptah = GlobalSettings.prefs.gccPath ?? "gcc";
+    try {
+      result = await Process.run(ptah, ["--version"]);
+    } catch (e) {
+      logger.e("Failed to find GCC compiler in path: $ptah \n $e");
+      gccState = null;
+      return;
+    }
 
     if (result.stderr.toString().isNotEmpty) {
       gccState = null;

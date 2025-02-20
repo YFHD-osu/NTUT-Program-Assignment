@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:logger/logger.dart' show Logger, PrettyPrinter, DateTimeFormat, Level;
+import 'package:logger/logger.dart' show Logger;
 import 'package:ntut_program_assignment/core/test_server.dart';
 
 import 'package:provider/provider.dart';
@@ -18,27 +18,17 @@ import 'package:ntut_program_assignment/core/updater.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
 import 'package:ntut_program_assignment/page/homework/page.dart';
 import 'package:ntut_program_assignment/page/settings/page.dart';
-import 'package:ntut_program_assignment/core/logger.dart' show FileOutput;
+import 'package:ntut_program_assignment/core/logger.dart' show DebugPrintOutput, LogToFile, Printer;
 
 late final Logger logger;
 
 void main() async {
-  final output = FileOutput();
-  await output.initialize("logs");
-
   logger = Logger(
-    printer: PrettyPrinter(
-      dateTimeFormat: DateTimeFormat.onlyTime,
-      levelEmojis: {
-        Level.debug: "[DEBUG]",
-        Level.error: "[ERROR]",
-        Level.fatal: "[FETAL]",
-        Level.info: "[INFO]",
-        Level.warning: "[WARNNING]"
-      }
-    ),
-    output: output,
+    printer: Printer(),
+    output: DebugPrintOutput(),
   );
+
+  await LogToFile.initialize();
 
   // Make http package to accept self-signed certificate 
   HttpOverrides.global = DevHttpOverrides();
@@ -63,6 +53,7 @@ void main() async {
   await TestServer.initialize();
 
   runApp(const MyApp());
+  return;
 }
 
 class MyApp extends StatelessWidget {

@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/main.dart';
+
 class TestException {
   final String message;
 
@@ -33,8 +36,15 @@ class ProgramTest {
     if (!await target.exists()) {
       throw TestException("指定的測試檔案不存在");
     }
+    final interpreter = GlobalSettings.prefs.pythonPath ?? "python";
+    late final Process process; 
 
-    final process = await Process.start("python", [target.path]);
+    try {
+      process = await Process.start(interpreter, [target.path]);
+    } catch (e) {
+      logger.e("Error running python file, due: $e");
+      throw TestException("Error running python file, due: $e");
+    }
 
     for (var line in input.split("\n")) {
       process.stdin.write(line);

@@ -8,6 +8,7 @@ import 'package:html_character_entities/html_character_entities.dart';
 import 'package:http/http.dart' as http;
 import 'package:beautiful_soup_dart/beautiful_soup.dart';
 import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/core/test_server.dart';
 import 'package:ntut_program_assignment/main.dart' show logger;
 
 class DevHttpOverrides extends HttpOverrides {
@@ -271,7 +272,7 @@ class Testcase {
   }
 
   bool get isPass {
-    return "$output\n" == result?.output.join("\n");
+    return output.trim() == result?.output.join("\n").trim();
   }
 
   factory Testcase.parse(String message) {
@@ -557,7 +558,6 @@ class Homework {
     return;
   }
 
-
   // Fetch the homework status on web
   Future<String> _fetchState() async {
     final result = (await GlobalSettings.account!.fetchHomeworkList())
@@ -646,7 +646,7 @@ class Homework {
     
     while (attempts > 0) {
       final state = await _fetchState();
-      print(state);
+
       if (state != "批改中") break;
       
       await Future.delayed(const Duration(seconds: 1));
@@ -729,7 +729,21 @@ class Homework {
   }
 
   Future<void> _testPython(File target, int index) async {
-    final process = await Process.start(GlobalSettings.prefs.pythonPath ?? "python", [target.path]);
+    if (!TestServer.pythonOK) {
+      throw RuntimeError("Python 環境尚未設定");
+    }
+
+    late final Process process;
+
+    try {
+      process = await Process.start(GlobalSettings.prefs.pythonPath ?? "python", [target.path]);
+    } catch (e) {
+      testCases[index].result = TestResult(
+        error: ["檔案執行失敗: $e"],
+        output: ["檔案執行失敗: $e"]
+      );
+      return;
+    }    
 
     for (var line in testCases[index].input.split("\n")) {
       // print("Feeding: $line");
@@ -770,15 +784,39 @@ class Homework {
   }
 
   Future<void> _testC(File target, int index) async {
-    final compile = await Process.start(GlobalSettings.prefs.gccPath ?? "gcc", [target.path, '-o', 'test']);
+    if (!TestServer.gccOK) {
+      throw RuntimeError("C 環境尚未設定");
+    }
+
+    late final Process compile;
+
+    try {
+      compile = await Process.start(GlobalSettings.prefs.gccPath ?? "gcc", [target.path, '-o', 'test']);
+    } catch (e) {
+      testCases[index].result = TestResult(
+        error: ["檔案編譯失敗: $e"],
+        output: ["檔案編譯失敗: $e"]
+      );
+      return;
+    }
     
     await compile.exitCode
       .timeout(const Duration(seconds: 10))
       .onError((error, trace) => _onTestError(error, trace, index));
+    
+    final exitCode = await compile.exitCode;
+    if (exitCode != 0) {
+      final err = await compile.stderr
+        .map((e) => utf8.decode(e))
+        .toList();
 
-    if (await compile.exitCode != 0) {
       testCases[index].testing = false;
-      logger.e("failed to compile: ${target.path}");
+      testCases[index].result = TestResult(
+        error: ["檔案編譯失敗，程式返回: $exitCode \n$err"],
+        output: ["檔案編譯失敗，程式返回: $exitCode \n$err"]
+      );
+      logger.e("failed to compile: ${target.path} \n$err");
+
       return;
     } 
 

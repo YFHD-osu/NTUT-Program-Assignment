@@ -30,7 +30,7 @@ class GlobalSettings {
   static Future<void> login(Account acc) async {
     await acc.login();
     
-    logger.d("Logged in with session: ${acc.username}");
+    logger.i("Logged in with user: ${acc.username}");
     account = acc;
     update.sink.add(GlobalEvent.refreshHwList);
   }

@@ -33,10 +33,19 @@ class Updater {
 
     final packageInfo = await PackageInfo.fromPlatform();
 
-    logger.d("Latest version: $latest, currently: ${packageInfo.version}");
+    late final String current;
+
+    if (packageInfo.buildNumber.isEmpty) {
+      current = packageInfo.version;
+    } else {
+      current = "${packageInfo.version}+${packageInfo.buildNumber}";
+    }
+
+    logger.i("Latest version: $latest, currently: $current");
     
     // Whether latest version is greater than current version  
-    available.value = latest!.compareTo(packageInfo.version) > 0;
+    available.value = latest!.compareTo(current) > 0;
+
     return available.value;
   }
 }
