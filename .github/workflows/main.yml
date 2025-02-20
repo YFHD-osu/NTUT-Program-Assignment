@@ -33,7 +33,7 @@ jobs:
         with:
           cache: true
           cache-sdk: true
-          version: 3.24.0
+          version: 3.27.0
           channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
           
       - name: Install flutter distributor dependencies
@@ -120,7 +120,7 @@ jobs:
         with:
           cache: true
           cache-sdk: true
-          version: 3.24.0
+          version: 3.27.0
           channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
       
       - name: Install Inno Setup
@@ -188,7 +188,7 @@ jobs:
         with:
           cache: true
           cache-sdk: true
-          version: 3.24.0
+          version: 3.27.0
           channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
       
       - name: Install Flutter Distributor Dependences
