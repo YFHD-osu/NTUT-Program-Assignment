@@ -100,11 +100,20 @@ class Printer extends LogPrinter {
 
 }
 
-class DebugPrintOutput extends LogOutput {
+class FileLogOutput extends LogOutput {
   @override
   void output(OutputEvent event) {
     for (var line in event.lines) {
-      debugPrint(line); // 用 debugPrint() 而非 print()
+      // debugPrint(line); // 輸出到 Console
+      LogToFile._writeLog(line);
     }
   }
+}
+
+class AlwaysLogFilter extends LogFilter {
+  @override
+  bool shouldLog(LogEvent event) {
+    return true;
+  }
+  
 }

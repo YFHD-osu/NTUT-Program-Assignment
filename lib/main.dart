@@ -18,14 +18,15 @@ import 'package:ntut_program_assignment/core/updater.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
 import 'package:ntut_program_assignment/page/homework/page.dart';
 import 'package:ntut_program_assignment/page/settings/page.dart';
-import 'package:ntut_program_assignment/core/logger.dart' show DebugPrintOutput, LogToFile, Printer;
+import 'package:ntut_program_assignment/core/logger.dart' show AlwaysLogFilter, FileLogOutput, LogToFile, Printer;
 
 late final Logger logger;
 
 void main() async {
   logger = Logger(
     printer: Printer(),
-    output: DebugPrintOutput(),
+    output: FileLogOutput(),
+    filter: AlwaysLogFilter()
   );
 
   await LogToFile.initialize();

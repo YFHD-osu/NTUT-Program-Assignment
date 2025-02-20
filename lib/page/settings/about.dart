@@ -64,7 +64,11 @@ class AboutRouteState extends State<AboutRoute> {
 
   Future<String> getAppVersion() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    return packageInfo.version;
+
+    if (packageInfo.buildNumber.isEmpty) {
+      return packageInfo.version;
+    }
+    return "${packageInfo.version}+${packageInfo.buildNumber}";
   }
 
   Future<void> _checkUpdate() async {
