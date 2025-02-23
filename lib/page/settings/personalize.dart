@@ -16,15 +16,15 @@ class _PersonalizeRouteState extends State<PersonalizeRoute> {
   
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(height: 10),
-        Text("外觀", style: TextStyle(fontWeight: FontWeight.bold),),
+        Text(MyApp.locale.settings_personalize_appearance, style: TextStyle(fontWeight: FontWeight.bold),),
         SizedBox(height: 5),
         ThemeSection(),
         SizedBox(height: 10),
-        Text("文字大小", style: TextStyle(fontWeight: FontWeight.bold),),
+        Text(MyApp.locale.settings_personalize_font_size, style: TextStyle(fontWeight: FontWeight.bold),),
         SizedBox(height: 5),
         FontFactorSection()
       ]
@@ -41,16 +41,21 @@ class ThemeSection extends StatefulWidget {
 }
 
 class _ThemeSectionState extends State<ThemeSection> {
+  List<String> get title => [
+    MyApp.locale.settings_personalize_follow_system,
+    MyApp.locale.settings_personalize_light_theme,
+    MyApp.locale.settings_personalize_dark_theme
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final title = ["Follow System", "Light Mode", "Dark Mode"];
     return Expander(
       initiallyExpanded: true,
       contentPadding: EdgeInsets.zero,
       header: Tile.lore(
         icon: const Icon(FluentIcons.brush),
-        title: "Theme",
-        lore: "Choose theme style for this application",
+        title: MyApp.locale.settings_personalize_theme,
+        lore: MyApp.locale.settings_personalize_theme_desc,
         decoration: const BoxDecoration(
           color: Colors.transparent
         ),
@@ -80,7 +85,7 @@ class _ThemeSectionState extends State<ThemeSection> {
         const Divider(
           style: DividerThemeData(horizontalMargin: EdgeInsets.zero)),
         Tile.subTile(
-          title: "Window Effect",
+          title: MyApp.locale.settings_personalize_window_effect,
           decoration: const BoxDecoration(
             color: Colors.transparent
           ),
@@ -113,8 +118,8 @@ class _FontFactorSectionState extends State<FontFactorSection> {
     return Column(
       children: [
         Tile.lore(
-          title: "題目文字大小",
-          lore: "題目細節的顯示文字大小",
+          title: MyApp.locale.settings_personalize_problem_font_size,
+          lore: MyApp.locale.settings_personalize_problem_font_size_desc,
           icon: const Icon(FluentIcons.plain_text),
           child: ComboBox<double>(
             value: GlobalSettings.prefs.problemTextFactor,
@@ -131,8 +136,8 @@ class _FontFactorSectionState extends State<FontFactorSection> {
         ),
         const SizedBox(height: 5),
         Tile.lore(
-          title: "測試資料文字大小",
-          lore: "測試資料細節的顯示文字大小",
+          title: MyApp.locale.settings_personalize_testcase_font_size,
+          lore: MyApp.locale.settings_personalize_testcase_font_size_desc,
           icon: const Icon(FluentIcons.plain_text),
           child: ComboBox<double>(
             value: GlobalSettings.prefs.testcaseTextFactor,

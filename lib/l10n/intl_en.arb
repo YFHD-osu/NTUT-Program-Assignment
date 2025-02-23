@@ -85,16 +85,46 @@
     
   },
 
+  "runtime_error_student_id_not_found": "Cannot fetch Student ID (DNS error suspected)",
+  "@runtime_error_student_id_not_found": {
+    "description": "The exception message when student ID not found in login process"
+  },
+
+  "runtime_error_element_not_found": "Element not found in response",
+  "@runtime_error_element_not_found": {
+    "description": "The exception message when expected element not found in response"
+  },
+
+  "runtime_error_abnormal_status_code": "Server response an error code: ",
+  "@runtime_error_abnormal_status_code": {
+    "description": "The exception message when server responses an abnormal status code"
+  },
+
+  "runtime_error_testcase_parse_failed": "Failed to parse testcase",
+  "@runtime_error_testcase_parse_failed": {
+    "description": "The exception message when parser cannot handle the testcase messages"
+  },
+
+  "runtime_error_homework_not_found": "Homework not found",
+  "@runtime_error_homework_not_found": {
+    "description": "When fetch homework detail API failed to fetch the homework detail",
+    "comment": ""
+  },
+  
   "hwDetails_widget_copyWholeProblem": "Copy Problem",
-  "@hwDetails_widget_copyWholeProblem": {},
+  "@hwDetails_widget_copyWholeProblem": {
+    "description": "Copy whole problem button"
+  },
 
   "hwDetails_widget_copyWholeTestcase": "Copy Testcases",
-  "@hwDetails_widget_copyWholeTestcase": {},
+  "@hwDetails_widget_copyWholeTestcase": {
+    "description": "Copy every testcase button"
+  },
 
   "hwDetails_subtitle_homeworkStatus": "Homework status",
   "@hwDetails_subtitle_homeworkStatus": {},
 
-  "hwDetails_subtitle_dangerZone": "Dangerous Zone",
+  "hwDetails_subtitle_dangerZone": "Danger Zone",
   "@hwDetails_subtitle_dangerZone": {},
 
   "hwDetails_widget_deleteHw_title": "Delete Homework",
@@ -106,50 +136,751 @@
   "toast_delete_failed": "Homework Deleted",
   "@toast_delete_failed": {},
 
+  "grading_time_exceeded": "Grading time exceeded",
+  "@grading_time_exceeded": {
+    "description": "Only happaned on server keeps return grading status and never complete",
+    "comment": ""
+  },
+
+  "testcase_unsupported_lang": "We havn't add support for language:",
+  "@testcase_unsupported_lang": {
+    "description": "An error message shows on testing with a unsupported program language"
+  },
+
+  "testcase_environment_not_setup": "environment is not set up",
+  "@testcase_environment_not_setup": {
+    "description": "An error message shows on compiler not setup for the program language"
+  },
+
+  "testcase_file_failed_to_execute": "Cannot execute file:",
+  "@testcase_file_failed_to_execute": {
+    "description": "While error occur while test program running into problem",
+    "comment": ""
+  },
+
+  "testcase_compile_failed": "Failed to compile the file:",
+  "@testcase_compile_failed": {
+    "description": "Error message on file failed to compile",
+    "comment": ""
+  },
+
+  "testcase_program_error_with": "Failed to compile the file with error code:",
+  "@testcase_program_error_with": {
+    "description": "Error message on file failed to compile",
+    "comment": ""
+  },
+
+  "testcase_timeout": "Test time exceeded, forcibly terminated",
+  "@testcase_timeout": {
+    "description": "Error message on program timeout",
+    "comment": ""
+  },
+
+  "testcase_invalid_test_file": "Invaild test file:",
+  "@testcase_invalid_test_file": {
+    "comment": ""
+  },
+
+  "file_not_found": "File is not exists",
+  "@file_not_found": {
+    "description": "General file not exists message"
+  },
+
+  "internet_not_stable": "Unable to connect to the internet or the connection is unstable",
+  "@internet_not_stable": {
+    "comment": ""
+  },
+
+  "vpn_not_connect": "VPN is not connected",
+  "@vpn_not_connect": {
+  },
+
+  "cannot_login": "Cannot login",
+  "@cannot_login": {},
+
+  "uable_to_locale_server": "Unable to locate to the server",
+  "@uable_to_locale_server": {},
+
+  "comment_board_title": "Comment Board",
+  "@comment_board_title": {
+
+  },
+
+  "comment_board_add_reply": "New reply",
+  "@comment_board_add_reply": {
+    "description": "Add reply button in comment board page"
+  },
+
+  "comment_board_replies": "replies",
+  "@comment_board_replies": {
+    "description": "Use on {number} replies"
+  },
+
+  "send": "Send",
+  "@send": {
+    "description": "General send"
+  },
+
+  "error_occur": "Error occured",
+  "@error_occur": {
+    "description": "General error occur "
+  },
+
+  "refresh": "Refresh",
+  "@refresh": {
+    "description": "General refresh"
+  },
+
+  "loading": "Loading...",
+  "@loading": {
+    "description": "General loading"
+  },
+
   "hwDetails_widget_editFileName_title": "Edit Filename",
-  "@hwDetails_widget_editFileName_title": {},
+  "@hwDetails_widget_editFileName_title": {
+    "description": "Title for editing the filename"
+  },
   "hwDetails_widget_editFileName_lore": "The edited file name of this assignment on the server end",
-  "@hwDetails_widget_editFileName_lore": {},
+  "@hwDetails_widget_editFileName_lore": {
+    "description": "Lore for editing the filename"
+  },
 
   "hwDetails_widget_fileStatus_title": "File Upload Status",
-  "@hwDetails_widget_fileStatus_title": {},
+  "@hwDetails_widget_fileStatus_title": {
+    "description": "Title for file upload status"
+  },
   "hwDetails_widget_fileStatus_lore": "The current file's manual processing status on the server.",
-  "@hwDetails_widget_fileStatus_lore": {},
+  "@hwDetails_widget_fileStatus_lore": {
+    "description": "Lore for file upload status"
+  },
 
   "hwDetails_widget_uploadTime_title": "File Upload Date",
-  "@hwDetails_widget_uploadTime_title": {},
+  "@hwDetails_widget_uploadTime_title": {
+    "description": "Title for file upload date"
+  },
   "hwDetails_widget_uploadTime_lore": "The latest code upload time.",
-  "@hwDetails_widget_uploadTime_lore": {},
+  "@hwDetails_widget_uploadTime_lore": {
+    "description": "Lore for file upload date"
+  },
 
   "hwDetails_testArea_dropfileHere": "Please drag the program file here",
-  "@hwDetails_testArea_dropfileHere": {},
+  "@hwDetails_testArea_dropfileHere": {
+    "description": "Message for dragging the file"
+  },
   "hwDetails_testArea_testRunning": "Testing...",
-  "@hwDetails_testArea_testRunning": {},
+  "@hwDetails_testArea_testRunning": {
+    "description": "Message for testing in progress"
+  },
   "hwDetails_testArea_allPass": "Pass all testcases",
-  "@hwDetails_testArea_allPass": {},
+  "@hwDetails_testArea_allPass": {
+    "description": "Message for passing all testcases"
+  },
   "hwDetails_testArea_stillNotPass": "Still have %#% not passed",
-  "@hwDetails_testArea_stillNotPass": {},
+  "@hwDetails_testArea_stillNotPass": {
+    "description": "Message for testcases not passed"
+  },
   "hwDetails_testArea_testError": "Error: %#% (%#%)",
-  "@hwDetails_testArea_testError": {},
+  "@hwDetails_testArea_testError": {
+    "description": "Message for test error"
+  },
   "hwDetails_testArea_haveNotRun": "Test not run yet",
-  "@hwDetails_testArea_haveNotRun": {},
+  "@hwDetails_testArea_haveNotRun": {
+    "description": "Message for test not run yet"
+  },
   "hwDetails_testArea_testAll_title": "Test All",
-  "@hwDetails_testArea_testAll_title": {},
+  "@hwDetails_testArea_testAll_title": {
+    "description": "Title for testing all"
+  },
   "hwDetails_testArea_testAll_lore": "Validate all example test data once",
-  "@hwDetails_testArea_testAll_lore": {},
+  "@hwDetails_testArea_testAll_lore": {
+    "description": "Lore for testing all"
+  },
   "hwDetails_testArea_startTest": "Start Test",
-  "@hwDetails_testArea_startTest": {},
+  "@hwDetails_testArea_startTest": {
+    "description": "Button text for starting test"
+  },
+  "hwDetails_state_not_submitted": "Not submitted",
+  "@hwDetails_state_not_submitted": {
+  },
 
-  "test": "Test", "@test": {},
-  "upload": "Upload", "@upload": {},
-  "problem": "Problem", "@problem": {},
-  "testcase": "Testcase", "@testcase": {},
-  "cancel_button": "Cancel", "@cancel_button": {},
-  "delete": "Delete", "@delete": {},
-  "input": "Input", "@input": {},
-  "output": "Output", "@output": {},
-  "test_result": "Test Result", "@test_result": {},
-  "data": "Data", "@data": {}
+  "hwDetails_state_not_submitted_desc": "No homework of this operation file on the server.",
+  "@hwDetails_state_not_submitted_desc": {
+
+  },
+
+  "hwDetails_problem_empty": "The problem has no description",
+  "@hwDetails_problem_empty": {
+
+  },
+
+  "hwDetails_test_running": "Test is running...",
+  "@hwDetails_test_running": {
+
+  },
+
+  "hwDetails_cannot_parse_testcase": "Unable to parse test data",
+  "@hwDetails_cannot_parse_testcase": {
+
+  },
+
+  "hwDetails_compilation_failed": "Compilation failed",
+  "@hwDetails_compilation_failed": {
+
+  },
+
+  "hwDetails_preparing": "Preparing",
+  "@hwDetails_preparing": {
+
+  },
+
+  "hwDetails_failed": "Failed",
+  "@hwDetails_failed": {
+
+  },
+
+  "hwDetails_submitting": "Submitting",
+  "@hwDetails_submitting": {
+
+  },
+
+  "hwDetails_passed": "Passed",
+  "@hwDetails_passed": {
+
+  },
+
+  "hwDetails_deleting": "Deleting",
+  "@hwDetails_deleting": {
+
+  },
+
+  "hwDetails_number_of_completions": "Completions",
+  "@hwDetails_number_of_completions": {
+
+  },
+
+  "hwDetails_drop_file_here": "Drop file here",
+  "@hwDetails_drop_file_here": {
+
+  },
+
+  "hwDetails_select_homework_window_title": "Select assignment file",
+  "@hwDetails_select_homework_window_title": {
+
+  },
+
+  "hwDetails_failed_delete_homework": "Failed to delete assignment",
+  "@hwDetails_failed_delete_homework": {
+
+  },
+
+  "hwDetails_failed_upload_homework": "Failed to upload assignment",
+  "@hwDetails_failed_upload_homework": {
+
+  },
+
+  "hwDetails_resubmitt_homework": "Resubmit the assignment",
+  "@hwDetails_resubmitt_homework": {
+
+  },
+
+  "hwDetails_resubmitt_homework_desc": "You must delete the existing version before re-uploading. Are you sure you want to proceed?",
+  "@hwDetails_resubmitt_homework_desc": {
+
+  },
+
+  "hwDetails_delete_and_upload_btn": "Delete and upload",
+  "@hwDetails_delete_and_upload_btn": {
+
+  },
+
+  "hwDetails_homework_upload": "Assignment upload",
+  "@hwDetails_homework_upload": {
+
+  },
+
+  "hwDetails_homework_upload_desc": "Choose a file or drag and drop it here to upload the assignment",
+  "@hwDetails_homework_upload_desc": {
+
+  },
+
+  "hwDetails_select_file": "Select a file",
+  "@hwDetails_select_file": {
+
+  },
+
+  "hwDetails_release_to_upload": "Release to upload the file",
+  "@hwDetails_release_to_upload": {
+
+  },
+
+  "hwDetails_completion": "Completed",
+  "@hwDetails_completion": {
+
+  },
+
+  "hwDetails_deadline": "Deadline",
+  "@hwDetails_deadline": {
+
+  },
+
+  "hwDetails_remaining": "remaining",
+  "@hwDetails_remaining": {
+
+  },
+
+  "hwDetails_ago": "ago",
+  "@hwDetails_ago": {
+
+  },
+
+  "settings_about_update_available": "Update available",
+  "@settings_about_update_available": {
+    "comment": "有可用的新版本"
+  },
+
+  "settings_about_on_latest": "You are on the latest version",
+  "@settings_about_on_latest": {
+    "comment": "您處於最新版本"
+  },
+
+  "settings_about_latest_version": "Latest version",
+  "@settings_about_latest_version": {
+    "comment": "最新版本"
+  },
+
+  "settings_about_version_not_checked": "Not yet checked",
+  "@settings_about_version_not_checked": {
+    "comment": "尚未檢查"
+  },
+
+  "settings_about_user_agreement": "User Agreement",
+  "@settings_about_user_agreement": {
+    "comment": "使用者條約"
+  },
+
+  "settings_about_user_agreement_desc": "Legal document regulating user use of software",
+  "@settings_about_user_agreement_desc": {
+    "comment": "規範用戶使用軟體的法律文件"
+  },
+
+  "settings_about_acknoledge": "Acknowledgment",
+  "@settings_about_acknoledge": {
+    "comment": "特別銘謝"
+  },
+
+  "settings_account_acknoledge": "Add account",
+  "@settings_account_acknoledge": {
+    "comment": "加入帳號"
+  },
+
+  "settings_account_select_course": "Select a course",
+  "@settings_account_select_course": {
+    "comment": "選擇課程"
+  },
+
+  "settings_account_remember_password": "Remember username and password",
+  "@settings_account_remember_password": {
+    "comment": "記住帳號密碼"
+  },
+  "settings_account_login_failed": "Failed to login",
+  "@settings_account_login_failed": {
+    "comment": "登入失敗"
+  },
+
+  "settings_account_change_password": "Change password",
+  "@settings_account_change_password": {
+    "comment": "變更密碼"
+  },
+
+  "settings_account_change_password_desc": "Change the password for the assignment submission system (must be logged in)",
+  "@settings_account_change_password_desc": {
+    "comment": "變更登入作業繳交系統的密碼 (必須處於登入狀態)"
+  },
+
+  "settings_account_enter_new_password": "Enter new password",
+  "@settings_account_enter_new_password": {
+    "comment": "輸入新的密碼"
+  },
+
+  "settings_account_password_updated": "The password has been updated. Please use the new password for the next login.",
+  "@settings_account_password_updated": {
+    "comment": "密碼已更新，下次請用新密碼登入"
+  },
+  
+  "settings_account_not_logged_in": "Not logged in",
+  "@settings_account_not_logged_in": {
+    "comment": "尚未登入"
+  },
+
+  "settings_account_not_logged_in_desc": "Please select an account to sign in from the list below or add a new account",
+  "@settings_account_not_logged_in_desc": {
+    "comment": "請從下方列表選擇帳號登入或新增帳號"
+  },
+
+  "settings_account_logged_in_as": "Logged in as",
+  "@settings_account_logged_in_as": {
+    "comment": "目前登入"
+  },
+
+  "settings_account_auto_login": "Auto login",
+  "@settings_account_auto_login": {
+    "comment": "自動登入"
+  },
+
+  "settings_account_auto_login_desc": "Log in to the selected account when the application starts",
+  "@settings_account_auto_login_desc": {
+    "comment": "在應用程式啟動時登入所選擇的帳號"
+  },
+
+  "settings_account_other_user": "Other users",
+  "@settings_account_other_user": {
+    "comment": "其他使用者"
+  },
+
+  "settings_account_add_user": "Add another user",
+  "@settings_account_add_user": {
+    "comment": "新增其他使用者"
+  },
+
+  "settings_account_add_account": "Add account",
+  "@settings_account_add_account": {
+    "comment": "新增帳號"
+  },
+
+  "settings_account_refresh": "Can't see your account? Click here to refresh.",
+  "@settings_account_refresh": {
+    "comment": "沒有看到你的帳號嗎? 點此重新整理"
+  },
+
+  "settings_account_remove_account": "Remove",
+  "@settings_account_remove_account": {
+    "comment": "移除帳號"
+  },
+
+  "settings_account_no_account": "No account added yet, please click 'Add Account' above to start",
+  "@settings_account_no_account": {
+    "comment": "尚未加入任何帳號，請點擊上方的新增帳號開始"
+  },
+
+  "settings_page_update_available": "Update available, click here to view",
+  "@settings_page_update_available": {
+    "comment": "有可用的更新，點此查看"
+  },
+
+  "settings_page_account_desc": "Select the identity to log in to the assignment submission system",
+  "@settings_page_account_desc": {
+    "comment": "選擇要登入作業繳交系統的身分"
+  },
+
+  "settings_page_test_environment": "Testing environment",
+  "@settings_page_test_environment": {
+    "comment": "測試環境"
+  },
+
+  "settings_page_test_environment_desc": "Set the location of the local compiler",
+  "@settings_page_test_environment_desc": {
+    "comment": "設定本機編譯器的位置"
+  },
+
+  "settings_page_personalize": "Personalize",
+  "@settings_page_personalize": {
+    "comment": "個人化"
+  },
+
+  "settings_page_personalize_desc": "Unique design, personalized style, meeting individual needs",
+  "@settings_page_personalize_desc": {
+    "comment": "獨特設計，專屬風格，滿足個人需求"
+  },
+
+  "settings_page_about": "About",
+  "@settings_page_about": {
+    "comment": "軟體資訊"
+  },
+
+  "settings_page_about_desc": "About this program and its contributors",
+  "@settings_page_about_desc": {
+    "comment": "關於這支程式與它的貢獻者"
+  },
+
+  "settings_page_not_login": "Classmate, if you don't log in, we'll have to drop you from the course",
+  "@settings_page_not_login": {
+    "comment": "同學，如果沒有登入的話就要把你退選囉"
+  },
+
+  "settings_page_language": "Language",
+  "@settings_page_language": {
+    "comment": "語言"
+  },
+
+  "settings_page_language_desc": "Change the program display language",
+  "@settings_page_language_desc": {
+    "comment": "變更程式顯示地的語言"
+  },
+
+  "settings_personalize_appearance": "Appearance",
+  "@settings_personalize_appearance": {
+    "comment": "外觀"
+  },
+
+  "settings_personalize_follow_system": "Follow System",
+  "@settings_personalize_follow_system": {
+    "comment": "跟隨系統"
+  },
+
+  "settings_personalize_light_theme": "Light Mode",
+  "@settings_personalize_light_theme": {
+    "comment": "白色主題"
+  },
+
+  "settings_personalize_dark_theme": "Dark Mode",
+  "@settings_personalize_dark_theme": {
+    "comment": "黑色主題"
+  },
+
+  "settings_personalize_font_size": "Font size",
+  "@settings_personalize_font_size": {
+    "comment": "字型大小"
+  },
+
+  "settings_personalize_theme": "Theme",
+  "@settings_personalize_theme": {
+    "comment": "主題"
+  },
+
+  "settings_personalize_theme_desc": "Choose theme style for this application",
+  "@settings_personalize_theme_desc": {
+    "comment": "變更程式的主題"
+  },
+
+  "settings_personalize_window_effect": "Window Effect",
+  "@settings_personalize_window_effect": {
+    "comment": "視窗效果"
+  },
+
+  "settings_personalize_problem_font_size": "Problem font size",
+  "@settings_personalize_problem_font_size": {
+    "comment": "題目文字大小"
+  },
+
+  "settings_personalize_problem_font_size_desc": "Font size of the details of the question",
+  "@settings_personalize_problem_font_size_desc": {
+    "comment": "題目細節的顯示文字大小"
+  },
+
+  "settings_personalize_testcase_font_size": "Testcase font size",
+  "@settings_personalize_testcase_font_size": {
+    "comment": "測試資料文字大小"
+  },
+
+  "settings_personalize_testcase_font_size_desc": "Font size of the details of the testcase",
+  "@settings_personalize_testcase_font_size_desc": {
+    "comment": "測試資料細節的顯示文字大小"
+  },
+
+  "settings_test_server_select_compiler": "Select a compiler",
+  "@settings_test_server_select_compiler": {
+    "comment": "選取編譯器"
+  },
+
+  "settings_test_server_compiler_not_implement": "Compiler detection not yet implemented",
+  "@settings_test_server_compiler_not_implement": {
+    "comment": "尚未實作編譯器檢測"
+  },
+
+  "settings_test_server_compiler_invaild": "Please ensure that the specified compiler is a valid compiler",
+  "@settings_test_server_compiler_invaild": {
+    "comment": "請確定指定的編譯器是有效的編譯器"
+  },
+
+  "settings_test_server_compiler_set": "The program will use the compiler at the specified path.",
+  "@settings_test_server_compiler_set": {
+    "comment": "程式將使用指定路徑的編譯器"
+  },
+
+  "settings_test_server_c_not_found": "No valid C compiler in the environment.",
+  "@settings_test_server_c_not_found": {
+    "comment": "環境中無有效的 C 編譯器"
+  },
+
+  "settings_test_server_python_not_found": "No valid Python compiler in the environment.",
+  "@settings_test_server_python_not_found": {
+    "comment": "環境中無有效的 Python 編譯器"
+  },
+
+  "settings_test_server_not_implemented": "Compiler detection not yet implemented",
+  "@settings_test_server_not_implemented": {
+    "comment": "尚未實作編譯器檢測"
+  },
+
+  "settings_test_server_env_compiler_found": "A valid compiler has been found in the environment",
+  "@settings_test_server_env_compiler_found": {
+    "comment": "已在環境中發現有效的編譯器"
+  },
+
+  "settings_test_server_not_found": "Not found",
+  "@settings_test_server_not_found": {
+    "comment": "尚未找到"
+  },
+
+  "settings_test_server_environment_variable": "Environment variable",
+  "@settings_test_server_environment_variable": {
+    "comment": "環境變數"
+  },
+
+  "settings_test_server_sepcified_path": "Sepcified path",
+  "@settings_test_server_sepcified_path": {
+    "comment": "指定路徑"
+  },
+
+  "settings_test_server_source": "Source",
+  "@settings_test_server_source": {
+    "comment": "來源"
+  },
+
+  "settings_test_server_version": "Version",
+  "@settings_test_server_version": {
+    "comment": "版本"
+  },
+
+  "settings_test_server_custom_path": "Custom path",
+  "@settings_test_server_custom_path": {
+    "comment": "自訂位置"
+  },
+
+  "settings_test_server_use_environment_variable": "Use environment variable",
+  "@settings_test_server_use_environment_variable": {
+    "comment": "使用環境變數"
+  },
+
+  "settings_test_server_test_compiler_path": "Test compiler path",
+  "@settings_test_server_test_compiler_path": {
+    "comment": "測試編譯器位置"
+  },
+
+  "settings_test_server_test_compiler_path_desc": "Set the compiler location used for testing programs",
+  "@settings_test_server_test_compiler_path_desc": {
+    "comment": "設定測試程式時所使用的編譯器位置"
+  },
+
+  "settings_test_server_test_python_environment": "Python environment",
+  "@settings_test_server_test_python_environment": {
+    "comment": "Python 環境"
+  },
+
+  "settings_test_server_environment_detected": "Environment detected",
+  "@settings_test_server_environment_detected": {
+    "comment": "環境已被偵測"
+  },
+
+  "settings_test_server_environment_not_detected": "Environment not detected",
+  "@settings_test_server_environment_not_detected": {
+    "comment": "環境未被偵測"
+  },
+
+  "settings_test_server_test_c_environment": "C environment",
+  "@settings_test_server_test_c_environment": {
+    "comment": "C 環境"
+  },
+
+  "test": "Test", "@test": {
+    "description": "General test"
+  },
+  "upload": "Upload", "@upload": {
+    "description": "General upload"
+  },
+  "problem": "Problem", "@problem": {
+    "description": "General problem"
+  },
+  "testcase": "Testcase", "@testcase": {
+    "description": "General testcase"
+  },
+  "cancel_button": "Cancel", "@cancel_button": {
+    "description": "Cancel button text"
+  },
+  "delete": "Delete", "@delete": {
+    "description": "General delete"
+  },
+  "input": "Input", "@input": {
+    "description": "General input"
+  },
+  "output": "Output", "@output": {
+    "description": "General output"
+  },
+  "test_result": "Test Result", "@test_result": {
+    "description": "General test result"
+  },
+  "data": "Data", "@data": {
+    "description": "General data"
+  },
+  "status": "Status", "@status": {
+    "description": "狀態"
+  },
+
+  "login": "Login", "@login": {
+    "description": "登入"
+  },
+  
+  "number": "Number", "@number": {
+
+  },
+
+  "week": "weeks", "@week": {
+
+  },
+  "day": "days", "@day": {
+
+  },
+  "hour": "hours", "@hour": {
+
+  },
+  "minute": "minutes", "@minute": {
+
+  },
+  "no_title": "No title", "@no_title": {
+
+  },
+  "about": "About", "@about": {
+
+  },
+  "agree": "Agree", "@agree": {
+    "comment": "同意"
+  },
+  "view": "View", "@view": {
+    "comment": "檢視"
+  },
+  "account": "Account", "@account": {
+    "comment": "帳號"
+  },
+  "password": "Password", "@password": {
+    "comment": "密碼"
+  },
+  "ok": "Ok", "@ok": {
+    "comment": "確定"
+  },
+  "change": "Change", "@change": {
+    "comment": "變更"
+  },
+  "failed": "Failed", "@failed": {
+    "comment": "失敗"
+  },
+  "success": "Success", "@success": {
+    "comment": "成功"
+  },
+  "logout": "Logout", "@logout": {
+    "comment": "登出"
+  },
+  "disable": "Disabled", "@disable": {
+    "comment": "停用"
+  },
+  "welcome": "Welcome", "@welcome": {
+    "comment": "歡迎"
+  },
+
+  "studnet_id": "ID", "@studnet_id": {
+    "comment": "學號"
+  }
+
+
   
   
 }

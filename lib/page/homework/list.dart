@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/main.dart';
 
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/page/homework/page.dart';
@@ -108,7 +109,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("尚未通過", style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(MyApp.locale.hwDetails_failed, style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         SizedBox(
           height: (65 * notPasses.length) + (10 * (notPasses.length-1)),
@@ -135,7 +136,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("已通過", style: TextStyle(fontWeight: FontWeight.bold)),
+        Text(MyApp.locale.hwDetails_passed, style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         SizedBox(
           height: (65 * passed.length) + (10 * (passed.length-1)),
@@ -193,7 +194,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
                   Text("${passes.length}/${HomeworkInstance.homeworks.length}",
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 10),
-                  const Text("完成比"),
+                  Text(MyApp.locale.hwDetails_completion),
                   const Spacer(),
                 ]
               ),
@@ -220,7 +221,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
                   Text("${HomeworkInstance.homeworks.length-passes.length}",
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 10),
-                  const Text("未通過"),
+                  Text(MyApp.locale.hwDetails_failed),
                   const Spacer()
                 ]
               ),
@@ -251,11 +252,11 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
           children: [
             const Icon(FluentIcons.error, size: 50),
             const SizedBox(height: 10),
-            Text("發生錯誤\n$errMsg", textAlign: TextAlign.center),
+            Text("${MyApp.locale.error_occur}\n$errMsg", textAlign: TextAlign.center),
             const SizedBox(height: 10),
             FilledButton(
               onPressed: _refresh,
-              child: const Text("重新整理"),
+              child: Text(MyApp.locale.refresh),
             )
           ]
         )
@@ -278,7 +279,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
                 ProgressRing(value: value), 
             ),
             const SizedBox(height: 10),
-            const Text("題目載入中..."),
+            Text(MyApp.locale.loading),
           ]
         )
       );
@@ -320,7 +321,7 @@ class _ListItemState extends State<ListItem> {
 
   String fetchDeadline() {
     final hw = widget.homework;
-    return "繳交期限: ${formatDate(hw.deadline)}";
+    return "${MyApp.locale.hwDetails_deadline}: ${formatDate(hw.deadline)}";
   }
 
   String formatDate(DateTime date) {
@@ -328,19 +329,21 @@ class _ListItemState extends State<ListItem> {
     
     Duration diff = date.difference(now);
 
-    final decoration = (diff > Duration.zero) ? "後" : "前";
+    final decoration = (diff > Duration.zero) ? 
+      MyApp.locale.hwDetails_remaining :
+      MyApp.locale.hwDetails_ago;
     
     diff = (diff < Duration.zero) ? now.difference(date) : diff;
     
     if (diff > const Duration(days: 7)) {
       // print("[$date] ${diff.inDays} -> ${(diff.inDays / 7).toInt()}");
-      return "${diff.inDays ~/ 7} 周$decoration";
+      return "${diff.inDays ~/ 7} ${MyApp.locale.week} $decoration";
     } else if (diff > const Duration(days: 1)) {
-      return "${diff.inDays} 天$decoration";
+      return "${diff.inDays} ${MyApp.locale.day} $decoration";
     } else if (diff > const Duration(hours: 1)) {
-      return "${diff.inHours} 小時$decoration";
+      return "${diff.inHours} ${MyApp.locale.hour} $decoration";
     } else {
-      return "${diff.inMinutes} 分鐘$decoration";
+      return "${diff.inMinutes} ${MyApp.locale.minute} $decoration";
     }
   }
 
@@ -373,7 +376,7 @@ class _ListItemState extends State<ListItem> {
         }
         GlobalSettings.route.push(
           "hwDetail",
-          title: "${widget.homework.number} ${widget.homework.title??'未命名'}", 
+          title: "${widget.homework.number} ${widget.homework.title??MyApp.locale.no_title}", 
           parameter: {"id": widget.homework.id-1},
         );
       }

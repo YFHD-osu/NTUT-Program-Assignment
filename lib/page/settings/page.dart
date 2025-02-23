@@ -2,7 +2,9 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:ntut_program_assignment/core/updater.dart';
 
 import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/main.dart' show MyApp;
 import 'package:ntut_program_assignment/page/settings/test_server.dart';
+import 'package:ntut_program_assignment/provider/theme.dart';
 import 'package:ntut_program_assignment/router.dart';
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
@@ -10,20 +12,45 @@ import 'package:ntut_program_assignment/page/settings/about.dart';
 import 'package:ntut_program_assignment/page/settings/account.dart';
 import 'package:ntut_program_assignment/page/settings/personalize.dart';
 
-class SettingsPage extends StatelessWidget {
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+final _languageStream = ValueNotifier<String>("");
+
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  void _onLanguageChanged() {
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    _languageStream.addListener(_onLanguageChanged);
+    super.initState();
+  }
+  
+  @override
+  void dispose() {
+    _languageStream.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const FluentNavigation(
-      title: "設定",
+    return FluentNavigation(
+      title: MyApp.locale.sidebar_settings_title,
       struct: {
-          "default": OptionList(),
-          "account": AccountRoute(),
-          "testEnvironment": TestServerRoute(),
-          "personalize": PersonalizeRoute(),
-          "about": AboutRoute(),
-        }
+        "default": OptionList(),
+        "account": AccountRoute(),
+        "testEnvironment": TestServerRoute(),
+        "personalize": PersonalizeRoute(),
+        "about": AboutRoute(),
+      }
     );
   }
 }
@@ -55,11 +82,11 @@ class _UpadteNotifyState extends State<UpadteNotify> {
 
   Widget _context() {
     return FilledButton(
-      child: const Row(
+      child: Row(
         children: [
           Icon(FluentIcons.upgrade_analysis),
           SizedBox(width: 10),
-          Text("有可用的更新，點此查看")
+          Text(MyApp.locale.settings_page_update_available)
         ]
       ),
       onPressed: () {
@@ -100,14 +127,16 @@ class OptionList extends StatelessWidget {
           ]
         ),
         const SizedBox(height: 20),
+        LanguageSection(),
+        const SizedBox(height: 10),
         Button(
           style: const ButtonStyle(
             padding: WidgetStatePropertyAll(EdgeInsets.zero)
           ),
           child: Tile.lore(
             decoration: const BoxDecoration(),
-            title: "帳號",
-            lore: "選擇要登入作業繳交系統的身分",
+            title: MyApp.locale.account,
+            lore: MyApp.locale.settings_page_account_desc,
             icon: const Icon(FluentIcons.accounts),
             child: const Icon(FluentIcons.chevron_right),
           ),
@@ -125,8 +154,8 @@ class OptionList extends StatelessWidget {
           ),
           child: Tile.lore(
             decoration: const BoxDecoration(),
-            title: "測試環境",
-            lore: "設定本機編譯器的位置",
+            title: MyApp.locale.settings_page_test_environment,
+            lore: MyApp.locale.settings_page_test_environment_desc,
             icon: const Icon(FluentIcons.server_enviroment),
             child: const Icon(FluentIcons.chevron_right)
           ),
@@ -134,7 +163,7 @@ class OptionList extends StatelessWidget {
             if (GlobalSettings.route.length > 1) {
               return;
             }
-            GlobalSettings.route.push("testEnvironment", title: "測試環境");
+            GlobalSettings.route.push("testEnvironment", title: MyApp.locale.settings_page_test_environment);
           }
         ),
         const SizedBox(height: 10),
@@ -144,8 +173,8 @@ class OptionList extends StatelessWidget {
           ),
           child: Tile.lore(
             decoration: const BoxDecoration(),
-            title: "個人化",
-            lore: "獨特設計，專屬風格，滿足個人需求",
+            title: MyApp.locale.settings_page_personalize,
+            lore: MyApp.locale.settings_page_personalize_desc,
             icon: const Icon(FluentIcons.personalize),
             child: const Icon(FluentIcons.chevron_right),
           ),
@@ -153,7 +182,7 @@ class OptionList extends StatelessWidget {
             if (GlobalSettings.route.length > 1) {
               return;
             }
-            GlobalSettings.route.push("personalize", title: "個人化");
+            GlobalSettings.route.push("personalize", title: MyApp.locale.settings_page_personalize);
           }
         ),
         const SizedBox(height: 10),
@@ -163,8 +192,8 @@ class OptionList extends StatelessWidget {
           ),
           child: Tile.lore(
             decoration: const BoxDecoration(),
-            title: "軟體資訊",
-            lore: "關於這支程式與它的貢獻者",
+            title: MyApp.locale.settings_page_about,
+            lore: MyApp.locale.settings_page_about_desc,
             icon: const Icon(FluentIcons.info),
             child: const Icon(FluentIcons.chevron_right),
           ),
@@ -172,7 +201,7 @@ class OptionList extends StatelessWidget {
             if (GlobalSettings.route.length > 1) {
               return;
             }
-            GlobalSettings.route.push("about", title: "軟體資訊");
+            GlobalSettings.route.push("about", title: MyApp.locale.settings_page_about);
           }
         )
       ]
@@ -207,13 +236,63 @@ class AccountOverview extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(account?.name ?? "尚未登入", style: const TextStyle(
+            Text(account?.name ?? MyApp.locale.settings_account_not_logged_in, style: const TextStyle(
               fontWeight: FontWeight.bold, fontSize: 24
             )),
-            Text(account == null ? "同學，如果沒有登入的話就要把你退選囉" : "學號 ${account!.username}")
+            Text(account == null ? MyApp.locale.settings_page_not_login : "${MyApp.locale.studnet_id} ${account!.username}")
           ]
         )
       ]
+    );
+  }
+}
+
+class LanguageSection extends StatefulWidget {
+  const LanguageSection({super.key});
+
+  @override
+  State<LanguageSection> createState() => _LanguageSectionState();
+}
+
+class _LanguageSectionState extends State<LanguageSection> {
+
+  final Map<String, String> _trans = {
+    "en": "English",
+    "zh": "中文 (簡體)",
+    "zh_Hant": "中文 (繁體)"
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Button(
+      style: const ButtonStyle(
+        padding: WidgetStatePropertyAll(EdgeInsets.zero)
+      ),
+      child: Tile.lore(
+        decoration: const BoxDecoration(),
+        title: MyApp.locale.settings_page_language,
+        lore: MyApp.locale.settings_page_language_desc,
+        icon: const Icon(FluentIcons.locale_language),
+        child: ComboBox(
+          value: GlobalSettings.prefs.language,
+          items: AppLocalizations.supportedLocales
+            .map((e) => ComboBoxItem(
+              value: e.toString(),
+              child: Text(_trans[e.toString()] ?? e.toString()))
+            )
+            .toList(),
+          onChanged: (v) {
+            if (v == null) {
+              return;
+            }
+            GlobalSettings.prefs.language = v;
+
+            _languageStream.value = v;
+            ThemeProvider.instance.setTheme(ThemeProvider.instance.theme);
+          }
+        )
+      ),
+      onPressed: () {}
     );
   }
 }

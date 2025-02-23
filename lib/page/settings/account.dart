@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 
-import 'package:ntut_program_assignment/main.dart' show MyApp;
+import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
 import 'package:ntut_program_assignment/page/homework/list.dart';
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
@@ -60,11 +60,11 @@ class _LoginDialogState extends State<LoginDialog> {
     return ContentDialog(
       constraints: const BoxConstraints(
         minHeight: 0, minWidth: 0, maxHeight: 400, maxWidth: 400),
-      title: const Text("加入帳號"),
+      title: Text(MyApp.locale.settings_account_acknoledge),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("帳號"),
+          Text(MyApp.locale.account),
           const SizedBox(height: 5),
           TextBox(
             focusNode: _uFocus,
@@ -79,7 +79,7 @@ class _LoginDialogState extends State<LoginDialog> {
             },
           ),
           const SizedBox(height: 10),
-          const Text("密碼"),
+          Text(MyApp.locale.password),
           const SizedBox(height: 5),
           TextBox(
             focusNode: _pFocus,
@@ -91,7 +91,7 @@ class _LoginDialogState extends State<LoginDialog> {
             }
           ),
           const SizedBox(height: 10),
-          const Text("選擇課程"),
+          Text(MyApp.locale.settings_account_select_course),
           const SizedBox(height: 5),
           SizedBox(
             width: 400,
@@ -115,7 +115,7 @@ class _LoginDialogState extends State<LoginDialog> {
           ),
           const SizedBox(height: 10),
           Checkbox(
-            content: const Text("記住帳號密碼"),
+            content: Text(MyApp.locale.settings_account_remember_password),
             checked: _rememberPW,
             onChanged: (value) {
               setState(() => _rememberPW = value??false);
@@ -136,11 +136,11 @@ class _LoginDialogState extends State<LoginDialog> {
           onPressed: _isLoading ? null : () {
             Navigator.pop(context);
           },
-          child: const Text('取消'),
+          child: Text(MyApp.locale.cancel_button),
         ),
         FilledButton(
           onPressed: _isLoading ? null : _login,
-          child: const Text('登入'),
+          child: Text(MyApp.locale.login)
         ),
       ],
     );
@@ -162,11 +162,11 @@ class _LoginDialogState extends State<LoginDialog> {
       await showDialog<String>(
         context: context,
         builder: (context) => ContentDialog(
-          title: const Text("登入錯誤"),
+          title: Text(MyApp.locale.settings_account_login_failed),
           content: Text(e.toString()),
           actions: [
             Button(
-              child: const Text("確定"),
+              child: Text(MyApp.locale.ok),
               onPressed: () => Navigator.of(context).pop()
             )
           ],
@@ -194,11 +194,11 @@ class ChangePasswordDialog extends StatelessWidget {
     return ContentDialog(
       constraints: const BoxConstraints(
         minHeight: 0, minWidth: 0, maxHeight: 215, maxWidth: 400),
-      title: const Text("變更密碼"),
+      title: Text(MyApp.locale.settings_account_change_password),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("輸入新的密碼"),
+          Text(MyApp.locale.settings_account_enter_new_password),
           const SizedBox(height: 5),
           TextBox(
             controller: _controller
@@ -210,13 +210,13 @@ class ChangePasswordDialog extends StatelessWidget {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: const Text('取消'),
+          child: Text(MyApp.locale.cancel_button),
         ),
         FilledButton(
           onPressed: () {
             Navigator.pop(context, _controller.text);
           },
-          child: const Text('更改'),
+          child: Text(MyApp.locale.change),
         ),
       ],
     );
@@ -294,15 +294,17 @@ class _AccountRouteState extends State<AccountRoute> {
 
     try {
       await GlobalSettings.account!.changePasswd(newPass);
-    } on RuntimeError catch (e) {
-      MyApp.showToast("變更失敗", e.message, InfoBarSeverity.error);
-      return;
     } catch (e) {
-      MyApp.showToast("變更失敗", "例外情況: $e", InfoBarSeverity.error);
+      logger.e("Failed to chagne password: ${e.toString()}");
+      MyApp.showToast(MyApp.locale.failed, e.toString(), InfoBarSeverity.error);
       return;
     }
 
-    MyApp.showToast("變更成功", "密碼已更新，下次請用新密碼登入", InfoBarSeverity.success);
+    MyApp.showToast(
+      MyApp.locale.success,
+      MyApp.locale.settings_account_password_updated,
+      InfoBarSeverity.success
+    );
   }
 
   Future<void> _refreshDB() async {
@@ -348,7 +350,7 @@ class _AccountRouteState extends State<AccountRoute> {
             GlobalSettings.logout();
             setState(() {});
           },
-          child: const Text("登出"),
+          child: Text(MyApp.locale.logout)
         )
       ]
     );
@@ -366,11 +368,11 @@ class _AccountRouteState extends State<AccountRoute> {
           child: const Icon(FluentIcons.user_optional),
         ),
         const SizedBox(width: 15),
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("尚未登入"),
-            Text("請從下方列表選擇帳號登入或新增帳號")
+            Text(MyApp.locale.settings_account_not_logged_in),
+            Text(MyApp.locale.settings_account_not_logged_in_desc)
           ]
         )
       ]
@@ -383,7 +385,7 @@ class _AccountRouteState extends State<AccountRoute> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 10),
-        const Text("目前登入"),
+        Text(MyApp.locale.settings_account_logged_in_as),
         const SizedBox(height: 5),
         Tile(
           child: AnimatedSwitcher(
@@ -395,19 +397,19 @@ class _AccountRouteState extends State<AccountRoute> {
         const SizedBox(height: 5),
         Tile.lore(
           icon: const Icon(FluentIcons.power_automate_logo),
-          title: "自動登入",
-          lore: "在應用程式啟動時登入所選擇的帳號",
+          title: MyApp.locale.settings_account_auto_login,
+          lore: MyApp.locale.settings_account_auto_login_desc,
           child: SizedBox(
             width: 200,
             child: ComboBox<String>(
-              value: GlobalSettings.prefs.autoLogin ?? "停用功能",
+              value: GlobalSettings.prefs.autoLogin ?? MyApp.locale.disable,
               items: [
                 ComboBoxItem<String>(
-                  value: "停用功能",
+                  value: MyApp.locale.disable,
                   child: Container(
                     width: 156,
                     alignment: Alignment.centerLeft,
-                    child: const Text("停用功能")
+                    child: Text(MyApp.locale.disable)
                   ),
                 ),
                 ..._accounts.map<ComboBoxItem<String>>((e) {
@@ -425,29 +427,29 @@ class _AccountRouteState extends State<AccountRoute> {
                 GlobalSettings.prefs.autoLogin = value;
                 setState(() {});
               },
-              placeholder: const Text('停用功能')
+              placeholder: Text(MyApp.locale.disable)
             )
           )
         ),
         const SizedBox(height: 5),
         Tile.lore(
           icon: const Icon(FluentIcons.password_field),
-          title: "變更密碼",
-          lore: "變更登入作業繳交系統的密碼 (必須處於登入狀態)",
+          title: MyApp.locale.settings_account_change_password,
+          lore: MyApp.locale.settings_account_change_password_desc,
           child: Button(
             onPressed: GlobalSettings.account == null ? 
               null :
               _changePasswd,
-            child: const Text("變更"),
+            child: Text(MyApp.locale.change),
           )
         ),
         const SizedBox(height: 10),
-        const Text("其他使用者"),
+        Text(MyApp.locale.settings_account_other_user),
         const SizedBox(height: 5),
         Tile(
           child: Row(
             children: [
-              const Text("新增其他使用者"),
+              Text(MyApp.locale.settings_account_add_user),
               const Spacer(),
               Visibility(
                 visible: _isLogging,
@@ -467,12 +469,16 @@ class _AccountRouteState extends State<AccountRoute> {
                   try {
                     await _addAccount();
                   } catch (e) {
-                    MyApp.showToast("發生錯誤", e.toString(), InfoBarSeverity.error);
+                    MyApp.showToast(
+                      MyApp.locale.error_occur,
+                      e.toString(),
+                      InfoBarSeverity.error
+                    );
                   }
                   if (!mounted) return;
                   setState(() => _isLogging = false);
                 },
-                child: const Text("新增帳號")
+                child: Text(MyApp.locale.settings_account_add_account)
               )
             ]
           )
@@ -484,7 +490,7 @@ class _AccountRouteState extends State<AccountRoute> {
           alignment: Alignment.centerLeft,
           child: HyperlinkButton(
             onPressed: _refreshDB,
-            child: const Text("沒有看到你的帳號嗎? 點此重新整理"),
+            child: Text(MyApp.locale.settings_account_refresh),
           )
         )
 
@@ -502,7 +508,7 @@ class _AccountRouteState extends State<AccountRoute> {
       await GlobalSettings.login(account);
     } catch (e) {
       MyApp.showToast(
-        "登入失敗",
+        MyApp.locale.failed,
         e.toString(),
         InfoBarSeverity.error
       ); 
@@ -513,8 +519,8 @@ class _AccountRouteState extends State<AccountRoute> {
 
     HomeworkInstance.homeworks.clear();
     MyApp.showToast(
-      "登入成功", 
-      "歡迎 ${GlobalSettings.account?.name}", 
+      MyApp.locale.success, 
+      "${MyApp.locale.welcome} ${GlobalSettings.account?.name}", 
       InfoBarSeverity.info
     );
     
@@ -559,7 +565,7 @@ class _AccountRouteState extends State<AccountRoute> {
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8, vertical: 2.5),
-                  child: Text("移除帳號",
+                  child: Text(MyApp.locale.settings_account_remove_account,
                     style: TextStyle(color: Colors.red))
                 )
               )
@@ -567,10 +573,10 @@ class _AccountRouteState extends State<AccountRoute> {
           ),
         ),
         onInvoked: _isLogging ? null : () => _login(account),
-        child: const Padding(
+        child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: 10, vertical: 5),
-          child: Text("登入")
+          child: Text(MyApp.locale.login)
         )
       )
     );
@@ -597,9 +603,9 @@ class _AccountRouteState extends State<AccountRoute> {
     }
 
     if (_accounts.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.only(bottom: 10),
-        child: Text("尚未加入任何帳號，請點擊上方的新增帳號開始")
+        child: Text(MyApp.locale.settings_account_no_account)
       );
     }
 

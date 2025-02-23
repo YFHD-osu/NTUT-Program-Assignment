@@ -37,7 +37,10 @@ class LogToFile {
 
     // 攔截 Flutter 內部的錯誤
     FlutterError.onError = (FlutterErrorDetails details) {
-      final log = '[ERROR] ${DateTime.now()}: ${details.exceptionAsString()}\n${details.stack}';
+      String log = '[ERROR] ${DateTime.now()}: ${details.exceptionAsString()}';
+      if (details.stack != null) {
+        log += "\n${details.stack.toString()}";
+      }
       _writeLog(log);
     };
 
@@ -89,11 +92,15 @@ class Printer extends LogPrinter {
 
 
     if (logTrace.contains(event.level)) {
-      messages.addAll(
-        prettyPrinter.formatStackTrace(StackTrace.current, 6)
-        .toString()
-        .split("\n")
-      );
+      final trace = prettyPrinter.formatStackTrace(StackTrace.current, 6);
+
+      if (trace != null) {
+        messages.addAll(
+          trace
+          .split("\n")
+        );
+      }
+      
     }
     return messages;
   }

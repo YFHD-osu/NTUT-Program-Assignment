@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:logger/logger.dart' show Logger;
-import 'package:ntut_program_assignment/core/test_server.dart';
 
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
@@ -11,14 +10,17 @@ import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/core/updater.dart';
+import 'package:ntut_program_assignment/core/logger.dart';
+import 'package:ntut_program_assignment/core/test_server.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
-import 'package:ntut_program_assignment/page/homework/page.dart';
-import 'package:ntut_program_assignment/page/settings/page.dart';
-import 'package:ntut_program_assignment/core/logger.dart' show AlwaysLogFilter, FileLogOutput, LogToFile, Printer;
+import 'package:ntut_program_assignment/page/comments/page.dart' show CommentPage;
+import 'package:ntut_program_assignment/page/homework/page.dart' show HomeworkPage;
+import 'package:ntut_program_assignment/page/settings/page.dart' show SettingsPage;
+import 'package:ntut_program_assignment/widget.dart';
+
 
 late final Logger logger;
 
@@ -110,13 +112,28 @@ class MyApp extends StatelessWidget {
           ),
           child: InfoBar(
             isLong: false,
-            title: RichText(text: title),
-            content: RichText(text: message),
+            title: RichText(
+              text: TextSpan(
+                style: TextStyle(color: ThemeProvider.instance.isLight ? Colors.black : Colors.white),
+                children: [title]
+              )),
+            content: RichText(
+              text: TextSpan(
+                style: TextStyle(color: ThemeProvider.instance.isLight ? Colors.black : Colors.white),
+                children: [message]
+              )),
             severity: level
           )
         );
       },
     );
+  }
+
+  Locale get _locale {
+    final data = GlobalSettings.prefs.language.split("_");
+    final scriptCode = data.length > 1 ? data.last : null;
+
+    return Locale.fromSubtags(languageCode: data.first, scriptCode: scriptCode);
   }
 
   // This widget is the root of your application.
@@ -128,7 +145,7 @@ class MyApp extends StatelessWidget {
         final themeProvider = Provider.of<ThemeProvider>(context);
         // print(AppLocalizations.supportedLocales);
         return FluentApp(
-          locale: const Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
+          locale: _locale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           debugShowCheckedModeBanner: false,
@@ -155,9 +172,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   final routeMap = {
     "hwlist": 0,
-    "score": 1,
-    "comments": 2,
-    "settings": 3
+    // "score": 1,
+    "comments": 1,
+    "settings": 2
   };
   
   Future<void> _fetchUpdate() async {
@@ -325,15 +342,15 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             title: Text(MyApp.locale.sidebar_homework_title),
             body: const HomeworkPage()
           ),
-          PaneItem(
-            icon: const Icon(FluentIcons.red_eye),
-            title: Text(MyApp.locale.sidebar_my_grade_title),
-            body: const UnimplementPage()
-          ),
+          // PaneItem(
+          //   icon: const Icon(FluentIcons.red_eye),
+          //   title: Text(MyApp.locale.sidebar_my_grade_title),
+          //   body: const UnimplementPage()
+          // ),
           PaneItem(
             icon: const Icon(FluentIcons.comment),
             title: Text(MyApp.locale.sidebar_comment_title),
-            body: const UnimplementPage()
+            body: const CommentPage()
           )
         ],
         footerItems: [

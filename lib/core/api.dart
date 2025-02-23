@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:beautiful_soup_dart/beautiful_soup.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/core/test_server.dart';
-import 'package:ntut_program_assignment/main.dart' show logger;
+import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
 
 class DevHttpOverrides extends HttpOverrides {
   @override
@@ -41,7 +41,7 @@ class Account {
     final isEven = int.tryParse(username.substring(username.length-3))?.isEven??false;
     return isEven ? defaultDomain[1] : defaultDomain[0];
   }
-
+  
   bool get isLogin => sessionID != null;
 
   late final client = InnerClient(
@@ -50,11 +50,14 @@ class Account {
 
   late DateTime loginTime = DateTime.now();
 
-  Future<void> login() async {    
+  Future<void> login() async {
+
     sessionID = null;
     late http.Response response;
 
-    response = await client._get("/Login");
+    Uri url = Uri.parse("$domain/upload/Login");
+    response = await http.get(url, headers: client._headers);
+
     sessionID = response.headers['set-cookie']
       .toString()
       .split(" ")
@@ -66,8 +69,9 @@ class Account {
       "passwd": password,
       "rdoCourse": course.toString()
     };
-
-    response = await client._post("/Login", body: payload);
+    
+    url = Uri.parse("$domain/upload/Login");
+    response = await http.post(url, body: payload, headers: client._headers);
 
     loginTime = DateTime.now();
     BeautifulSoup bs = BeautifulSoup(response.body);
@@ -79,13 +83,15 @@ class Account {
       throw Exception(error?.text??"");
     }
 
-    response = await client._get("/TopMenu");
-    bs = BeautifulSoup(response.body);
+    url = Uri.parse("$domain/upload/TopMenu");
+    response = await http.get(url, headers: client._headers);
 
+    bs = BeautifulSoup(response.body);
     final studentName = bs.find("div", class_: "content");
 
     if (studentName == null) {
-      throw RuntimeError("Cannot fetch Student ID (DNS error suspected)");
+      logger.e("Cannot fetch Student ID (DNS error suspected)");
+      throw RuntimeError(MyApp.locale.runtime_error_student_id_not_found);
     }
     name = studentName.text.replaceAll(" ", "").split("\n")[1];
   }
@@ -113,7 +119,7 @@ class Account {
       resp = await client._get("/HomeworkBoard");
     } on http.ClientException catch (e) {
       await login();
-      logger.e("Perform account redfresh due to: $e");
+      logger.e("Perform account refresh due to: $e");
       return await fetchHomeworkList();
     }
 
@@ -121,7 +127,8 @@ class Account {
     final hwList = bs.find("tbody");
 
     if (hwList == null) {
-      throw Exception("ERROR, Cannot fetch homeworks");
+      logger.e("Cannot fetch homeworks list element");
+      throw RuntimeError(MyApp.locale.runtime_error_element_not_found);
     }
 
     return hwList.contents
@@ -136,7 +143,8 @@ class Account {
     final menu = bs.find("tbody");
 
     if (menu == null) {
-      throw RuntimeError("Cannot find the main table");
+      logger.e("Cannot find the main table element");
+      throw RuntimeError(MyApp.locale.runtime_error_element_not_found);
     }
 
     final List<HomeworkStatus> result = [];
@@ -158,7 +166,8 @@ class Account {
     final resp = await client._post("/changePasswd", body: data);
 
     if (resp.statusCode != 200) {
-      throw RuntimeError("Unable to change password (Status: ${resp.statusCode})");
+      logger.e("Unable to change password (Status: ${resp.statusCode})");
+      throw RuntimeError("${MyApp.locale.runtime_error_abnormal_status_code} (${resp.statusCode})");
     }
 
   }
@@ -171,28 +180,40 @@ class Account {
     final resp = await client._post("/AddMsgBoard", body: data);
 
     if (resp.statusCode != 302) {
-      throw RuntimeError("Unable to add message (Status: ${resp.statusCode})");
+      logger.e("Unable to add message (Status: ${resp.statusCode})");
+      throw RuntimeError("${MyApp.locale.runtime_error_abnormal_status_code} (${resp.statusCode})");
     }
   }
 
-  Future<void> replyMsgBoard(String ctx, String content) async {
+  Future<void> replyMsgBoard(String metadata, String content) async {
     final data = {
-      "masterTime": ctx,
+      "masterTime": metadata,
       "replyContent": content
     };
 
-    final resp = await client._post("/MessageAjax?case=replySomeone", body: data);
+    final header = {
+      "Referer": "https://$domain/upload/MessageBoard"
+    };
+
+    final resp = await client._post("/MessageAjax?case=replySomeone", body: data, headers: header);
 
     if (resp.statusCode != 200) {
-      throw RuntimeError("Unable to reply (Status: ${resp.statusCode})");
+      logger.e("Unable to reply (Status: ${resp.statusCode})");
+      throw RuntimeError("${MyApp.locale.runtime_error_abnormal_status_code} (${resp.statusCode})");
     }
 
   }
 
-  Future fetchMsgBoard() async {
-    await client._get("/MessageBoard");
+  Future<List<Comment>> fetchMsgBoard() async {
+    final response = await client._get("/MessageBoard");
 
-    throw UnimplementedError();
+    BeautifulSoup bs = BeautifulSoup(response.body);
+    final comemnts = bs.find("div", class_: "ui comments");
+
+    return comemnts!.children
+      .where((e) => e.className == "comment")
+      .map((e) => Comment.parse(e))
+      .toList();
   }
 
   Map<String, dynamic> toMap() {
@@ -232,11 +253,6 @@ class RuntimeError {
 
 class NetworkError extends RuntimeError {
   NetworkError(super.message);
-}
-
-class LoginProcessingError extends RuntimeError {
-  LoginProcessingError(super.message);
-
 }
 
 class TestException {
@@ -280,7 +296,8 @@ class Testcase {
 
     final arr = message.split(regExp);
     if (arr.length < 3) {
-      throw RuntimeError("Cannot parse testcase: $message");
+      logger.e("Cannot parse testcase: $message");
+      throw RuntimeError(MyApp.locale.runtime_error_testcase_parse_failed);
     }
 
     return Testcase(
@@ -296,7 +313,7 @@ class Testcase {
 
   @override
   String toString() {
-    return "輸入: \n$input \n\n輸出:\n$output";
+    return "${MyApp.locale.input}: \n$input \n\n${MyApp.locale.output}:\n$output";
   }
 }
 
@@ -413,7 +430,8 @@ class Homework {
     final resp = await client._get("/showHomework?hwId=$number");
 
     if (resp.statusCode == 500) {
-      throw RuntimeError("無法獲取作業詳細資料，猜測作業不存在");
+      logger.e("Cannot fetch homework details, status code :${resp.statusCode}");
+      throw RuntimeError(MyApp.locale.runtime_error_homework_not_found);
     }
 
     BeautifulSoup bs = BeautifulSoup(resp.body);
@@ -466,9 +484,9 @@ class Homework {
       try {
         final data = Testcase.parse(
           ctx.sublist(start, index)
-              .map((e) => e.trim())
-              .where((e) => e.isNotEmpty)
-              .join("\n")
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .join("\n")
         );
         testCases.add(data);
       } on RuntimeError catch (e) {
@@ -484,9 +502,9 @@ class Homework {
     try {
       final data = Testcase.parse(
         ctx.sublist(start, index)
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .join("\n")
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .join("\n")
       );
       testCases.add(data);
     } on RuntimeError catch (e) {
@@ -504,8 +522,16 @@ class Homework {
     final table = bs.find("table", class_: "table");
     
     final tr = table?.children.first.children;
+
     if (tr == null) {
-      throw RuntimeError("Cannot fetch success list, not login ?");
+      // If account being logout, the table will not shown
+      // So try re-login and try again
+
+      await Future.doWhile(() => GlobalSettings.isLoggingIn);
+
+      return await fetchPassList();
+
+      // throw RuntimeError("Cannot fetch success list, not login ?");
     }
 
     return tr
@@ -608,7 +634,7 @@ class Homework {
 
     if (!await file.exists()) {
       submitting = false;
-      throw RuntimeError("File is not exists");
+      throw RuntimeError(MyApp.locale.file_not_found);
     }    
 
     final account = GlobalSettings.account!;
@@ -616,7 +642,7 @@ class Homework {
     // This endpoint must be GET before any homework uploaded
     await prefetch();
 
-    logger.i("Prefetch completed.");
+    logger.i("Upload homework prefetch completed.");
 
     final headers = client._headers;
     headers.addAll({
@@ -658,7 +684,7 @@ class Homework {
     logger.d("Upload process completed ");
 
     if (attempts <= 0) {
-      throw RuntimeError("批改時間超時");
+      throw RuntimeError(MyApp.locale.grading_time_exceeded);
     }
 
     return;
@@ -707,7 +733,7 @@ class Homework {
 
   Future<TestResult> test(File target, int index) async {
     if (!await target.exists()) {
-      throw TestException("指定的測試檔案不存在");
+      throw TestException(MyApp.locale.file_not_found);
     }
 
     switch (language) {
@@ -721,7 +747,7 @@ class Homework {
 
       default: 
         testCases[index].testing = false;
-        throw TestException("尚未支援此測試模式: $language");
+        throw TestException("${MyApp.locale.testcase_unsupported_lang} $language");
     }
     testCases[index].testing = false;
 
@@ -730,7 +756,7 @@ class Homework {
 
   Future<void> _testPython(File target, int index) async {
     if (!TestServer.pythonOK) {
-      throw RuntimeError("Python 環境尚未設定");
+      throw RuntimeError("Python ${MyApp.locale.testcase_environment_not_setup}");
     }
 
     late final Process process;
@@ -739,8 +765,8 @@ class Homework {
       process = await Process.start(GlobalSettings.prefs.pythonPath ?? "python", [target.path]);
     } catch (e) {
       testCases[index].result = TestResult(
-        error: ["檔案執行失敗: $e"],
-        output: ["檔案執行失敗: $e"]
+        error: ["${MyApp.locale.testcase_file_failed_to_execute} $e"],
+        output: ["${MyApp.locale.testcase_file_failed_to_execute} $e"]
       );
       return;
     }    
@@ -785,7 +811,7 @@ class Homework {
 
   Future<void> _testC(File target, int index) async {
     if (!TestServer.gccOK) {
-      throw RuntimeError("C 環境尚未設定");
+      throw RuntimeError("C ${MyApp.locale.testcase_environment_not_setup}");
     }
 
     late final Process compile;
@@ -794,8 +820,8 @@ class Homework {
       compile = await Process.start(GlobalSettings.prefs.gccPath ?? "gcc", [target.path, '-o', 'test']);
     } catch (e) {
       testCases[index].result = TestResult(
-        error: ["檔案編譯失敗: $e"],
-        output: ["檔案編譯失敗: $e"]
+        error: ["${MyApp.locale.testcase_compile_failed} $e"],
+        output: ["${MyApp.locale.testcase_compile_failed} $e"]
       );
       return;
     }
@@ -812,8 +838,8 @@ class Homework {
 
       testCases[index].testing = false;
       testCases[index].result = TestResult(
-        error: ["檔案編譯失敗，程式返回: $exitCode \n$err"],
-        output: ["檔案編譯失敗，程式返回: $exitCode \n$err"]
+        error: ["${MyApp.locale.testcase_program_error_with} $exitCode \n$err"],
+        output: ["${MyApp.locale.testcase_program_error_with} $exitCode \n$err"]
       );
       logger.e("failed to compile: ${target.path} \n$err");
 
@@ -861,19 +887,19 @@ class Homework {
     switch (error.runtimeType) {
       case TimeoutException _:
         testCases[index].result = TestResult(
-          error: ["測試時間超時，已強制結束"],
-          output: ["測試時間超時，已強制結束"]
+          error: [MyApp.locale.testcase_timeout],
+          output: [MyApp.locale.testcase_timeout]
         );
-        throw TestException("測試時間超時，已強制結束");
+        throw TestException(MyApp.locale.testcase_timeout);
       
       case OSError _:
         testCases[index].result = TestResult(
-          error: ["測試檔案無效: ${(error as OSError).message}"],
-          output: ["測試時間超時，已強制結束"]
+          error: ["${MyApp.locale.testcase_invalid_test_file} ${(error as OSError).message}"],
+          output: [MyApp.locale.testcase_timeout]
         );
 
       default:
-        throw TestException("發生例外狀況: $error");
+        throw TestException(error.toString());
     }
 
     return 0;
@@ -881,6 +907,7 @@ class Homework {
 }
 
 class InnerClient extends http.BaseClient {
+  static bool _loginBlock = false;
   final Account account;
 
   InnerClient({
@@ -895,6 +922,13 @@ class InnerClient extends http.BaseClient {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
   };
 
+  Map<String, String> get headers => {
+    'Host': account.domain.replaceAll("https://", ""),
+    'Origin': account.domain,
+    'Cookie': account.sessionID ?? "",
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+  };
+
   Future<void> checkConnect() async {
     late Uri uri;
     
@@ -903,9 +937,9 @@ class InnerClient extends http.BaseClient {
       await http.head(uri)
         .timeout(const Duration(seconds: 8));
     } on TimeoutException catch (_) {
-      throw NetworkError("無法連線到網際網路或網路不穩定");
+      throw NetworkError(MyApp.locale.internet_not_stable);
     } on SocketException catch (_) {
-      throw NetworkError("無法連線到網際網路或網路不穩定");
+      throw NetworkError(MyApp.locale.internet_not_stable);
     } catch (e) {
       throw NetworkError(e.toString());
     }
@@ -915,7 +949,7 @@ class InnerClient extends http.BaseClient {
       await http.head(uri)
         .timeout(const Duration(seconds: 8));
     } on TimeoutException catch (_) {
-      throw NetworkError("網路不穩定或未使用VPN");
+      throw NetworkError(MyApp.locale.vpn_not_connect);
     } catch (e) {
       throw NetworkError(e.toString());
     }
@@ -951,30 +985,48 @@ class InnerClient extends http.BaseClient {
   }
   Future<http.StreamedResponse> _send(http.BaseRequest request, int depth, DateTime timestamp) async {
     late final http.StreamedResponse response;
+    
+    if (_loginBlock) {
+      await Future.doWhile(() async {
+        await Future.delayed(Duration(milliseconds: 500));
+        return _loginBlock;
+      });
+      return _send(request, depth, timestamp);
+    }
 
     try {
       response = await _copyRequest(request).send();
     } on SocketException catch (_) {
+      
+
       if (depth > 1) {
-        throw RuntimeError("Cannot login");
+        throw RuntimeError(MyApp.locale.cannot_login);
       }
 
       await checkConnect();
       logger.e("SocketException occured with ${request.method} ${request.url} ($depth)");
 
-      if (timestamp.compareTo(account.loginTime) < 0) {
-        throw LoginProcessingError("Login is processing, please resend request");
-      }
+      // if (timestamp.compareTo(account.loginTime) < 0) {
+      //   throw LoginProcessingError("Login is processing, please resend request");
+      // }
+
+      _loginBlock = true;
 
       account.logout();
       await account.login();
 
+      _loginBlock = false;
+
+      // Update requests header with new cookies
+      final newReq = _copyRequest(request);
+      newReq.headers.addAll(headers);
+
       logger.d("Debug depth: ${depth + 1}");
-      return _send(_copyRequest(request), depth + 1, timestamp);
+      return _send(newReq, depth + 1, timestamp);
     } on HandshakeException catch (_) {
-      throw RuntimeError("Unable to locate to the server...");
+      throw RuntimeError(MyApp.locale.uable_to_locale_server);
     } on http.ClientException catch (_) {
-      throw RuntimeError("網路連線中斷");
+      throw RuntimeError(MyApp.locale.internet_not_stable);
     }
 
     return response;
@@ -1044,6 +1096,63 @@ class HomeworkStatus {
       description: a[2],
       filename: a[3],
       status: a[4].trim()
+    );
+  }
+}
+
+class Comment {
+  final String author;
+  final String metadata;
+  final String text;
+  final bool canReply;
+
+  final List<Comment> child;
+
+  Comment({
+    required this.author,
+    required this.metadata,
+    required this.text,
+    required this.canReply,
+    required this.child
+  });
+
+  factory Comment.parse(Bs4Element soup) {
+    final content = soup.find("div", class_: "content")!;
+
+    final author = content
+      .find("a", class_: 'author')!
+      .text;
+
+    final metadata = content
+      .find("div", class_: "metadata")!
+      .find("span")!
+      .text;
+    
+    final text = content
+      .find("div", class_: "text")!
+      .findAll("p")
+      .map((e) => HtmlCharacterEntities.decode(e.text))
+      .join("\n")
+      .trim();
+
+    final canReply = content
+      .find("div", class_: "actions")!
+      .children.isNotEmpty;
+
+
+    final comments = soup
+      .findAll("div", class_: "comments");
+
+    List<Comment> children = comments
+      .map((e) => Comment.parse(e.find("div", class_: "comment")!))
+      .toList();
+
+    return Comment(
+      author: author,
+      metadata: metadata,
+      text: text,
+      canReply: canReply,
+      child: children,
     );
   }
 }

@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:ntut_program_assignment/core/updater.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:ntut_program_assignment/widget.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:ntut_program_assignment/core/updater.dart';
+import 'package:ntut_program_assignment/main.dart' show MyApp;
+
+import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 
 const String termOfUse = """
@@ -79,7 +81,7 @@ class AboutRouteState extends State<AboutRoute> {
   }
 
   List<String> getInfo() {
-    return [version??"載入中...", "Stable", kDebugMode ? 'Debug' : 'Release'];
+    return [version??MyApp.locale.loading, "Stable", kDebugMode ? 'Debug' : 'Release'];
   }
   
   @override
@@ -100,11 +102,14 @@ class AboutRouteState extends State<AboutRoute> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("關於程式"),
+        Text(MyApp.locale.about),
         const SizedBox(height: 5),
         ThanksCard(
-          title: Updater.available.value ? "有可用的新版本" : "您處於最新版本",
-          lore: "最新版本: ${Updater.latest??'尚未檢查'}",
+          title: Updater.available.value ? 
+            MyApp.locale.settings_about_update_available : 
+            MyApp.locale.settings_about_on_latest,
+          lore: "${MyApp.locale.settings_about_latest_version}:"
+                " ${Updater.latest??MyApp.locale.settings_about_version_not_checked}",
           image: Container(
             decoration: BoxDecoration(
               color: Updater.available.value ? Colors.yellow.darkest : Colors.green.lighter,
@@ -133,8 +138,8 @@ class AboutRouteState extends State<AboutRoute> {
         ),
         const SizedBox(height: 5),
         ThanksCard(
-          title: "使用者條約",
-          lore: "規範用戶使用軟體的法律文件",
+          title: MyApp.locale.settings_about_user_agreement,
+          lore: MyApp.locale.settings_about_user_agreement_desc,
           image: const Icon(FluentIcons.business_rule),
           content: FilledButton(
             onPressed: () async {
@@ -144,7 +149,7 @@ class AboutRouteState extends State<AboutRoute> {
                   constraints: const BoxConstraints(
                     maxWidth: 450, maxHeight: 800
                   ),
-                  title: const Text("使用者條約"),
+                  title: Text(MyApp.locale.settings_about_user_agreement),
                   content: const SingleChildScrollView(
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 10),
@@ -153,16 +158,16 @@ class AboutRouteState extends State<AboutRoute> {
                   ),
                   actions: [
                     Button(
-                      child: const Text("同意"),
+                      child: Text(MyApp.locale.agree),
                       onPressed: () => Navigator.of(context).pop()
                     )
                   ],
                 )
               );
             },
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 15, vertical: 1),
-              child: Text("檢視")
+              child: Text(MyApp.locale.view)
             ),
           )
         ),
@@ -182,8 +187,14 @@ class AboutRouteState extends State<AboutRoute> {
           )
         ),
         const SizedBox(height: 10),
-        const Text("特別銘謝"),
+        Text(MyApp.locale.settings_about_acknoledge),
         const SizedBox(height: 5),
+        ThanksCard(
+          title: "大帥B",
+          lore: "我是誰，我在哪裡，這裡好黑好可怕",
+          image: Image.asset(r"assets/acknowledge/handsome_b.png")
+        ),
+        const SizedBox(height: 10),
         ThanksCard(
           title: "PurpleSheep",
           lore: "打屁聊天，輕鬆愉快中深入分析程式碼。 a.k.a 愛上火車、蒼之彼空四重奏、千戀萬花、拔作島宿舍高級玩家!",
@@ -203,7 +214,7 @@ class AboutRouteState extends State<AboutRoute> {
         ),
         const SizedBox(height: 10),
         ThanksCard(
-          title: "Winter's wife",
+          title: "Winter's husband",
           lore: "現在開始播放音樂，讓你的心情隨之律動，享受這一刻的愉快旋律。",
           image: Image.asset(r"assets/acknowledge/xuan.png")
         ),

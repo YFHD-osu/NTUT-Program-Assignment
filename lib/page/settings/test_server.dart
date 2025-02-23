@@ -47,7 +47,7 @@ class _TestServerRouteState extends State<TestServerRoute> {
       type: FileType.custom,
       lockParentWindow: true,
       allowedExtensions: ["*"],
-      dialogTitle: '選取編譯器'
+      dialogTitle: MyApp.locale.settings_test_server_select_compiler
     );
 
     if (outputFile?.paths.first == null) {
@@ -68,7 +68,9 @@ class _TestServerRouteState extends State<TestServerRoute> {
 
       default:
         MyApp.showToast(
-          "無法設定編譯器", "尚未實作編譯器檢測: $type", InfoBarSeverity.error
+          MyApp.locale.success, 
+          "${MyApp.locale.settings_test_server_compiler_not_implement}: $type", 
+          InfoBarSeverity.error
         );
         return;
     }
@@ -76,13 +78,17 @@ class _TestServerRouteState extends State<TestServerRoute> {
     if (!result) {
       setState(() {});
       MyApp.showToast(
-        "無效編譯器", "請確定指定的編譯器是有效的 $type 編譯器", InfoBarSeverity.error
+        MyApp.locale.failed,
+        "${MyApp.locale.settings_test_server_compiler_invaild} ($type)",
+        InfoBarSeverity.error
       );
       return;
     }
 
     MyApp.showToast(
-      "設定成功", "程式將使用指定路徑的 $type 編譯器", InfoBarSeverity.info
+      MyApp.locale.success,
+      "${MyApp.locale.settings_test_server_compiler_set} ($type)",
+      InfoBarSeverity.info
     );
     setState(() {});
     return;    
@@ -95,7 +101,9 @@ class _TestServerRouteState extends State<TestServerRoute> {
         await TestServer.findGCC();
         if (!TestServer.gccOK) {
           MyApp.showToast(
-            "找不到編譯器", "環境中無有效的 c 編譯器", InfoBarSeverity.error
+            MyApp.locale.failed, 
+            MyApp.locale.settings_test_server_c_not_found,
+            InfoBarSeverity.error
           );
           return;
         }
@@ -105,20 +113,26 @@ class _TestServerRouteState extends State<TestServerRoute> {
         await TestServer.findPython();
         if (!TestServer.pythonOK) {
           MyApp.showToast(
-            "找不到編譯器", "環境中無有效的 python 編譯器", InfoBarSeverity.error
+            MyApp.locale.failed,
+            MyApp.locale.settings_test_server_python_not_found,
+            InfoBarSeverity.error
           );
           return;
         }
 
       default:
         MyApp.showToast(
-          "無法設定編譯器", "尚未實作編譯器檢測: $type", InfoBarSeverity.error
+          MyApp.locale.failed,
+          "${MyApp.locale.settings_test_server_not_implemented}: $type",
+          InfoBarSeverity.error
         );
         return;
     }
 
     MyApp.showToast(
-      "設定成功", "已在環境中發現有效的 $type 編譯器", InfoBarSeverity.info
+      MyApp.locale.success,
+      "${MyApp.locale.settings_test_server_env_compiler_found} ($type)", 
+      InfoBarSeverity.info
     );
     setState(() {});
   }
@@ -126,21 +140,21 @@ class _TestServerRouteState extends State<TestServerRoute> {
   Widget _pythonDetails() {
     String compilerType(Compiler? compiler) {
       if (compiler == null) {
-        return "尚未找到";
+        return MyApp.locale.settings_test_server_not_found;
       }
 
       switch (compiler.type) {
         case CompilerType.environment:
-          return "環境變數";
+          return MyApp.locale.settings_test_server_environment_variable;
 
         case CompilerType.path:
-          return "指定路徑 (${GlobalSettings.prefs.pythonPath})";
+          return "${MyApp.locale.settings_test_server_sepcified_path} (${GlobalSettings.prefs.pythonPath})";
       }
     }
 
     String compilerVersion(Compiler? compiler) {
       if (compiler == null) {
-        return "尚未找到";
+        return MyApp.locale.settings_test_server_not_found;
       }
 
       return compiler.version;
@@ -151,7 +165,7 @@ class _TestServerRouteState extends State<TestServerRoute> {
       children: [
         Row(
           children: [
-            const Text("來源"),
+            Text(MyApp.locale.settings_test_server_source),
             const Spacer(),
             Text(compilerType(TestServer.pythonState))
           ]
@@ -159,7 +173,7 @@ class _TestServerRouteState extends State<TestServerRoute> {
         const SizedBox(height: 10),
         Row(
           children: [
-            const Text("版本"),
+            Text(MyApp.locale.settings_test_server_version),
             const Spacer(),
             Text(compilerVersion(TestServer.pythonState))
           ]
@@ -170,12 +184,12 @@ class _TestServerRouteState extends State<TestServerRoute> {
           children: [
             Button(
               onPressed: () => _customPath("python"),
-              child: const Text("自訂位置")
+              child: Text(MyApp.locale.settings_test_server_custom_path)
             ),
             const SizedBox(width: 10),
             Button(
               onPressed: () => _envPath("python"),
-              child: const Text("使用環境變數")
+              child: Text(MyApp.locale.settings_test_server_use_environment_variable)
             )
           ]
         )
@@ -186,21 +200,21 @@ class _TestServerRouteState extends State<TestServerRoute> {
   Widget _gccDetails() {
     String compilerType(Compiler? compiler) {
       if (compiler == null) {
-        return "尚未找到";
+        return MyApp.locale.settings_test_server_not_found;
       }
 
       switch (compiler.type) {
         case CompilerType.environment:
-          return "環境變數";
+          return MyApp.locale.settings_test_server_environment_variable;
 
         case CompilerType.path:
-          return "指定路徑 (${GlobalSettings.prefs.gccPath})";
+          return "${MyApp.locale.settings_test_server_sepcified_path} (${GlobalSettings.prefs.gccPath})";
       }
     }
 
     String compilerVersion(Compiler? compiler) {
       if (compiler == null) {
-        return "尚未找到";
+        return MyApp.locale.settings_test_server_not_found;
       }
 
       return compiler.version;
@@ -211,7 +225,7 @@ class _TestServerRouteState extends State<TestServerRoute> {
       children: [
         Row(
           children: [
-            const Text("來源"),
+            Text(MyApp.locale.settings_test_server_source),
             const Spacer(),
             Text(compilerType(TestServer.gccState))
           ]
@@ -219,7 +233,7 @@ class _TestServerRouteState extends State<TestServerRoute> {
         const SizedBox(height: 10),
         Row(
           children: [
-            const Text("版本"),
+            Text(MyApp.locale.settings_test_server_version),
             const Spacer(),
             Text(compilerVersion(TestServer.gccState))
           ]
@@ -230,12 +244,12 @@ class _TestServerRouteState extends State<TestServerRoute> {
           children: [
             Button(
               onPressed: () => _customPath("c"),
-              child: const Text("自訂位置")
+              child: Text(MyApp.locale.settings_test_server_custom_path)
             ),
             const SizedBox(width: 10),
             Button(
               onPressed: () => _envPath("c"),
-              child: const Text("使用環境變數")
+              child: Text(MyApp.locale.settings_test_server_use_environment_variable)
             )
           ]
         )
@@ -248,8 +262,8 @@ class _TestServerRouteState extends State<TestServerRoute> {
     return Column(
       children: [
         Tile.lore(
-          title: "測試編譯器位置",
-          lore: "設定測試程式時所使用的編譯器位置",
+          title: MyApp.locale.settings_test_server_test_compiler_path,
+          lore: MyApp.locale.settings_test_server_test_compiler_path_desc,
           icon: const Icon(FluentIcons.file_code),
           child: AnimatedContainer(
             width: 10, height: 10,
@@ -270,9 +284,12 @@ class _TestServerRouteState extends State<TestServerRoute> {
                 child: Image.asset("assets/language/python.png", height: 40)
               ),
               const SizedBox(width: 10, height: 60),
-              const Text("Python 環境"),
+              Text(MyApp.locale.settings_test_server_test_python_environment),
               const Spacer(),
-              Text(TestServer.pythonOK ? "已偵測到 Python 環境" : "無法偵測到 Python 環境"),
+              Text(TestServer.pythonOK ?
+                MyApp.locale.settings_test_server_environment_detected : 
+                MyApp.locale.settings_test_server_environment_not_detected
+              ),
             ]
           ),
           content: _pythonDetails()
@@ -287,9 +304,12 @@ class _TestServerRouteState extends State<TestServerRoute> {
                 child: Image.asset("assets/language/c.png", height: 40)
               ),
               const SizedBox(width: 10, height: 60),
-              const Text("C 語言 環境"),
+              Text(MyApp.locale.settings_test_server_test_c_environment),
               const Spacer(),
-              Text(TestServer.gccOK ? "已偵測到 C 語言 環境" : "無法偵測到 C 語言 環境")
+              Text(TestServer.gccOK ?
+                MyApp.locale.settings_test_server_environment_detected : 
+                MyApp.locale.settings_test_server_environment_not_detected
+              ),
             ]
           ),
           content: _gccDetails()

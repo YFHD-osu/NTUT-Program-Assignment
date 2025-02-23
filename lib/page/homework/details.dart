@@ -7,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:ntut_program_assignment/core/extension.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/page/homework/list.dart';
+import 'package:ntut_program_assignment/provider/theme.dart';
 import 'package:pretty_diff_text/pretty_diff_text.dart';
 import 'package:dotted_decoration/dotted_decoration.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
@@ -247,8 +248,8 @@ class _StateSectionState extends State<StateSection> {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
         child: Tile.lore(
-          title: "尚未繳交",
-          lore: "伺服器上沒此作業的檔案紀錄",
+          title: MyApp.locale.hwDetails_state_not_submitted,
+          lore: MyApp.locale.hwDetails_state_not_submitted_desc,
           icon: const Icon(FluentIcons.not_executed),
         )
       );
@@ -357,18 +358,24 @@ class ProblemBox extends StatelessWidget {
     if (line.contains(RegExp("<img src=.+>"))) {
       return WidgetSpan(child: Image.network(line.substring(10, line.length-2)));
     }
-    return TextSpan(text: line, style: const TextStyle(fontFamily: "FiraCode"));
+    return TextSpan(
+      text: line,
+      style: TextStyle(
+        fontFamily: "FiraCode",
+        color: ThemeProvider.instance.isLight ? Colors.black : Colors.white
+      )
+    );
   }
 
   @override
   Widget build(BuildContext context) {
 
     if (problem.isEmpty) {
-      return const Tile(
+      return Tile(
         width: double.infinity,
         height: 50,
         child: Center(
-          child: Text("你敢信這題沒有題目?")
+          child: Text(MyApp.locale.hwDetails_problem_empty)
         ),
       );
     }
@@ -379,7 +386,8 @@ class ProblemBox extends StatelessWidget {
         selectionControls: fluentTextSelectionControls,
         TextSpan(
           style: TextStyle(
-            fontSize: 14 * GlobalSettings.prefs.problemTextFactor
+            fontSize: 14 * GlobalSettings.prefs.problemTextFactor,
+            color: ThemeProvider.instance.isLight ? Colors.black : Colors.white
           ),
           children: problem
             .map((e) => _fetchSpan(e))
@@ -544,7 +552,7 @@ class _TestAreaState extends State<TestArea> {
     }
 
     if (testCase.testing) {
-      return const Text("測試執行中...");
+      return Text(MyApp.locale.hwDetails_test_running);
     }
     
     return Text(MyApp.locale.hwDetails_testArea_haveNotRun); 
@@ -569,8 +577,8 @@ class _TestAreaState extends State<TestArea> {
 
   Widget _testcaseSection(int index) {
     if (widget.homework.testCases.isEmpty) {
-      return const Center(
-        child: Text("無法解析測試資料")
+      return Center(
+        child: Text(MyApp.locale.hwDetails_cannot_parse_testcase)
       );
     }
     
@@ -769,7 +777,7 @@ class _OverviewCardState extends State<OverviewCard> {
             ),
           ),
           const SizedBox(width: 10),
-          Text("尚未繳交", style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
+          Text(MyApp.locale.hwDetails_state_not_submitted, style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
           const Spacer(),
         ]
       );
@@ -786,7 +794,7 @@ class _OverviewCardState extends State<OverviewCard> {
             ),
           ),
           const SizedBox(width: 10),
-          Text("編譯失敗", style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
+          Text(MyApp.locale.hwDetails_compilation_failed, style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
           const Spacer(),
         ]
       );
@@ -803,7 +811,7 @@ class _OverviewCardState extends State<OverviewCard> {
             ),
           ),
           const SizedBox(width: 10),
-          Text("準備中", style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
+          Text(MyApp.locale.hwDetails_preparing, style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
           const Spacer(),
         ]
       );
@@ -832,7 +840,7 @@ class _OverviewCardState extends State<OverviewCard> {
           Text("/${widget.testcasesVal!.length}",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)),
           const SizedBox(width: 5),
-          Text("未通過", style: TextStyle(color: colors)),
+          Text(MyApp.locale.hwDetails_failed, style: TextStyle(color: colors)),
           const Spacer(),
         ]
       );
@@ -848,7 +856,7 @@ class _OverviewCardState extends State<OverviewCard> {
             )
           ),
           const SizedBox(width: 10),
-          Text("批改中", style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
+          Text(MyApp.locale.hwDetails_submitting, style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
           const Spacer()
         ]
       );
@@ -877,12 +885,12 @@ class _OverviewCardState extends State<OverviewCard> {
           Text("/${widget.testcasesVal!.length}",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)),
           const SizedBox(width: 5),
-          Text("通過", style: TextStyle(color: colors)),
+          Text(MyApp.locale.hwDetails_passed, style: TextStyle(color: colors)),
           const Spacer()
         ]
       );
 
-      case HomeworkState.delete: return const Row(
+      case HomeworkState.delete: return Row(
         key: ValueKey(2),
         children: [
           Spacer(),
@@ -893,7 +901,7 @@ class _OverviewCardState extends State<OverviewCard> {
             )
           ),
           SizedBox(width: 10),
-          Text("刪除中", style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(MyApp.locale.hwDetails_deleting, style: TextStyle(fontWeight: FontWeight.bold)),
           Spacer()
         ]
       );
@@ -918,7 +926,7 @@ class _OverviewCardState extends State<OverviewCard> {
           )
         ),
         const SizedBox(width: 10),
-        Text("完成人數", style: TextStyle(color: colors)),
+        Text(MyApp.locale.hwDetails_number_of_completions, style: TextStyle(color: colors)),
         const Spacer(),
       ]
     );
@@ -1060,14 +1068,14 @@ class DropItemInfo extends StatelessWidget {
         alignment: Alignment.center,
         width: double.infinity,
         color: Colors.black.withValues(alpha: .075),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(FluentIcons.select_all, size: 35),
             SizedBox(width: 10),
-            Text("放開選取檔案")
+            Text(MyApp.locale.hwDetails_drop_file_here)
           ]
         )
       ) 
@@ -1102,7 +1110,7 @@ class TestCaseFlyout extends StatelessWidget {
           Text(result.title),
           const SizedBox(width: 10),
           Flexible(
-            child: Text(result.message??"吃我機八")
+            child: Text(result.message??"")
           ),
         ]
       ),
@@ -1129,11 +1137,11 @@ class TestCaseFlyout extends StatelessWidget {
             margin: const EdgeInsets.only(left: 10, right: 11, bottom: 10),
             child: Row(
               children: [
-                const Text("狀態"),
+                Text(MyApp.locale.status),
                 const SizedBox(width: 10),
-                const Text("編號"),
+                Text(MyApp.locale.number),
                 const SizedBox(width: 10),
-                const Text("輸出"),
+                Text(MyApp.locale.output),
                 const Spacer(),
                 Text("${percent.toStringAsFixed(0)} %", style: const TextStyle(
                   fontWeight: FontWeight.bold
@@ -1233,7 +1241,7 @@ class _UploadSectionState extends State<UploadSection> {
       type: FileType.custom,
       lockParentWindow: true,
       allowedExtensions: widget.homework.allowedExtensions,
-      dialogTitle: '選取作業'
+      dialogTitle: MyApp.locale.hwDetails_select_homework_window_title
     );
 
     if (outputFile?.paths.first == null) {
@@ -1271,7 +1279,7 @@ class _UploadSectionState extends State<UploadSection> {
         await widget.homework.delete();
       } on RuntimeError catch (e) {
         widget.homework.deleting = false;
-        MyApp.showToast("無法刪除作業", e.toString(), InfoBarSeverity.error);
+        MyApp.showToast(MyApp.locale.hwDetails_failed_delete_homework, e.toString(), InfoBarSeverity.error);
         HomeworkInstance.update.add(EventType.refreshOverview);
         return;
       }
@@ -1295,13 +1303,10 @@ class _UploadSectionState extends State<UploadSection> {
   Future<void> _uploadFile(File file) async{
     try {
       return await widget.homework.upload(file);
-    } on LoginProcessingError catch (_) {
-      return await widget.homework.upload(file);
     } catch (e) {
-      MyApp.showToast("無法上傳作業", e.toString(), InfoBarSeverity.error);
+      MyApp.showToast(MyApp.locale.hwDetails_failed_upload_homework, e.toString(), InfoBarSeverity.error);
       return;
     }
-    
   }
 
   void _onDropLeave(DropEvent event) {
@@ -1326,20 +1331,20 @@ class _UploadSectionState extends State<UploadSection> {
     return ContentDialog(
       constraints: const BoxConstraints(
         minHeight: 0, minWidth: 0, maxHeight: 400, maxWidth: 400),
-      title: const Text("重新繳交作業"),
-      content: const Text("必須要先刪除現有版本才能重新上傳，確定要操作嗎?"),
+      title: Text(MyApp.locale.hwDetails_resubmitt_homework),
+      content: Text(MyApp.locale.hwDetails_resubmitt_homework_desc),
       actions: [
         FilledButton(
           onPressed: () {
             Navigator.pop(context, true);
           },
-          child: const Text('刪除並上傳'),
+          child: Text(MyApp.locale.hwDetails_delete_and_upload_btn),
         ),
         Button(
           onPressed: () {
             Navigator.pop(context, false);
           },
-          child: const Text('取消'),
+          child: Text(MyApp.locale.cancel_button),
         )
       ],
     );
@@ -1380,30 +1385,33 @@ class _UploadSectionState extends State<UploadSection> {
                 children: [
                   const Icon(FluentIcons.upload),
                   const SizedBox(width: 20),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("作業上傳"),
-                      Text("選擇檔案或是將檔案拖曳制這裡來上傳作業")
+                      Text(MyApp.locale.hwDetails_homework_upload),
+                      Text(MyApp.locale.hwDetails_homework_upload_desc)
                     ]
                   ),
                   const Spacer(),
                   FilledButton(
                     onPressed: isClickable ? _browseHomework : null,
-                    child: const Text("選取檔案"),
+                    child: Text(MyApp.locale.hwDetails_select_file),
                   )
                 ]
               ),
               Expanded(
                 child: Center(
                   child: RichText(
-                    text: const TextSpan(
+                    text: TextSpan(
+                      style: TextStyle(color: ThemeProvider.instance.isLight ? Colors.black : Colors.white),
                       children: [
                         WidgetSpan(
                           alignment: PlaceholderAlignment.middle,
                           child: Icon(FluentIcons.cloud_upload, size: 50)),
                         WidgetSpan(child: SizedBox(width: 10)),
-                        TextSpan(text: "放開來上傳檔案")
+                        TextSpan(
+                          text: MyApp.locale.hwDetails_release_to_upload
+                        )
                       ]
                     ) 
                   )

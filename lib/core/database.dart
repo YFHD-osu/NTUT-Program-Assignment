@@ -157,6 +157,16 @@ class Preferences {
     database.put("gccPath", v);
   }
 
+  late String _language;
+
+  String get language =>
+    _language;
+  
+  set language(String v) {
+    _language = v;
+    database.put("language", v);
+  }
+
   Future<void> initialize() async {
     await database.initialize();
     await refresh();
@@ -177,5 +187,7 @@ class Preferences {
 
     _gccPath = map['gccPath'];
     _pythonPath = map['pythonPath'];
+
+    _language = map["language"] ?? "zh_Hant";
   }
 }
