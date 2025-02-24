@@ -433,6 +433,21 @@
 
   },
 
+  "settings_about_porfile_image_source": "Profile image source",
+  "@settings_about_porfile_image_source": {
+    "comment": "頭像來源"
+  },
+
+  "settings_about_porfile_image_source_desc": "The profile picture is owned by Professor Guo Zhongyi of NTUT and is used with permission.",
+  "@settings_about_porfile_image_source_desc": {
+    "comment": "此程式之頭像為 北科大 郭忠義教授 所有並授權使用"
+  },
+
+  "settings_about_porfile_image_source_view_channel": "View channel",
+  "@settings_about_porfile_image_source_view_channel": {
+    "comment": "前往頻道"
+  },
+
   "settings_about_update_available": "Update available",
   "@settings_about_update_available": {
     "comment": "有可用的新版本"

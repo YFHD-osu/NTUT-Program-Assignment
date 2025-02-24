@@ -171,6 +171,22 @@ class AboutRouteState extends State<AboutRoute> {
             ),
           )
         ),
+        const SizedBox(height: 5),
+        ThanksCard(
+          title: MyApp.locale.settings_about_porfile_image_source,
+          lore: MyApp.locale.settings_about_porfile_image_source_desc,
+          image: Image.asset(r"assets/jong_yih_kuo@x500.png"),
+          content: FilledButton(
+            onPressed: () async {
+              final uri = Uri.parse("https://www.youtube.com/@iiijohnny9278");
+              await launchUrl(uri);
+            },
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 15, vertical: 1),
+              child: Text(MyApp.locale.settings_about_porfile_image_source_view_channel)
+            ),
+          )
+        ),
         const SizedBox(height: 20),
         Text(locale.settings_about_developer,),
         const SizedBox(height: 5),

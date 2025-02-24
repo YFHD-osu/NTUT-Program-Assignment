@@ -209,5 +209,9 @@
   "settings_test_server_environment_detected":"环境已被检测",
   "settings_test_server_environment_not_detected":"环境未被检测",
   "settings_test_server_test_c_environment":"C 环境",
-  "about": "关于"
+  "about": "关于",
+  
+  "settings_about_porfile_image_source": "头像来源",
+  "settings_about_porfile_image_source_desc": "此程式之头像为 北科大 郭忠义教授 所有并授权使用",
+  "settings_about_porfile_image_source_view_channel": "前往频道"
 }

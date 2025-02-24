@@ -210,5 +210,9 @@
   "settings_test_server_environment_detected":"環境已被偵測",
   "settings_test_server_environment_not_detected":"環境未被偵測",
   "settings_test_server_test_c_environment":"C 環境",
-  "about": "關於"
+  "about": "關於",
+
+  "settings_about_porfile_image_source": "頭像來源",
+  "settings_about_porfile_image_source_desc": "此程式之頭像為 北科大 郭忠義教授 所有並授權使用",
+  "settings_about_porfile_image_source_view_channel": "前往頻道"
 }
