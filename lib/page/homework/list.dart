@@ -58,7 +58,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
       return;
     }
 
-    if (GlobalSettings.account == null) {
+    if (!GlobalSettings.isLogin) {
       return;
     }
 
