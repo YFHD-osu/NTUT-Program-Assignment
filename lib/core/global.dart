@@ -41,6 +41,11 @@ class GlobalSettings {
   }
 
   static void autoLogin() async {
+    if (prefs.autoLogin == null) {
+      logger.i("No auto login account found!");
+      return;
+    }
+    
     final db = Database(name: "accounts");
     await db.initialize();
     final acc = await db.get(prefs.autoLogin!);

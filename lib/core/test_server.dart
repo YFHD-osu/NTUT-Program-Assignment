@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/main.dart';
 
+const String pythonAlias = "python3";
+
 enum CompilerType {
   environment,
 
@@ -54,7 +56,7 @@ class TestServer {
 
     try {
       result = await Process.run(
-        GlobalSettings.prefs.pythonPath ?? "python", ["--version"],
+        GlobalSettings.prefs.pythonPath ?? pythonAlias, ["--version"],
       );
     } catch (e) {
       logger.e(e.toString());

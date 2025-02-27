@@ -5,7 +5,7 @@ import 'package:logger/logger.dart' show Logger;
 
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
-import 'package:window_manager/window_manager.dart';
+// import 'package:window_manager/window_manager.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -20,11 +20,14 @@ import 'package:ntut_program_assignment/page/comments/page.dart' show CommentPag
 import 'package:ntut_program_assignment/page/homework/page.dart' show HomeworkPage;
 import 'package:ntut_program_assignment/page/settings/page.dart' show SettingsPage;
 import 'package:ntut_program_assignment/widget.dart';
+import 'package:window_manager/window_manager.dart' show WindowCaption;
 
 
 late final Logger logger;
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
   logger = Logger(
     printer: Printer(),
     output: FileLogOutput(),
@@ -35,8 +38,19 @@ void main() async {
 
   // Make http package to accept self-signed certificate 
   HttpOverrides.global = DevHttpOverrides();
-  WidgetsFlutterBinding.ensureInitialized();
-  
+
+  if (Platforms.isDesktop) {
+    // Enable windows mica effect
+    await Window.initialize();
+  }
+
+  await GlobalSettings.initialize();
+  await ThemeProvider.instance.initialize();
+
+  await TestServer.initialize();
+
+  runApp(const MyApp());
+
   if (Platforms.isDesktop) {
     doWhenWindowReady(() {
       appWindow.size = const Size(800, 600);
@@ -44,18 +58,8 @@ void main() async {
       appWindow.title = "NTUT Program Assigiment";
       appWindow.show();
     });
-
-    // Enable windows mica effect
-    await Window.initialize();
-
-    await windowManager.ensureInitialized();
   }
 
-  await GlobalSettings.initialize();
-  await ThemeProvider.instance.initialize();
-  await TestServer.initialize();
-
-  runApp(const MyApp());
   return;
 }
 
@@ -172,7 +176,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   final routeMap = {
     "hwlist": 0,
-    // "score": 1,
     "comments": 1,
     "settings": 2
   };
@@ -342,11 +345,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             title: Text(MyApp.locale.sidebar_homework_title),
             body: const HomeworkPage()
           ),
-          // PaneItem(
-          //   icon: const Icon(FluentIcons.red_eye),
-          //   title: Text(MyApp.locale.sidebar_my_grade_title),
-          //   body: const UnimplementPage()
-          // ),
           PaneItem(
             icon: const Icon(FluentIcons.comment),
             title: Text(MyApp.locale.sidebar_comment_title),
