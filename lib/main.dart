@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:ui';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:logger/logger.dart' show Logger;
 
@@ -20,7 +21,7 @@ import 'package:ntut_program_assignment/page/comments/page.dart' show CommentPag
 import 'package:ntut_program_assignment/page/homework/page.dart' show HomeworkPage;
 import 'package:ntut_program_assignment/page/settings/page.dart' show SettingsPage;
 import 'package:ntut_program_assignment/widget.dart';
-import 'package:window_manager/window_manager.dart' show WindowCaption;
+import 'package:window_manager/window_manager.dart' show WindowCaption, windowManager;
 
 
 late final Logger logger;
@@ -41,6 +42,7 @@ void main() async {
 
   if (Platforms.isDesktop) {
     // Enable windows mica effect
+    await windowManager.ensureInitialized();
     await Window.initialize();
   }
 
