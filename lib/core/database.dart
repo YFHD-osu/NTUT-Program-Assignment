@@ -8,6 +8,7 @@ import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 import 'package:ntut_program_assignment/widget.dart';
+import 'package:path_provider/path_provider.dart';
 
 class Database {
   final String name;
@@ -24,10 +25,12 @@ class Database {
   Future<bool> initialize() async {
     if (_isInitialized) return false;
 
+    final directory = (await getApplicationSupportDirectory()).path;
+
     collection = await BoxCollection.open(
       name, // Name of your database
       {name}, // Names of your boxes,
-      path: r"./data/",
+      path: "$directory/data/",
       key: HiveAesCipher(await _getChipset())
     );
 

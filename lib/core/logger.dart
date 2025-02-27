@@ -4,13 +4,16 @@ import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:logger/logger.dart';
+import 'package:path_provider/path_provider.dart';
 
 class LogToFile {
   static File? _logFile;
   static IOSink? _sink;
 
   static Future<File> _createFile() async {
-    final directory = Directory.current.path;
+
+    final directory = (await getApplicationSupportDirectory()).path;
+    // print(directory);
     final filename = DateFormat('yyyy-MM-dd-HH-mm-ss').format(DateTime.now());
 
     File newfile = File("$directory/logs/$filename.log");
