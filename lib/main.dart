@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:async';
-import 'dart:ui';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:logger/logger.dart' show Logger;
 
@@ -23,11 +22,12 @@ import 'package:ntut_program_assignment/page/settings/page.dart' show SettingsPa
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:window_manager/window_manager.dart' show WindowCaption, windowManager;
 
-
 late final Logger logger;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await LogToFile.initialize();
   
   logger = Logger(
     printer: Printer(),
@@ -35,7 +35,6 @@ void main() async {
     filter: AlwaysLogFilter()
   );
 
-  await LogToFile.initialize();
 
   // Make http package to accept self-signed certificate 
   HttpOverrides.global = DevHttpOverrides();

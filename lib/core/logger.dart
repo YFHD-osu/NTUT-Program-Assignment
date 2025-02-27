@@ -21,7 +21,8 @@ class LogToFile {
       index ++;
       newfile = File("$directory/$filename-$index.log");
     }
-
+    
+    await newfile.create(recursive: true);
     return newfile;
   }
 

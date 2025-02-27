@@ -101,7 +101,7 @@ class TestServer {
       return;
     }
 
-    final exp = RegExp(r"gcc(.+) \d+.\d+.\d+");
+    final exp = RegExp(r"(gcc|Apple clang)(.+) \d+.\d+.\d+");
 
     if (!exp.hasMatch(result.stdout)) {
       gccState = null;
