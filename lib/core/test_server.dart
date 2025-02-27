@@ -119,8 +119,6 @@ class TestServer {
     if (! await compiler.exists() ) {
       return false;
     }
-
-    
     
     final origPath = GlobalSettings.prefs.gccPath;
 

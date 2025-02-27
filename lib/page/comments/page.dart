@@ -83,6 +83,10 @@ class CommentViewState extends State<CommentView> {
 
   @override
   Widget build(BuildContext context) {
+    if (!GlobalSettings.isLogin || GlobalSettings.isLoggingIn) {
+      return LoginBlock();
+    }
+    
     if (_error != null) {
       return Center(
         child: Column(
