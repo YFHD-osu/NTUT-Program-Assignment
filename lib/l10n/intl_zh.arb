@@ -213,5 +213,7 @@
   
   "settings_about_porfile_image_source": "头像来源",
   "settings_about_porfile_image_source_desc": "此程式之头像为 北科大 郭忠义教授 所有并授权使用",
-  "settings_about_porfile_image_source_view_channel": "前往频道"
+  "settings_about_porfile_image_source_view_channel": "前往频道",
+  
+  "test_server_file_not_support": "本作业仅能使用:"
 }

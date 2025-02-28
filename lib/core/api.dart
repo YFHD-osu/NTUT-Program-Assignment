@@ -779,7 +779,7 @@ class Homework {
 
     await process.exitCode
       .timeout(const Duration(seconds: 10))
-      .onError((error, trace) => _onTestError(error, trace, index));
+      .onError((error, trace) => _onTestError(error, trace, index, process));
 
     if (await process.exitCode != 0) {
       testCases[index].testing = false;
@@ -828,7 +828,7 @@ class Homework {
     
     await compile.exitCode
       .timeout(const Duration(seconds: 10))
-      .onError((error, trace) => _onTestError(error, trace, index));
+      .onError((error, trace) => _onTestError(error, trace, index, compile));
     
     final exitCode = await compile.exitCode;
     if (exitCode != 0) {
@@ -858,7 +858,7 @@ class Homework {
 
     await process.exitCode
       .timeout(const Duration(seconds: 10))
-      .onError((error, trace) => _onTestError(error, trace, index));
+      .onError((error, trace) => _onTestError(error, trace, index, process));
 
     process.kill();
 
@@ -883,7 +883,8 @@ class Homework {
     return;
   }
 
-  Future<int> _onTestError(Object? error, StackTrace trace, int index) async {
+  Future<int> _onTestError(Object? error, StackTrace trace, int index, Process process) async {
+    process.kill();
     switch (error.runtimeType) {
       case TimeoutException _:
         testCases[index].result = TestResult(

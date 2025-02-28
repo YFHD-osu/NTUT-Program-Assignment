@@ -797,6 +797,11 @@
     "comment": "C 環境"
   },
 
+  "test_server_file_not_support": "This assignment only allow:",
+  "@test_server_file_not_support": {
+    "comment": "C 環境"
+  },
+
   "test": "Test", "@test": {
     "description": "General test"
   },

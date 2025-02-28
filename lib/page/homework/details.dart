@@ -478,6 +478,16 @@ class _TestAreaState extends State<TestArea> {
   Future<void> _onLoad(path) async {
     var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
 
+    if (!widget.homework.allowedExtensions.contains(myFile.path.split(".").last)) {
+      logger.i("Unsupported format: ${myFile.path}");
+      MyApp.showToast(
+        MyApp.locale.error_occur, 
+        "${MyApp.locale.test_server_file_not_support} ${widget.homework.allowedExtensions.map((e) => ".$e").join(", ")}",
+        InfoBarSeverity.warning
+      );
+      return;
+    }
+
     widget.homework.testFile = myFile;
     // final tasks = [_homework.upload(myFile), _setKeyState()];
     // await Future.wait(tasks);
@@ -516,19 +526,38 @@ class _TestAreaState extends State<TestArea> {
   }
 
   Future<void> _testAll() async {
+    // Block if target file not exist
+    if ( !( await widget.homework.testFile!.exists() ) ) {
+      MyApp.showToast(
+        MyApp.locale.error_occur, 
+        MyApp.locale.file_not_found,
+        InfoBarSeverity.error
+      );
+      return;
+    }
+
     for (var testCase in widget.homework.testCases) {
       testCase.result = null;
       testCase.testing = true;
     }
-    
+   
     _isAllTestRunning = true;
     if (mounted) setState(() {});
-    
+
     try {
       await widget.homework.testAll(widget.homework.testFile!);
     } on TestException catch (e) {
+      MyApp.showToast(
+        MyApp.locale.error_occur, 
+        e.message,
+        InfoBarSeverity.error
+      );
       logger.e(e.message);
     } finally {
+      for (var testCase in widget.homework.testCases) {
+        testCase.testing = false;
+      }
+
       _isAllTestRunning = false;
       if (mounted) setState(() {});
     }
@@ -1249,7 +1278,13 @@ class _UploadSectionState extends State<UploadSection> {
       return;
     }
 
-    await _upload(outputFile!.paths.first);
+    var myFile = File(
+      outputFile!.paths.first
+      .toString()
+      .replaceAll(r"file:///", "")
+      .replaceAll("%20", " ")
+    );
+    await _upload(myFile);
 
     setState(() => _explorerOpen = false);
   }
@@ -1260,11 +1295,28 @@ class _UploadSectionState extends State<UploadSection> {
         logger.e("DataReader cannot read file from drag object.");
         continue;
       }
-      item.dataReader!.getValue(Formats.fileUri, _upload);
+      item.dataReader!.getValue(Formats.fileUri, _convertDragPath);
     }
   }
 
-  Future<void> _upload(path) async {
+  void _convertDragPath(path) async {
+    // For Chinese path support 
+    var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
+
+    if (!widget.homework.allowedExtensions.contains(myFile.path.split(".").last)) {
+      logger.i("Unsupported format: ${myFile.path}");
+      MyApp.showToast(
+        MyApp.locale.error_occur, 
+        "${MyApp.locale.test_server_file_not_support} ${widget.homework.allowedExtensions.map((e) => ".$e").join(", ")}",
+        InfoBarSeverity.warning
+      );
+      return;
+    }
+
+    await _upload(myFile);
+  }
+
+  Future<void> _upload(File file) async {
     if ([HomeworkState.passed, HomeworkState.notPassed, HomeworkState.compileFailed].contains(widget.homework.state)) {
       final isConfirmed = await showDialog<bool>(
         context: context,
@@ -1288,15 +1340,10 @@ class _UploadSectionState extends State<UploadSection> {
       HomeworkInstance.update.add(EventType.refreshOverview);
     }
 
-    // For Chinese path support 
-    var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
-
-    // var myFile = File(path.toString().replaceAll(r"file:///", "").replaceAll("%20", " "));
-
     widget.homework.submitting = true;
     HomeworkInstance.update.add(EventType.setStateDetail);
 
-    await _uploadFile(myFile);
+    await _uploadFile(file);
 
     GlobalSettings.update.add(GlobalEvent.setHwState);
     HomeworkInstance.update.add(EventType.refreshOverview);
