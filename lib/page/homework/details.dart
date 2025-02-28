@@ -1288,8 +1288,10 @@ class _UploadSectionState extends State<UploadSection> {
       HomeworkInstance.update.add(EventType.refreshOverview);
     }
 
-    // var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
-    var myFile = File(path.toString().replaceAll(r"file:///", "").replaceAll("%20", " "));
+    // For Chinese path support 
+    var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
+
+    // var myFile = File(path.toString().replaceAll(r"file:///", "").replaceAll("%20", " "));
 
     widget.homework.submitting = true;
     HomeworkInstance.update.add(EventType.setStateDetail);

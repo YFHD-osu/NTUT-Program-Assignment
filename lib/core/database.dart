@@ -26,7 +26,7 @@ class Database {
     if (_isInitialized) return false;
 
     final directory = (await getApplicationSupportDirectory()).path;
-
+    
     collection = await BoxCollection.open(
       name, // Name of your database
       {name}, // Names of your boxes,
