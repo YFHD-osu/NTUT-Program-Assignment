@@ -48,16 +48,13 @@ class LogToFile {
       _writeLog(log);
     };
 
-    // // 攔截所有未捕獲的異常（例如 `throw Exception()`）
-    // runZonedGuarded(() {
-    //   ;
-    // }, _onException);
+   
   }
 
-  // static void _onException(Object error, StackTrace stackTrace) {
-  //   final log = '[ZONE ERROR] ${DateTime.now()}: $error\n$stackTrace';
-  //   _writeLog(log);
-  // }
+  static void _onException(Object error, StackTrace stackTrace) {
+    final log = '[ZONE ERROR] ${DateTime.now()}: $error\n$stackTrace';
+    _writeLog(log);
+  }
 
   static void _writeLog(String message) {
     _sink?.writeln(message);
@@ -115,7 +112,6 @@ class FileLogOutput extends LogOutput {
   @override
   void output(OutputEvent event) {
     for (var line in event.lines) {
-      // debugPrint(line); // 輸出到 Console
       LogToFile._writeLog(line);
     }
   }

@@ -35,7 +35,6 @@ void main() async {
     filter: AlwaysLogFilter()
   );
 
-
   // Make http package to accept self-signed certificate 
   HttpOverrides.global = DevHttpOverrides();
 
