@@ -35,8 +35,6 @@ class Compiler {
     required this.name,
     required this.version
   });
-
-
 }
 
 class TestServer {

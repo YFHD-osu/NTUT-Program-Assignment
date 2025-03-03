@@ -10,6 +10,7 @@ import 'package:beautiful_soup_dart/beautiful_soup.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/core/test_server.dart';
 import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
+import 'package:path_provider/path_provider.dart';
 
 class DevHttpOverrides extends HttpOverrides {
   @override
@@ -816,8 +817,18 @@ class Homework {
 
     late final Process compile;
 
+    final compileDir = "${(await getApplicationSupportDirectory()).path}/build";
+
+    if (! (await Directory(compileDir).exists())) {
+      await Directory(compileDir).create(recursive: true);
+    }
+
     try {
-      compile = await Process.start(GlobalSettings.prefs.gccPath ?? "gcc", [target.path, '-o', 'test']);
+      compile = await Process.start(
+        GlobalSettings.prefs.gccPath ?? "gcc",
+        [target.path, '-o', '$compileDir/$id']
+      );
+      
     } catch (e) {
       testCases[index].result = TestResult(
         error: ["${MyApp.locale.testcase_compile_failed} $e"],
@@ -848,7 +859,7 @@ class Homework {
 
     compile.kill();
 
-    final process = await Process.start("test", []);
+    final process = await Process.start("$compileDir/$id", []);
 
     for (var line in testCases[index].input.split("\n")) {
       // print("Feeding: $line");
