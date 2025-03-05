@@ -37,7 +37,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   List<String>? _passList = [];
 
   // Store all online checked testcases status and messages
-  List<CheckResult> _testcasesVal = [];
+  CheckResult? _testcasesVal;
 
   // Store copy button whether should display a check mark or clipboard icon 
   bool inputCopy = false, outputCopy = false;
@@ -135,7 +135,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
         OverviewCard(
           homework: homework,
           passVal: _passList,
-          testcasesVal: _testcasesVal,
+          testResult: _testcasesVal,
 
         ),
         const SizedBox(height: 10),
@@ -483,7 +483,7 @@ class _TestAreaState extends State<TestArea> {
       MyApp.showToast(
         MyApp.locale.error_occur, 
         "${MyApp.locale.test_server_file_not_support} ${widget.homework.allowedExtensions.map((e) => ".$e").join(", ")}",
-        InfoBarSeverity.warning
+        InfoBarSeverity.error
       );
       return;
     }
@@ -770,13 +770,13 @@ class OverviewCard extends StatefulWidget {
   final List<String>? passVal;
 
   // Test case passed
-  final List<CheckResult>? testcasesVal;
+  final CheckResult? testResult;
 
   const OverviewCard({
     super.key,
     required this.homework,
     required this.passVal,
-    required this.testcasesVal
+    required this.testResult
   });
 
   @override
@@ -805,7 +805,7 @@ class _OverviewCardState extends State<OverviewCard> {
               color: Colors.red.lighter
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 15),
           Text(MyApp.locale.hwDetails_state_not_submitted, style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
           const Spacer(),
         ]
@@ -858,15 +858,13 @@ class _OverviewCardState extends State<OverviewCard> {
           ),
           const SizedBox(width: 5),
           AnimatedFlipCounter(
-            value: widget.testcasesVal!
-              .where((e) => e.pass).length
-              .toDouble(),
+            value: (widget.testResult?.passCount ?? 0).toDouble(),
             fractionDigits: 0,
             curve: Curves.easeInOutSine,
             duration: const Duration(milliseconds: 600),
             textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)
           ),
-          Text("/${widget.testcasesVal!.length}",
+          Text("/${widget.testResult?.allCount ?? 0}",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)),
           const SizedBox(width: 5),
           Text(MyApp.locale.hwDetails_failed, style: TextStyle(color: colors)),
@@ -901,20 +899,8 @@ class _OverviewCardState extends State<OverviewCard> {
               color: Colors.green.lighter
             ),
           ),
-          const SizedBox(width: 5),
-          AnimatedFlipCounter(
-            value: widget.testcasesVal!
-              .where((e) => e.pass).length
-              .toDouble(),
-            fractionDigits: 0,
-            curve: Curves.easeInOutSine,
-            duration: const Duration(milliseconds: 600),
-            textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)
-          ),
-          Text("/${widget.testcasesVal!.length}",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)),
-          const SizedBox(width: 5),
-          Text(MyApp.locale.hwDetails_passed, style: TextStyle(color: colors)),
+          const SizedBox(width: 10),
+          Text(MyApp.locale.hwDetails_passed, style: TextStyle(color: colors, fontWeight: FontWeight.bold)),
           const Spacer()
         ]
       );
@@ -956,7 +942,7 @@ class _OverviewCardState extends State<OverviewCard> {
         ),
         const SizedBox(width: 10),
         Text(MyApp.locale.hwDetails_number_of_completions, style: TextStyle(color: colors)),
-        const Spacer(),
+        const Spacer()
       ]
     );
   }
@@ -973,7 +959,7 @@ class _OverviewCardState extends State<OverviewCard> {
 
       case HomeworkState.notPassed:
       case HomeworkState.passed:
-        return (widget.testcasesVal != null);
+        return (widget.testResult != null);
     }
   }
 
@@ -988,7 +974,7 @@ class _OverviewCardState extends State<OverviewCard> {
       navigatorKey: Navigator.of(context),
       builder: (context) {
         return TestCaseFlyout(
-          results: widget.testcasesVal!
+          results: widget.testResult!
         );
       });
   }
@@ -1113,14 +1099,14 @@ class DropItemInfo extends StatelessWidget {
 }
 
 class TestCaseFlyout extends StatelessWidget {
-  final List<CheckResult> results;
+  final CheckResult results;
 
   const TestCaseFlyout({
     super.key,
     required this.results
   });
 
-  Widget _testDataRow(CheckResult result, BuildContext context) {
+  Widget _testDataRow(TestCase testcase, BuildContext context) {
     return Tile(
       constraints: const BoxConstraints(
         minHeight: 48
@@ -1131,15 +1117,15 @@ class TestCaseFlyout extends StatelessWidget {
           Container(
             width: 10, height: 10,
             decoration: BoxDecoration(
-              color: result.pass ? Colors.green.lighter : Colors.red.light,
+              color: testcase.pass ? Colors.green.lighter : Colors.red.light,
               borderRadius: BorderRadius.circular(10)
             ),
           ),
           const SizedBox(width: 18),
-          Text(result.title),
+          Text(testcase.title),
           const SizedBox(width: 10),
           Flexible(
-            child: Text(result.message??"")
+            child: Text(testcase.message??"")
           ),
         ]
       ),
@@ -1148,8 +1134,7 @@ class TestCaseFlyout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-    final percent = results.where((e) => e.pass).length / results.length * 100;
+
     return Container(
       constraints: const BoxConstraints(
         maxHeight: 500, maxWidth: 300
@@ -1172,7 +1157,7 @@ class TestCaseFlyout extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(MyApp.locale.output),
                 const Spacer(),
-                Text("${percent.toStringAsFixed(0)} %", style: const TextStyle(
+                Text("${results.passRate} %", style: const TextStyle(
                   fontWeight: FontWeight.bold
                 ))
               ]
@@ -1180,8 +1165,8 @@ class TestCaseFlyout extends StatelessWidget {
           ),
           Expanded(child: ListView.separated(
             itemBuilder: (context, index) => 
-              _testDataRow(results[index], context),
-            itemCount: results.length,
+              _testDataRow(results.cases[index], context),
+            itemCount: results.cases.length,
             separatorBuilder: (context, index) => 
               const SizedBox(height: 10),
           ))
@@ -1308,7 +1293,7 @@ class _UploadSectionState extends State<UploadSection> {
       MyApp.showToast(
         MyApp.locale.error_occur, 
         "${MyApp.locale.test_server_file_not_support} ${widget.homework.allowedExtensions.map((e) => ".$e").join(", ")}",
-        InfoBarSeverity.warning
+        InfoBarSeverity.error
       );
       return;
     }

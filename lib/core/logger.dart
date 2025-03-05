@@ -47,14 +47,12 @@ class LogToFile {
       }
       _writeLog(log);
     };
-
-   
   }
 
-  static void _onException(Object error, StackTrace stackTrace) {
-    final log = '[ZONE ERROR] ${DateTime.now()}: $error\n$stackTrace';
-    _writeLog(log);
-  }
+  // static void _onException(Object error, StackTrace stackTrace) {
+  //   final log = '[ZONE ERROR] ${DateTime.now()}: $error\n$stackTrace';
+  //   _writeLog(log);
+  // }
 
   static void _writeLog(String message) {
     _sink?.writeln(message);

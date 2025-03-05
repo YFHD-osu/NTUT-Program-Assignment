@@ -343,7 +343,7 @@
 
   },
 
-  "hwDetails_passed": "Passed",
+  "hwDetails_passed": " All Case Passed",
   "@hwDetails_passed": {
 
   },

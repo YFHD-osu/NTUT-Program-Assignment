@@ -101,7 +101,7 @@
   "hwDetails_preparing":"准备中",
   "hwDetails_failed":"未通过",
   "hwDetails_submitting":"批改中",
-  "hwDetails_passed":"已通过",
+  "hwDetails_passed":"通过所有测资",
   "hwDetails_deleting":"删除中",
   "hwDetails_number_of_completions":"完成人数",
   "hwDetails_drop_file_here":"放开选择文件",

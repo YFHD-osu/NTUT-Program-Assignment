@@ -38,8 +38,10 @@ class Account {
     "https://140.124.181.26"
   ];
 
+  bool get isEven => 
+    int.tryParse(username.substring(username.length-3))?.isEven??false;
+
   String get domain {
-    final isEven = int.tryParse(username.substring(username.length-3))?.isEven??false;
     return isEven ? defaultDomain[1] : defaultDomain[0];
   }
   
@@ -318,21 +320,116 @@ class Testcase {
   }
 }
 
-class CheckResult {
+class TestCase {
   final bool pass;
   final String title;
   final String? message;
 
-  CheckResult(this.pass, this.title, this.message);
+  TestCase(
+    this.pass,
+    this.title,
+    this.message
+  );
 
-  factory CheckResult.fromSoup(Bs4Element soup) {
+  factory TestCase.fromSoup(Bs4Element soup) {
     final failed = soup.findAll("td");
     
-    return CheckResult(
+    return TestCase(
       soup.children.first.className == "positive",
       soup.children.first.text.trim(),
       failed.isEmpty ? "" : failed.last.text.trim()
     );
+  }
+}
+
+class CheckResult {
+  final List<TestCase> cases;
+  final int? _passRate;
+
+  int get failedCount {
+    // Even student id cannot fetch all test count, so we need to handle it specially 
+    if (GlobalSettings.account!.isEven) {
+      return cases.length;
+    }
+
+    // Process odd studnet id normally
+    return cases.where((e) => !e.pass).length;
+  }
+
+  int get passCount {
+    // Even student id cannot fetch all test count, so we need to handle it specially 
+    if (GlobalSettings.account!.isEven) {
+      return ( allCount * passRate / 100).toInt();
+    }
+
+    return cases.where((e) => e.pass).length;
+  }
+
+  int get failedRate => 100 - passRate;
+
+  int get passRate {
+    if (_passRate != null) {
+      return _passRate;
+    }
+
+    if (cases.isEmpty && GlobalSettings.account!.isEven) {
+      // Return 100% pass rate due to even student id system will response a empty list if assignment passed
+      return 100;
+    }
+
+    if (cases.isEmpty) {
+      // Assert that length of test cases is not zero 
+      return 0;
+    }
+    
+    return (cases.where((e) => e.pass).length / cases.length * 100).toInt();
+  }
+    
+
+  int get allCount {
+    if (GlobalSettings.account!.isEven) {
+      if (failedCount == 0) {
+        return 0;
+      }
+
+      return ( failedCount * 100 / failedRate ).toInt();
+    } 
+
+    return cases.length;
+  }
+
+  CheckResult(
+    this.cases,
+    this._passRate
+  );
+
+  factory CheckResult.fromSoup(BeautifulSoup soup) {
+    final table = soup.find("tbody");
+
+    late final List<TestCase> testcases;
+
+    if (table == null || table.children.isEmpty) {
+      // Return empty array means that the homework hasn't been submitted
+
+      // Even student ID doesn't support test case showing,
+      // ignore search if the form is empty
+      testcases = [];
+    } else {
+      testcases = table.children
+      .where((soup) => soup.children.firstOrNull != null)
+      .map((e) => TestCase.fromSoup(e))
+      .toList();
+    }
+    
+    final pr = soup.findAll("span").lastOrNull?.text ?? "";
+    
+    final int? passRate = int.tryParse(
+      RegExp(r"\d+")
+        .firstMatch(pr)
+        ?.group(0) ?? ""
+    );
+
+    return CheckResult(testcases, passRate);
   }
 }
 
@@ -372,6 +469,8 @@ class Homework {
 
   bool get isPass =>
     status == "通過";
+
+  int? passRate;
 
   List<String> get allowedExtensions {
 
@@ -541,32 +640,13 @@ class Homework {
       .toList();
   }
 
-  Future<List<CheckResult>> fetchTestcases() async {
+  Future<CheckResult> fetchTestcases() async {
     final account = GlobalSettings.account!;
     final resp = await client._get("/CheckResult?questionID=$number&studentID=${account.username}");
 
     BeautifulSoup bs = BeautifulSoup(utf8.decode(resp.bodyBytes));
 
-    final table = bs.find("tbody");
-    
-    if (table == null) {
-      // Return empty array means that the homework hasn't been submitted
-      return []; 
-    }
-
-    // Even student ID doesn't support test case showing,
-    // ignore search if the form is empty
-
-    if (table.children.isEmpty) {
-      return [];
-    }
-    // print(table.children);
-
-    return table.children
-      .where((soup) => soup.children.firstOrNull != null)
-      .map((e) => CheckResult.fromSoup(e))
-      .toList();
-
+    return CheckResult.fromSoup(bs);
   }
 
   Future<void> delete() async {

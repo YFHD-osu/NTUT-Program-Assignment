@@ -102,7 +102,7 @@
   "hwDetails_preparing":"準備中",
   "hwDetails_failed":"未通過",
   "hwDetails_submitting":"批改中",
-  "hwDetails_passed":"已通過",
+  "hwDetails_passed":"通過所有測資",
   "hwDetails_deleting":"刪除中",
   "hwDetails_number_of_completions":"完成人數",
   "hwDetails_drop_file_here":"放開選取檔案",
