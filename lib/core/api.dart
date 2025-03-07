@@ -295,6 +295,48 @@ class Testcase {
   }
 
   factory Testcase.parse(String message) {
+    // Handle the case that the message doesn't contains the input and output title
+    // These conditions only happened while TA froget to type those word ;D
+    if (!message.contains("輸入") || !message.contains("輸出")) {
+      final arr = message.split("\n");
+
+      int index = 0; 
+      int start = 0;
+
+      // Fetch the input data, skip the 
+      while (index < arr.length) {
+        if (arr[index].trim().isNotEmpty && !arr[index].contains("輸出")) {
+          index++;
+          continue;
+        }
+
+        break;
+      }
+
+      final input = arr.sublist(start, index);
+
+      index ++;
+      start = index;
+      // Fetch the input data, skip the 
+      while (index < arr.length) {
+        if (arr[index].trim().isNotEmpty) {
+          index++;
+          continue;
+        }
+
+        start = index;
+        break;
+      }
+
+      final output = arr.sublist(start, index);
+
+      return Testcase(
+        input: input.join("\n"),
+        output: output.join("\n"),
+        original: message
+      );
+    }
+
     final regExp = RegExp(r"輸(入|出).+");
 
     final arr = message.split(regExp);
@@ -548,6 +590,7 @@ class Homework {
         continue;
       }
 
+      // Search for title if the value is not found
       if (title == null && ctx[index].contains(number)) {
         title = HtmlCharacterEntities.decode(ctx[index])
           .split(number)
@@ -578,6 +621,7 @@ class Homework {
     while (index < ctx.length) {
       if (!ctx[index].contains(RegExp(r"【測試資料.+】"))) {
         index++;
+        
         continue;
       }
 
@@ -594,9 +638,9 @@ class Homework {
         continue;
       } finally {
         start = index + 1;
+        index++;
       }
 
-      index++;
     }
 
     try {
