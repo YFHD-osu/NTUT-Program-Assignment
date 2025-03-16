@@ -120,5 +120,4 @@ class AlwaysLogFilter extends LogFilter {
   bool shouldLog(LogEvent event) {
     return true;
   }
-  
 }

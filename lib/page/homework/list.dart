@@ -24,7 +24,18 @@ class HomeworkList extends StatefulWidget {
 
 class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClientMixin{
   String? errMsg;
-  double? _loadPercent;
+  int? _loadCount;
+
+  double get _loadPercent {
+    final sum = HomeworkInstance.homeworks.length;
+
+    if (sum == 0) {
+      return 0;
+    }
+
+    return (_loadCount ?? 0) / sum; 
+  }
+
   late bool _isReady = HomeworkInstance.homeworks.isNotEmpty;
   late StreamSubscription _sub;
 
@@ -53,7 +64,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   }
 
   Future<void> _refresh() async {
-    if (_loadPercent != null) {
+    if (_loadCount != null) {
       return;
     }
 
@@ -64,7 +75,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
     HomeworkInstance.homeworks.clear();
     
     errMsg = null;
-    _loadPercent = 0;
+    _loadCount = 0;
     setState(() => _isReady = false);
 
     try {
@@ -73,29 +84,38 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
       await Homework.refreshHandedIn(HomeworkInstance.homeworks);
     } on RuntimeError catch (e) {
       errMsg = e.message;
-      _loadPercent = null;
+      _loadCount = null;
       
       if (mounted) setState(() {});
       return;
     }
     
     _isReady = true;
-    _loadPercent = null;
+    _loadCount = null;
 
     if (mounted) setState(() {});
   }
 
-  Future<void> _fetchDescription() async {
-    final sum = HomeworkInstance.homeworks.length;
-    int index = 0;
-    if (mounted) setState(() => _loadPercent = 0);
-    for (var hw in HomeworkInstance.homeworks) {
-      if (hw.id == 39) continue;
-      await hw.fetchHomeworkDetail();
+  void _onHomeworkLoadDone(val) {
+    _loadCount = (_loadCount??0) + 1 ;
+    if (mounted) return;
+    setState(() {});
+  }
 
-      index ++;
-      if (mounted) setState(() => _loadPercent = index/sum*100);
-    }
+  Future<void> _fetchDescription() async {
+    if (mounted) setState(() => _loadCount = 0);
+
+    // for (var hw in HomeworkInstance.homeworks) {
+    //   await hw.fetchHomeworkDetail()
+    //     .then(_onHomeworkLoadDone);
+    // }
+
+    final tasks = HomeworkInstance.homeworks.map((hw) => 
+      hw.fetchHomeworkDetail()
+        .then(_onHomeworkLoadDone)
+    );
+    
+    await Future.wait(tasks);
   }
 
   Widget _pendingHws() {

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
 import 'package:html_character_entities/html_character_entities.dart';
 
@@ -317,6 +318,7 @@ class Testcase {
 
       index ++;
       start = index;
+
       // Fetch the input data, skip the 
       while (index < arr.length) {
         if (arr[index].trim().isNotEmpty) {
@@ -618,12 +620,19 @@ class Homework {
       problem.removeLast();
     }
     
+    late String message;
+
     while (index < ctx.length) {
       if (!ctx[index].contains(RegExp(r"【測試資料.+】"))) {
         index++;
         
         continue;
       }
+
+      message = ctx.sublist(start, index)
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .join("\n");
 
       try {
         final data = Testcase.parse(
@@ -636,6 +645,13 @@ class Homework {
       } on RuntimeError catch (e) {
         logger.d(e);
         continue;
+      } catch (e) {
+        logger.e("Cannot parse testcase for homework $id, message:\n$message");
+        MyApp.showToast(
+          MyApp.locale.error_occur, 
+          "解析作業 $id 的測資時發生錯誤，請到網站確認實資訊",
+          InfoBarSeverity.error
+        );
       } finally {
         start = index + 1;
         index++;
@@ -643,16 +659,25 @@ class Homework {
 
     }
 
+    message = ctx.sublist(start, index)
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty)
+      .join("\n");
+
     try {
       final data = Testcase.parse(
-        ctx.sublist(start, index)
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .join("\n")
+        message
       );
       testCases.add(data);
     } on RuntimeError catch (e) {
       logger.d(e);
+    } catch (e) {
+      logger.e("Cannot parse testcase for homework $id, message:\n$message");
+      MyApp.showToast(
+        MyApp.locale.error_occur, 
+        "解析作業 $id 的測資時發生錯誤，請到網站確認實資訊",
+        InfoBarSeverity.error
+      );
     }
 
     return;
