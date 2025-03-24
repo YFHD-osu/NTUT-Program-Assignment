@@ -66,6 +66,8 @@ dependencies:
   html_character_entities: ^1.0.0+1
   path_provider: ^2.1.5
 
+  macos_window_utils: ^1.6.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
