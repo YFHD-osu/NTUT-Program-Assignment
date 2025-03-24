@@ -92,17 +92,6 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
     if (mounted) setState(() {});
   }
 
-  bool canDelete() {
-    switch (homework.state) {
-      case HomeworkState.notPassed:
-      case HomeworkState.passed:
-        return DateTime.now().compareTo(homework.deadline) <= 0;
-
-      default:
-        return false;
-    }
-  }
-
   Widget _showDeleteConfirm() {
     return ContentDialog(
       constraints: const BoxConstraints(
@@ -195,7 +184,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
           icon: const Icon(FluentIcons.delete),
           child: CustomWidgets.alertButton(
             child: Text(MyApp.locale.delete),
-            onPressed: !canDelete() ? null : () async {
+            onPressed: !homework.canDelete ? null : () async {
               final isConfirmed = await showDialog<bool>(
                 context: context,
                 builder: (context) => _showDeleteConfirm()
@@ -906,7 +895,7 @@ class _OverviewCardState extends State<OverviewCard> {
       );
 
       case HomeworkState.delete: return Row(
-        key: ValueKey(2),
+        key: ValueKey(4),
         children: [
           Spacer(),
           SizedBox.square(
@@ -918,6 +907,23 @@ class _OverviewCardState extends State<OverviewCard> {
           SizedBox(width: 10),
           Text(MyApp.locale.hwDetails_deleting, style: TextStyle(fontWeight: FontWeight.bold)),
           Spacer()
+        ]
+      );
+
+      case HomeworkState.other: return Row(
+        key: ValueKey(5),
+        children: [
+          const Spacer(),
+          Container(
+            height: 10, width: 10,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Colors.orange.lighter
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(widget.homework.status, style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
+          const Spacer(),
         ]
       );
     }
@@ -955,6 +961,7 @@ class _OverviewCardState extends State<OverviewCard> {
       case HomeworkState.delete:
       case HomeworkState.compileFailed:
       case HomeworkState.preparing:
+      case HomeworkState.other:
         return false;
 
       case HomeworkState.notPassed:
@@ -1302,7 +1309,7 @@ class _UploadSectionState extends State<UploadSection> {
   }
 
   Future<void> _upload(File file) async {
-    if ([HomeworkState.passed, HomeworkState.notPassed, HomeworkState.compileFailed].contains(widget.homework.state)) {
+    if (widget.homework.canDelete) {
       final isConfirmed = await showDialog<bool>(
         context: context,
         builder: (context) => _showDeleteAlert()

@@ -484,7 +484,8 @@ enum HomeworkState {
   checking,
   delete,
   compileFailed,
-  preparing
+  preparing,
+  other
 }
 
 class Homework {
@@ -513,6 +514,19 @@ class Homework {
 
   bool get isPass =>
     status == "通過";
+
+  bool get canDelete {
+    switch (state) {
+      case HomeworkState.notPassed:
+      case HomeworkState.passed:
+      case HomeworkState.other:
+      case HomeworkState.compileFailed:
+        return DateTime.now().compareTo(deadline) <= 0;
+
+      default:
+        return false;
+    }
+  }
 
   int? passRate;
 
@@ -553,7 +567,11 @@ class Homework {
       return HomeworkState.preparing;
     }
 
-    return HomeworkState.notTried;
+    if (status == "未繳交") {
+      return HomeworkState.notTried;
+    }
+
+    return HomeworkState.other;
   }
 
   final client = InnerClient(
