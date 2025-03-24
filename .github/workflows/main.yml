@@ -186,7 +186,7 @@ jobs:
       - name: Install Flutter 
         uses: flutter-actions/setup-flutter@v3
         with:
-          cache: true
+          cache: false
           cache-sdk: true
           version: 3.27.0
           channel: 'stable' # or: 'beta', 'dev', 'master' (or 'main')
