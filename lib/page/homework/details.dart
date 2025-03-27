@@ -1035,13 +1035,13 @@ class _OverviewCardState extends State<OverviewCard> {
         return;
       }
 
-      widget.homework.deleting = false;
-      
       // Only refresh new pass list only if the homework is already passed
       // It's intended to illustrate user's name being removed from the list
       if (widget.homework.state == HomeworkState.passed) {
         await widget.homework.refreshTestcaseAndPasslist();
       }
+
+      widget.homework.deleting = false;
 
       setState(() {});
     }
