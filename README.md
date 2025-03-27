@@ -35,8 +35,5 @@ However, ``web``, ``android``, ``iOS``, are not planned to be support, reasons l
 ### Android, iOS
 "There is no reason you need to use this app on a mobile device since most people don't use their phones to write programs. Technically, the mobile platform is supported, but it is not required.
 
-## TODO
-- 新增題目討論系統
-
 ## License
 [MIT](https://opensource.org/license/MIT) Copyright (c) 2018-present
