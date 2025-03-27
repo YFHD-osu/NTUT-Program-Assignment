@@ -5,8 +5,7 @@ import 'package:ntut_program_assignment/page/homework/details.dart';
 import 'package:ntut_program_assignment/page/homework/list.dart';
 
 enum EventType {
-  refreshOverview,
-  setStateDetail
+  setStateOverview
 }
 
 class HomeworkPage extends StatefulWidget {

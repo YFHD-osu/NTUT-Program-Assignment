@@ -288,16 +288,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.easeInOut,
-              tween: Tween<double>(
-                begin: 0,
-                end: _loadPercent ?? 0,
-              ),
-              builder: (context, value, _) =>
-                ProgressRing(value: value), 
-            ),
+            ProgressRing(),
             const SizedBox(height: 10),
             Text(MyApp.locale.loading),
           ]

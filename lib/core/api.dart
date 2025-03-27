@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:beautiful_soup_dart/beautiful_soup.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/core/test_server.dart';
+import 'package:ntut_program_assignment/core/utils.dart';
 import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
 import 'package:path_provider/path_provider.dart';
 
@@ -367,12 +368,14 @@ class Testcase {
 class TestCase {
   final bool pass;
   final String title;
-  final String? message;
+  final String? testResult;
+  final String message;
 
   TestCase(
     this.pass,
     this.title,
-    this.message
+    this.message,
+    this.testResult
   );
 
   factory TestCase.fromSoup(Bs4Element soup) {
@@ -381,6 +384,7 @@ class TestCase {
     return TestCase(
       soup.children.first.className == "positive",
       soup.children.first.text.trim(),
+      failed.isEmpty ? "" : failed[1].text.trim(),
       failed.isEmpty ? "" : failed.last.text.trim()
     );
   }
@@ -449,7 +453,7 @@ class CheckResult {
 
   factory CheckResult.fromSoup(BeautifulSoup soup) {
     final table = soup.find("tbody");
-
+  
     late final List<TestCase> testcases;
 
     if (table == null || table.children.isEmpty) {
@@ -485,6 +489,7 @@ enum HomeworkState {
   delete,
   compileFailed,
   preparing,
+  plagiarism,
   other
 }
 
@@ -495,6 +500,12 @@ class Homework {
   final DateTime deadline;
   final bool canHandIn;
   final String language;
+
+  String? filename;
+  List<int>? bytes;
+
+  List<String>? passList;
+  CheckResult? testResults;
 
   String? title;
   List<String> problem = [];
@@ -521,6 +532,7 @@ class Homework {
       case HomeworkState.passed:
       case HomeworkState.other:
       case HomeworkState.compileFailed:
+      case HomeworkState.plagiarism:
         return DateTime.now().compareTo(deadline) <= 0;
 
       default:
@@ -571,6 +583,10 @@ class Homework {
       return HomeworkState.notTried;
     }
 
+    if (status == "作業抄襲") {
+      return HomeworkState.plagiarism;
+    }
+
     return HomeworkState.other;
   }
 
@@ -587,6 +603,11 @@ class Homework {
     required this.canHandIn, 
     required this.language,
   });
+
+  Future<void> refreshTestcaseAndPasslist() async {
+    final tasks = [fetchPassList(), fetchTestcases()];
+    await Future.wait(tasks);
+  }
 
   Future<void> fetchHomeworkDetail() async {
     final resp = await client._get("/showHomework?hwId=$number");
@@ -721,10 +742,12 @@ class Homework {
       // throw RuntimeError("Cannot fetch success list, not login ?");
     }
 
-    return tr
+    passList = tr
       .map((e) => e.text.trim())
       .where((e) => e != "學號")
       .toList();
+
+    return passList!;
   }
 
   Future<CheckResult> fetchTestcases() async {
@@ -733,7 +756,8 @@ class Homework {
 
     BeautifulSoup bs = BeautifulSoup(utf8.decode(resp.bodyBytes));
 
-    return CheckResult.fromSoup(bs);
+    testResults = CheckResult.fromSoup(bs);
+    return testResults!;
   }
 
   Future<void> delete() async {
@@ -762,9 +786,50 @@ class Homework {
     return result.status;
   }
 
-  Future<void> upload(File file) async {
+  void applyTrashCode() {
+    if (bytes == null) {
+      logger.e("Bytes variable is null, so the trash code cannot be appiled");
+      return;
+    }
+
+    if (type != "C") {
+      throw UnimplementedError();
+    }
+
+    String code = String.fromCharCodes(bytes!);
+
+    code += "\n";
+
+    code += Utils.generateTrashCode(CodeType.c)
+      .join("\n");
+
+    bytes = code.codeUnits;
+  }
+
+  void applyDelComment() {
+    if (bytes == null) {
+      logger.e("Bytes variable is null, so the trash code cannot be appiled");
+      return;
+    }
+
+    if (type != "C") {
+      throw UnimplementedError();
+    }
+
+    String code = String.fromCharCodes(bytes!);
+
+    RegExp commentPattern = RegExp(r'//.*|/\*[\s\S]*?\*/');
+
+    // Remove all comments
+    bytes = code.replaceAll(commentPattern, '').codeUnits;
+  }
+
+  Future<void> upload(List<int> bytes, String filename) async {
     Future<void> prefetch() async {
       final account = GlobalSettings.account!;
+
+      this.bytes = bytes;
+      this.filename = filename;
 
       /*
       Login (Ref: "https://140.124.181.25/upload/Login")
@@ -800,11 +865,6 @@ class Homework {
       return;
     }
 
-    if (!await file.exists()) {
-      submitting = false;
-      throw RuntimeError(MyApp.locale.file_not_found);
-    }    
-
     final account = GlobalSettings.account!;
 
     // This endpoint must be GET before any homework uploaded
@@ -822,7 +882,7 @@ class Homework {
       'POST', Uri.parse('${account.domain}/upload/upLoadFile')
     );
 
-    request.files.add(await http.MultipartFile.fromPath('hwFile', file.path));
+    request.files.add(http.MultipartFile.fromBytes('hwFile', bytes, filename: filename));
     // request.headers.addAll(account.headers);
     request.headers.addAll(headers);
 
@@ -884,7 +944,7 @@ class Homework {
     DateFormat dateFormat = DateFormat("yyyy/MM/dd HH:mm");
     return Homework(
       id: int.parse(e.contents[0].text),
-      type: e.contents[1].text.trim(), 
+      type: e.contents[5].text.trim(), 
       number: e.contents[2].text.trim(),
       deadline: dateFormat.parse(e.contents[3].text), 
       canHandIn: e.contents[4].find("a") != null, 

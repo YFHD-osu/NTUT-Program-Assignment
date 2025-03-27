@@ -33,12 +33,6 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
 
   File? selFile;
 
-  // Store the list of all student ID that passes this homework 
-  List<String>? _passList = [];
-
-  // Store all online checked testcases status and messages
-  CheckResult? _testcasesVal;
-
   // Store copy button whether should display a check mark or clipboard icon 
   bool inputCopy = false, outputCopy = false;
 
@@ -48,12 +42,12 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
 
   Future<void> refresh() async {
     try {
-      final tasks = [_loadSuccess(), _loadTest()];
-      await Future.wait(tasks);
+      await homework.refreshTestcaseAndPasslist();
     } catch (e) {
       MyApp.showToast(MyApp.locale.hwDetails_refresh_failed, e.toString(), InfoBarSeverity.error);
       return;
     }
+    if (mounted) setState(() {});
   }
 
   @override
@@ -64,10 +58,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   }
 
   void _onEvent(EventType e) {
-    if (e == EventType.refreshOverview) {
-      refresh();
-      return;
-    } else if (e == EventType.setStateDetail) {
+    if (e == EventType.setStateOverview) {
       setState(() {});
     }
   }
@@ -76,20 +67,6 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
   void dispose() {
     super.dispose();
     _sub.cancel();
-  }
-
-  Future<void> _loadSuccess() async {
-    _passList = null;
-    if (mounted) setState(() {});
-    
-    _passList = await homework.fetchPassList();
-    if (mounted) setState(() {});
-  }
-
-  Future<void> _loadTest() async {
-    _testcasesVal = await homework.fetchTestcases();
-
-    if (mounted) setState(() {});
   }
 
   Widget _showDeleteConfirm() {
@@ -122,9 +99,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
       children: [
         const SizedBox(height: 5),
         OverviewCard(
-          homework: homework,
-          passVal: _passList,
-          testResult: _testcasesVal,
+          homework: homework
 
         ),
         const SizedBox(height: 10),
@@ -755,17 +730,9 @@ class _TestAreaState extends State<TestArea> {
 class OverviewCard extends StatefulWidget {
   final Homework homework;
 
-  // How many people passed this homework
-  final List<String>? passVal;
-
-  // Test case passed
-  final CheckResult? testResult;
-
   const OverviewCard({
     super.key,
-    required this.homework,
-    required this.passVal,
-    required this.testResult
+    required this.homework
   });
 
   @override
@@ -773,6 +740,12 @@ class OverviewCard extends StatefulWidget {
 }
 
 class _OverviewCardState extends State<OverviewCard> {
+  CheckResult? get testResult =>
+    widget.homework.testResults;
+
+  List<String>? get passVal =>
+    widget.homework.passList;
+
   double _successVal = 0;
 
   final _personFlyOut = FlyoutController();
@@ -847,13 +820,13 @@ class _OverviewCardState extends State<OverviewCard> {
           ),
           const SizedBox(width: 5),
           AnimatedFlipCounter(
-            value: (widget.testResult?.passCount ?? 0).toDouble(),
+            value: (testResult?.passCount ?? 0).toDouble(),
             fractionDigits: 0,
             curve: Curves.easeInOutSine,
             duration: const Duration(milliseconds: 600),
             textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)
           ),
-          Text("/${widget.testResult?.allCount ?? 0}",
+          Text("/${testResult?.allCount ?? 0}",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors)),
           const SizedBox(width: 5),
           Text(MyApp.locale.hwDetails_failed, style: TextStyle(color: colors)),
@@ -910,6 +883,7 @@ class _OverviewCardState extends State<OverviewCard> {
         ]
       );
 
+      case HomeworkState.plagiarism:
       case HomeworkState.other: return Row(
         key: ValueKey(5),
         children: [
@@ -953,25 +927,26 @@ class _OverviewCardState extends State<OverviewCard> {
     );
   }
 
-  bool isClickable() {
+  bool get isClickable {
     switch (widget.homework.state) {
       
       case HomeworkState.notTried:
       case HomeworkState.checking:
       case HomeworkState.delete:
-      case HomeworkState.compileFailed:
       case HomeworkState.preparing:
       case HomeworkState.other:
         return false;
 
+      case HomeworkState.compileFailed:
+      case HomeworkState.plagiarism:
       case HomeworkState.notPassed:
       case HomeworkState.passed:
-        return (widget.testResult != null);
+        return (testResult != null);
     }
   }
 
   Future<void> _showTestcaseFlyOut() async {
-    await _testCaseFlyOut.showFlyout(
+    final result = await _testCaseFlyOut.showFlyout(
       autoModeConfiguration: FlyoutAutoConfiguration(
         preferredMode: FlyoutPlacementMode.bottomRight,
       ),
@@ -980,10 +955,109 @@ class _OverviewCardState extends State<OverviewCard> {
       dismissWithEsc: true,
       navigatorKey: Navigator.of(context),
       builder: (context) {
+        if (widget.homework.state == HomeworkState.plagiarism) {
+          return PlagiarismFlyout(
+            result: testResult!
+          );
+        }
+
+        if (widget.homework.state == HomeworkState.compileFailed) {
+          return CompileFailFlyout(
+            result: testResult!
+          );
+        }
+        
         return TestCaseFlyout(
-          results: widget.testResult!
+          results: testResult!
         );
       });
+
+    if (result == null) {
+      return;
+    }
+
+    if (result) {
+      if (widget.homework.bytes == null || widget.homework.filename == null) {
+        if (!await pickHomeworkFile()) {
+          return;
+        }
+      }
+
+      switch (widget.homework.state) {
+        case HomeworkState.plagiarism:
+          widget.homework.applyTrashCode();
+        
+        case HomeworkState.compileFailed:
+          widget.homework.applyDelComment();
+
+        default:
+      }
+
+      await _uploadWithInnerBytesFile();
+    }
+  }
+
+  Future<bool> pickHomeworkFile() async {
+    final FilePickerResult? outputFile = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      lockParentWindow: true,
+      allowedExtensions: widget.homework.allowedExtensions,
+      dialogTitle: MyApp.locale.hwDetails_select_homework_window_title
+    );
+
+    if (outputFile?.paths.first == null) {
+      return false;
+    }
+
+    var myFile = File(
+      outputFile!.paths.first
+      .toString()
+      .replaceAll(r"file:///", "")
+      .replaceAll("%20", " ")
+    );
+
+    widget.homework.bytes = await myFile.readAsBytes();
+    widget.homework.filename = myFile.uri.pathSegments.last;
+    return true;
+  }
+  
+  Future<void> _delete() async {
+    if (widget.homework.canDelete) {
+      widget.homework.deleting = true;
+      setState(() {});
+
+      try {
+        await widget.homework.delete();
+      } on RuntimeError catch (e) {
+        widget.homework.deleting = false;
+        MyApp.showToast(MyApp.locale.hwDetails_failed_delete_homework, e.toString(), InfoBarSeverity.error);
+        setState(() {});
+        return;
+      }
+
+      widget.homework.deleting = false;
+      
+      // Only refresh new pass list only if the homework is already passed
+      // It's intended to illustrate user's name being removed from the list
+      if (widget.homework.state == HomeworkState.passed) {
+        await widget.homework.refreshTestcaseAndPasslist();
+      }
+
+      setState(() {});
+    }
+  }
+
+  Future<void> _uploadWithInnerBytesFile() async {
+    await _delete();
+
+    widget.homework.applyTrashCode();
+    widget.homework.submitting = true;
+    setState(() {});
+
+    await widget.homework.upload(widget.homework.bytes!, widget.homework.filename!);
+    await widget.homework.fetchTestcases();
+    await widget.homework.fetchPassList();
+    setState(() {});
   }
 
   Future<void> _showPeopleFlyOut() async {
@@ -997,14 +1071,14 @@ class _OverviewCardState extends State<OverviewCard> {
       navigatorKey: Navigator.of(context),
       builder: (context) {
         return PersonFlyout(
-          passes: widget.passVal!
+          passes: passVal!
         );
       });
   }
 
   @override
   Widget build(BuildContext context) {
-    _successVal = widget.passVal == null ? _successVal : widget.passVal!.length.toDouble();
+    _successVal = passVal == null ? _successVal : passVal!.length.toDouble();
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -1018,7 +1092,7 @@ class _OverviewCardState extends State<OverviewCard> {
                 padding: WidgetStatePropertyAll(EdgeInsets.zero),
                 foregroundColor: WidgetStatePropertyAll(Colors.white)
               ),
-              onPressed: widget.passVal == null ? null : _showPeopleFlyOut,
+              onPressed: passVal == null ? null : _showPeopleFlyOut,
               child: _completeCount()
             )
           )
@@ -1031,7 +1105,7 @@ class _OverviewCardState extends State<OverviewCard> {
               padding: WidgetStatePropertyAll(EdgeInsets.zero),
               foregroundColor: WidgetStatePropertyAll(Colors.white)
             ),
-            onPressed: isClickable() ? _showTestcaseFlyOut : null,
+            onPressed: isClickable ? _showTestcaseFlyOut : null,
             child: ClipRRect(
             clipBehavior: Clip.hardEdge,
               child: FlyoutTarget(
@@ -1132,7 +1206,7 @@ class TestCaseFlyout extends StatelessWidget {
           Text(testcase.title),
           const SizedBox(width: 10),
           Flexible(
-            child: Text(testcase.message??"")
+            child: Text(testcase.testResult??"")
           ),
         ]
       ),
@@ -1177,6 +1251,133 @@ class TestCaseFlyout extends StatelessWidget {
             separatorBuilder: (context, index) => 
               const SizedBox(height: 10),
           ))
+        ]
+      )
+    );
+  }
+}
+
+class PlagiarismFlyout extends StatelessWidget {
+  final CheckResult result;
+
+  const PlagiarismFlyout({
+    super.key,
+    required this.result
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tile(
+      constraints: const BoxConstraints(
+        maxHeight: 195, maxWidth: 300
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      decoration: BoxDecoration(
+        color: FluentTheme.of(context).menuColor,
+        borderRadius: BorderRadius.circular(5)
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start  ,
+        children: [
+          Text("作業抄襲", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          SizedBox(height: 5),
+          Tile(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+            child: Text(result.cases.firstOrNull?.message ?? "???")
+          ),
+          SizedBox(height: 10),
+          
+          Text("提示", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          SizedBox(height: 5),
+          Tile(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+            child: RichText(
+              text: TextSpan(
+                text: "少年，你相信光嗎?\n",
+                children: [
+                  TextSpan(
+                    text: "使用此程式的黑魔法讓你光速繞過抄襲檢查"
+                  )
+                ]
+              )
+            )
+          ),
+          SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Button(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: Text("一鍵黑魔法"),
+            )
+          )
+        ]
+      )
+    );
+  }
+}
+
+class CompileFailFlyout extends StatelessWidget {
+  final CheckResult result;
+
+  const CompileFailFlyout({
+    super.key,
+    required this.result
+  });
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Tile(
+      constraints: const BoxConstraints(
+        maxHeight: 195, maxWidth: 280, minWidth: 280
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      decoration: BoxDecoration(
+        color: FluentTheme.of(context).menuColor,
+        borderRadius: BorderRadius.circular(5)
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("編譯失敗", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          SizedBox(height: 5),
+          Tile(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+            child: Text(result.cases.firstOrNull?.message ?? "???")
+          ),
+          SizedBox(height: 10),
+          
+          Text("提示", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          SizedBox(height: 5),
+          Tile(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+            child: RichText(
+              text: TextSpan(
+                text: "少年，你相信光嗎?\n",
+                children: [
+                  TextSpan(
+                    text: "有時候刪掉註解對這個問題有幫助！"
+                  )
+                ]
+              )
+            )
+          ),
+          SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Button(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: Text("一鍵刪除註解"),
+            )
+          )
         ]
       )
     );
@@ -1249,9 +1450,7 @@ class UploadSection extends StatefulWidget {
 
 class _UploadSectionState extends State<UploadSection> {
   bool _isDragOver = false;
-
   bool _explorerOpen = false;
-
 
   Future<void> _browseHomework() async {
     if (_explorerOpen) return;
@@ -1317,33 +1516,44 @@ class _UploadSectionState extends State<UploadSection> {
       if (!(isConfirmed??false)) return;
 
       widget.homework.deleting = true;
-      HomeworkInstance.update.add(EventType.refreshOverview);
+      HomeworkInstance.update.add(EventType.setStateOverview);
 
       try {
         await widget.homework.delete();
       } on RuntimeError catch (e) {
         widget.homework.deleting = false;
         MyApp.showToast(MyApp.locale.hwDetails_failed_delete_homework, e.toString(), InfoBarSeverity.error);
-        HomeworkInstance.update.add(EventType.refreshOverview);
+        HomeworkInstance.update.add(EventType.setStateOverview);
         return;
       }
       
+      await widget.homework.fetchPassList();
+      await widget.homework.fetchTestcases();
       widget.homework.deleting = false;
-      HomeworkInstance.update.add(EventType.refreshOverview);
+      HomeworkInstance.update.add(EventType.setStateOverview);
     }
 
     widget.homework.submitting = true;
-    HomeworkInstance.update.add(EventType.setStateDetail);
+    // HomeworkInstance.update.add(EventType.setStateOverview);
 
     await _uploadFile(file);
 
+    await widget.homework.fetchPassList();
+    await widget.homework.fetchTestcases();
+
     GlobalSettings.update.add(GlobalEvent.setHwState);
-    HomeworkInstance.update.add(EventType.refreshOverview);
+    HomeworkInstance.update.add(EventType.setStateOverview);
   }
 
   Future<void> _uploadFile(File file) async{
+    if (!await file.exists()) {
+      MyApp.showToast(MyApp.locale.hwDetails_failed_upload_homework, MyApp.locale.file_not_found, InfoBarSeverity.error);
+      return;
+    }
+
     try {
-      return await widget.homework.upload(file);
+      final bytes = await file.readAsBytes();
+      return await widget.homework.upload(bytes, file.uri.pathSegments.last);
     } catch (e) {
       MyApp.showToast(MyApp.locale.hwDetails_failed_upload_homework, e.toString(), InfoBarSeverity.error);
       return;
