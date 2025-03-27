@@ -169,18 +169,18 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
 
               logger.i("Homework deleted!");
 
-              final task = homework.delete();
+              homework.deleting = true;
               setState(() {});
               
               try {
-                await task;
+                await homework.delete();
+                await refresh();
               } catch (e) {
                 MyApp.showToast(MyApp.locale.toast_delete_failed, e.toString(), InfoBarSeverity.error);
                 setState(() => homework.deleting = false);
                 return;
               }
-
-              refresh();
+              
               setState(() {});
             }
           )
@@ -769,7 +769,7 @@ class _OverviewCardState extends State<OverviewCard> {
           ),
           const SizedBox(width: 15),
           Text(MyApp.locale.hwDetails_state_not_submitted, style: TextStyle(fontWeight: FontWeight.bold, color: colors)),
-          const Spacer(),
+          const Spacer()
         ]
       );
 
@@ -1475,12 +1475,18 @@ class _UploadSectionState extends State<UploadSection> {
       .replaceAll(r"file:///", "")
       .replaceAll("%20", " ")
     );
+
     await _upload(myFile);
 
-    setState(() => _explorerOpen = false);
+    if (mounted) setState(() => _explorerOpen = false);
   }
 
   Future<void> _onPerformDrop(PerformDropEvent event) async {
+    // Block upload progress if upload is performing
+    if (! widget.homework.canUpload) {
+      return;
+    }
+
     for (var item in event.session.items) {
       if (item.dataReader == null) {
         logger.e("DataReader cannot read file from drag object.");
@@ -1534,6 +1540,7 @@ class _UploadSectionState extends State<UploadSection> {
     }
 
     widget.homework.submitting = true;
+    HomeworkInstance.update.add(EventType.setStateOverview);
     // HomeworkInstance.update.add(EventType.setStateOverview);
 
     await _uploadFile(file);
@@ -1575,6 +1582,9 @@ class _UploadSectionState extends State<UploadSection> {
   bool get isClickable {
     if (_explorerOpen) return false;
 
+    if (widget.homework.submitting) return false;
+    if (widget.homework.deleting) return false;
+
     return widget.homework.canHandIn;
   }
 
@@ -1613,9 +1623,9 @@ class _UploadSectionState extends State<UploadSection> {
       onDropLeave: _onDropLeave,
       onPerformDrop: _onPerformDrop,
       child: AnimatedContainer(
-        height: _isDragOver ? 200 : 63,
+        height: _isDragOver && widget.homework.canUpload ? 200 : 63,
         duration: const Duration(milliseconds: 150),
-        foregroundDecoration: _isDragOver ? DottedDecoration(
+        foregroundDecoration: _isDragOver && widget.homework.canUpload ? DottedDecoration(
           shape: Shape.box,
           strokeWidth: 2.5,
           color: FluentTheme.of(context).brightness.isDark ? Colors.white : Colors.black,

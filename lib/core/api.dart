@@ -526,6 +526,14 @@ class Homework {
   bool get isPass =>
     status == "通過";
 
+  bool get canUpload {
+    if (submitting || deleting) {
+      return false;
+    }
+
+    return true;
+  }
+
   bool get canDelete {
     switch (state) {
       case HomeworkState.notPassed:
