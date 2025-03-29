@@ -587,7 +587,7 @@ class Homework {
       return HomeworkState.preparing;
     }
 
-    if (status == "未繳交") {
+    if (status == "未繳交" || status == "未繳") {
       return HomeworkState.notTried;
     }
 
