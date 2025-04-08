@@ -53,13 +53,13 @@ dependencies:
   hive: ^2.2.3
   intl: ^0.19.0
   animated_flip_counter: ^0.3.4
-  super_drag_and_drop: ^0.8.24
+  super_drag_and_drop: ^0.9.0-dev.6
   dotted_decoration: ^2.0.0
-  toastification: ^2.3.0
+  toastification: ^3.0.2
   device_info_plus: ^10.1.2
   crypto: ^3.0.6
 
-  flutter_distributor: ^0.2.8
+  flutter_distributor: ^0.5.1
   package_info_plus: ^8.1.0
 
   html_character_entities: ^1.0.0+1
@@ -70,6 +70,8 @@ dependencies:
 
 dependency_overrides:
   macos_window_utils: 1.6.1
+  uuid: ^3.0.5
+
 
 dev_dependencies:
   flutter_test:
