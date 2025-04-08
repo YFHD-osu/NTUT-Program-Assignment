@@ -16,6 +16,14 @@ class TestServerRoute extends StatefulWidget {
 
 class _TestServerRouteState extends State<TestServerRoute> {
 
+  List<String> get compilerAllowExtension {
+    if (Platform.isWindows) {
+      return ['*'];
+    }
+
+    return [];
+  }
+
   @override
   void initState() {
     super.initState();
@@ -46,7 +54,7 @@ class _TestServerRouteState extends State<TestServerRoute> {
     final FilePickerResult? outputFile = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       lockParentWindow: true,
-      allowedExtensions: [],
+      allowedExtensions: compilerAllowExtension,
       dialogTitle: MyApp.locale.settings_test_server_select_compiler
     );
 

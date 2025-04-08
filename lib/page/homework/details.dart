@@ -1,18 +1,17 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:fluent_ui/fluent_ui.dart';
 
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:ntut_program_assignment/core/extension.dart';
-import 'package:ntut_program_assignment/core/global.dart';
-import 'package:ntut_program_assignment/page/homework/list.dart';
-import 'package:ntut_program_assignment/provider/theme.dart';
-import 'package:pretty_diff_text/pretty_diff_text.dart';
 import 'package:dotted_decoration/dotted_decoration.dart';
+import 'package:ntut_program_assignment/page/homework/test_area.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 
+import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/page/homework/list.dart';
+import 'package:ntut_program_assignment/provider/theme.dart';
 import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
@@ -248,7 +247,7 @@ class _StateSectionState extends State<StateSection> {
 
 class CopyButton extends StatefulWidget {
   final String? title;
-  final String context;
+  final String? context;
   
   const CopyButton({
     super.key,
@@ -290,6 +289,12 @@ class _CopyButtonState extends State<CopyButton> {
   @override
   Widget build(BuildContext context) {
     return Button(
+      onPressed: widget.context==null ? null : () async {
+        await Clipboard.setData(ClipboardData(text: widget.context!));
+        setState(() => copyState = true);
+        await Future.delayed(const Duration(milliseconds: 800));
+        setState(() => copyState = false);
+      },
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 100),
         child: Row(
@@ -299,13 +304,7 @@ class _CopyButtonState extends State<CopyButton> {
             ..._title()
           ]
         )
-      ),
-      onPressed: () async {
-        await Clipboard.setData(ClipboardData(text: widget.context));
-        setState(() => copyState = true);
-        await Future.delayed(const Duration(milliseconds: 800));
-        setState(() => copyState = false);
-      }
+      )
     );
   }
 }
@@ -360,369 +359,6 @@ class ProblemBox extends StatelessWidget {
             .sublist(0, problem.length*2-1)
         )
       ) 
-    );
-  }
-}
-
-class TestArea extends StatefulWidget {
-  final Homework homework;
-
-  const TestArea({
-    super.key,
-    required this.homework
-  });
-
-  @override
-  State<TestArea> createState() => _TestAreaState();
-}
-
-class _TestAreaState extends State<TestArea> {
-  bool _isAllTestRunning = false;
-
-  bool _isDragOver = false;
-
-  int _selectTestcase = 0;
-
-  Widget _testcaseBtns() => GridView(
-    shrinkWrap : true,
-    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 100,
-        childAspectRatio: 2.8,
-        crossAxisSpacing: 5,
-        mainAxisSpacing: 5
-    ),
-    children: List<int>.generate(widget.homework.testCases.length, (e) => e)
-      .map((e) => _testcaseBtn(e))
-      .toList()
-  );
-
-  Widget _testcaseWindow() {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.fastOutSlowIn,
-      child: ClipRRect(
-        clipBehavior: Clip.hardEdge,
-        child: AnimatedSwitcher(
-          switchInCurve: Curves.fastOutSlowIn,
-          switchOutCurve: Curves.fastOutSlowIn,
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(animation);
-
-            final slideAnimation = child.key == ValueKey(_selectTestcase) 
-                // Fade out from left to right
-                ? Tween<Offset>(begin: const Offset(0, -1), end: const Offset(0, 0)).animate(animation)
-                // Fade in from left to right
-                : Tween<Offset>(begin: const Offset(0, 1), end: const Offset(0, 0)).animate(animation);
-
-            return FadeTransition(
-              opacity: fadeAnimation,
-              child: SlideTransition(
-                position: slideAnimation,
-                child: child
-              ),
-            );
-          },
-          duration: const Duration(milliseconds: 300),
-          child: _testcaseSection(_selectTestcase)
-        )
-      )
-    );
-  }
-
-  Future<void> _onPerformDrop(PerformDropEvent event) async {
-    for (var item in event.session.items) {
-      if (item.dataReader == null) {
-        logger.e("DataReader cannot read file from clipboard.");
-        continue;
-      }
-      item.dataReader!.getValue(Formats.fileUri, _onLoad);
-    }
-  }
-
-  Future<void> _onLoad(path) async {
-    var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
-
-    if (!widget.homework.allowedExtensions.contains(myFile.path.split(".").last)) {
-      logger.i("Unsupported format: ${myFile.path}");
-      MyApp.showToast(
-        MyApp.locale.error_occur, 
-        "${MyApp.locale.test_server_file_not_support} ${widget.homework.allowedExtensions.map((e) => ".$e").join(", ")}",
-        InfoBarSeverity.error
-      );
-      return;
-    }
-
-    widget.homework.testFile = myFile;
-    // final tasks = [_homework.upload(myFile), _setKeyState()];
-    // await Future.wait(tasks);
-
-    if (!mounted) return;
-    setState(() {});
-  }
-
-  void _onDropLeave(DropEvent event) {
-    setState(() => _isDragOver = false);
-  }
-
-  DropOperation _onDropOver(DropOverEvent event) {
-    setState(() => _isDragOver = true);
-    return event.session.allowedOperations.firstOrNull ?? DropOperation.none;
-  }
-
-  Widget _loreWidget() {
-    final testCases = widget.homework.testCases;
-
-    if (widget.homework.testFile == null) {
-      return Text(MyApp.locale.hwDetails_testArea_dropfileHere);
-    }
-
-    if (_isAllTestRunning) {
-      return Text(MyApp.locale.hwDetails_testArea_testRunning);
-    }
-
-    final notPass = testCases.where((e) => !e.isPass).length;
-
-    if (notPass == 0) {
-      return Text(MyApp.locale.hwDetails_testArea_allPass);
-    }
-
-    return Text(MyApp.locale.hwDetails_testArea_stillNotPass.format([notPass]));
-  }
-
-  Future<void> _testAll() async {
-    // Block if target file not exist
-    if ( !( await widget.homework.testFile!.exists() ) ) {
-      MyApp.showToast(
-        MyApp.locale.error_occur, 
-        MyApp.locale.file_not_found,
-        InfoBarSeverity.error
-      );
-      return;
-    }
-
-    for (var testCase in widget.homework.testCases) {
-      testCase.result = null;
-      testCase.testing = true;
-    }
-   
-    _isAllTestRunning = true;
-    if (mounted) setState(() {});
-
-    try {
-      await widget.homework.testAll(widget.homework.testFile!);
-    } on TestException catch (e) {
-      MyApp.showToast(
-        MyApp.locale.error_occur, 
-        e.message,
-        InfoBarSeverity.error
-      );
-      logger.e(e.message);
-    } finally {
-      for (var testCase in widget.homework.testCases) {
-        testCase.testing = false;
-      }
-
-      _isAllTestRunning = false;
-      if (mounted) setState(() {});
-    }
-  }
-
-  Widget _testCaseOutput(int index) {
-    final testCase = widget.homework.testCases[index];
-
-    if (testCase.result?.error.isNotEmpty??false) {
-      return Text(MyApp.locale.hwDetails_testArea_testError
-        .format([testCase.result!.error.join("\n"), testCase.result!.error.length]));
-    }
-
-    if (testCase.hasOutput) {
-      return PrettyDiffText(
-        textWidthBasis: TextWidthBasis.longestLine,
-        defaultTextStyle: const TextStyle(color: Colors.white, fontFamily: "FiraCode"),
-        oldText: testCase.result!.output.join("\n"),
-        newText: testCase.output
-      );
-    }
-
-    if (testCase.testing) {
-      return Text(MyApp.locale.hwDetails_test_running);
-    }
-    
-    return Text(MyApp.locale.hwDetails_testArea_haveNotRun); 
-  }
-
-  Future<void> _startTest(int index) async {
-    final testCases = widget.homework.testCases;
-    testCases[index].testing = true;
-    testCases[index].result = null;
-
-    setState(() {});
-
-    try {
-      await widget.homework.test(widget.homework.testFile!, index);
-    } on TestException catch (e) {
-      MyApp.showToast("${MyApp.locale.test}${index+1}", e.message, InfoBarSeverity.error);
-      return;
-    }
-    
-    setState(() {});
-  }
-
-  Widget _testcaseSection(int index) {
-    if (widget.homework.testCases.isEmpty) {
-      return Center(
-        child: Text(MyApp.locale.hwDetails_cannot_parse_testcase)
-      );
-    }
-    
-    final testCase = widget.homework.testCases[index];
-
-    return Tile(
-      key: ValueKey(index),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 10, height: 10,
-                decoration: BoxDecoration(
-                  color: testCase.hasOutput ? 
-                    (testCase.isPass ? Colors.green.lightest : Colors.red.lightest) : 
-                    Colors.grey,
-                  borderRadius: BorderRadius.circular(10)
-                )
-              ),
-              const SizedBox(width: 10),
-              Text(
-                "${MyApp.locale.testcase}"
-                " ${index+1}",
-                style: const TextStyle(color: Colors.white)
-              )
-            ]
-          ),
-          const SizedBox(height: 10),
-          Text(MyApp.locale.input),
-          const SizedBox(height: 5),
-          SizedBox(
-            width: double.infinity,
-            child: SelectableTextBox(
-              text: testCase.input,
-              suffix: CopyButton(context: testCase.input)
-            )
-          ),
-          const SizedBox(height: 10),
-          Text(MyApp.locale.output),
-          const SizedBox(height: 5),
-          SizedBox(
-            width: double.infinity,
-            child: SelectableTextBox(
-            text: testCase.output,
-            suffix: CopyButton(context: testCase.output)
-          )
-          ),
-          const SizedBox(height: 10),
-          Text(MyApp.locale.test_result),
-          const SizedBox(height: 5),
-          Row(
-            children: [
-              Expanded(child: _testCaseOutput(index)),
-              Button(
-                onPressed: widget.homework.testFile==null ? 
-                  null : 
-                  () => _startTest(index),
-                child: const SizedBox.square(
-                  dimension: 25,
-                  child: Icon(FluentIcons.play)
-                )
-              ),
-              const SizedBox(width: 5)
-            ]
-          )
-        ]
-      )
-    );
-  }
-
-  Widget _testcaseBtn(int index) {
-    final testCase = widget.homework.testCases[index];
-
-    return Button(
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 10, height: 10,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: testCase.hasOutput ?
-                (testCase.isPass ? Colors.green.lightest : Colors.red.lightest) : 
-                Colors.grey
-          )),
-          const SizedBox(width: 10),
-          Text("${MyApp.locale.data} ${index+1}", style: const TextStyle(fontWeight: FontWeight.bold))
-        ]
-      ),
-      onPressed: () {
-        if (widget.homework.testCases.any((e) => e.testing)) {
-          return;
-        }
-        _selectTestcase = index;
-        setState(() {});
-      }
-    );
-  }
-
-  Widget _main() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _testcaseBtns(),
-        const SizedBox(height: 5),
-        _testcaseWindow(),
-        const SizedBox(height: 5),
-        Tile.lore(
-          title: MyApp.locale.hwDetails_testArea_testAll_title,
-          lore: MyApp.locale.hwDetails_testArea_testAll_lore,
-          icon: const Icon(FluentIcons.test_case),
-          child: Row(
-            children: [
-              _loreWidget(),
-              const SizedBox(width: 10),
-              FilledButton(
-                onPressed: widget.homework.testFile == null || _isAllTestRunning ? null : _testAll,
-                child: Text(MyApp.locale.hwDetails_testArea_startTest)
-              )
-            ]
-          )
-        )
-      ]
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DropRegion(
-      formats: const [
-        ...Formats.standardFormats,
-        Formats.fileUri
-      ],
-      hitTestBehavior: HitTestBehavior.opaque,
-      onDropOver: _onDropOver,
-      onDropLeave: _onDropLeave,
-      onPerformDrop: _onPerformDrop,
-      child: Container(
-        foregroundDecoration: _isDragOver ? BoxDecoration(
-          color: Colors.white.withValues(alpha: .075),
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(
-            color: Colors.white,
-            width: 3
-          )
-        ): null,
-        child: _main()
-      )
     );
   }
 }

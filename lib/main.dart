@@ -150,6 +150,7 @@ class MyApp extends StatelessWidget {
         // print(AppLocalizations.supportedLocales);
         return FluentApp(
           locale: _locale,
+          // scrollBehavior: MyCustomScrollBehavior(),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           debugShowCheckedModeBanner: false,

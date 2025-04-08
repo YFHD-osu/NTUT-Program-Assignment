@@ -14,7 +14,6 @@ class HomeworkInstance {
   static List<Homework> homeworks = [];
 }
 
-
 class HomeworkList extends StatefulWidget {
   const HomeworkList({super.key});
 
@@ -25,16 +24,6 @@ class HomeworkList extends StatefulWidget {
 class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClientMixin{
   String? errMsg;
   int? _loadCount;
-
-  double get _loadPercent {
-    final sum = HomeworkInstance.homeworks.length;
-
-    if (sum == 0) {
-      return 0;
-    }
-
-    return (_loadCount ?? 0) / sum; 
-  }
 
   late bool _isReady = HomeworkInstance.homeworks.isNotEmpty;
   late StreamSubscription _sub;
@@ -105,6 +94,15 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   Future<void> _fetchDescription() async {
     if (mounted) setState(() => _loadCount = 0);
 
+    Future<int> handleError(Object? e, StackTrace s) async {
+       MyApp.showToast(
+        MyApp.locale.error_occur, 
+        e.toString(),
+        InfoBarSeverity.error
+      );
+      return 0;
+    }
+
     // for (var hw in HomeworkInstance.homeworks) {
     //   await hw.fetchHomeworkDetail()
     //     .then(_onHomeworkLoadDone);
@@ -113,6 +111,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
     final tasks = HomeworkInstance.homeworks.map((hw) => 
       hw.fetchHomeworkDetail()
         .then(_onHomeworkLoadDone)
+        .onError(handleError)
     );
     
     await Future.wait(tasks);

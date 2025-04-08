@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ntut_program_assignment/core/diff_matcher.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/main.dart';
 
@@ -7,7 +8,6 @@ const String pythonAlias = "python3";
 
 enum CompilerType {
   environment,
-
   path
 }
 
@@ -147,5 +147,120 @@ class TestServer {
 
     GlobalSettings.prefs.pythonPath = origPath; 
     return false;
+  }
+}
+
+class Testcase {
+  // Raw problem string fetch from website
+  final String original;
+
+  // Splitted input, output string parsed from original
+  final String input, output;
+
+  bool testing = false;
+
+  // Store test output and error message
+  List<String>? testError, testOutput;
+
+  DifferentMatcher? matcher;
+
+  Testcase({
+    required this.input,
+    required this.output,
+    required this.original
+  });
+
+  bool get hasOutput => 
+    testOutput != null;
+
+  bool get isPass {
+    return output.trim() == testOutput?.join("\n").trim();
+  }
+
+  bool get hasError =>
+    testError?.isNotEmpty??false;
+
+  void setOutput({List<String>? error, List<String>? output}) {
+    testError = error ?? testError;
+    testOutput = output ?? testOutput;
+    testing = false;
+
+    if (testOutput != null) {
+      matcher = DifferentMatcher.trimAndMatch(this.output.split("\n"), testOutput!);
+    }
+  }
+
+  void resetTestState() {
+    testOutput = null;
+    testError = null;
+    testing = true;
+  }
+
+  factory Testcase.parse(String message) {
+    // Handle the case that the message doesn't contains the input and output title
+    // These conditions only happened while TA froget to type those word ;D
+    if (!message.contains("輸入") || !message.contains("輸出")) {
+      final arr = message.split("\n");
+
+      int index = 0; 
+      int start = 0;
+
+      // Fetch the input data, skip the 
+      while (index < arr.length) {
+        if (arr[index].trim().isNotEmpty && !arr[index].contains("輸出")) {
+          index++;
+          continue;
+        }
+
+        break;
+      }
+
+      final input = arr.sublist(start, index);
+
+      index ++;
+      start = index;
+
+      // Fetch the input data, skip the 
+      while (index < arr.length) {
+        if (arr[index].trim().isNotEmpty) {
+          index++;
+          continue;
+        }
+
+        start = index;
+        break;
+      }
+
+      final output = arr.sublist(start, index);
+
+      return Testcase(
+        input: input.join("\n"),
+        output: output.join("\n"),
+        original: message
+      );
+    }
+
+    final regExp = RegExp(r"輸(入|出).+");
+
+    final arr = message.split(regExp);
+    if (arr.length < 3) {
+      logger.e("Cannot parse testcase: $message");
+      throw Exception(MyApp.locale.runtime_error_testcase_parse_failed);
+    }
+
+    return Testcase(
+      input: arr[1]
+        .replaceFirst("\n", "")
+        .trimRight(),
+      output: arr
+        .last // There are always some <new lines> mark at the begin of the List 
+        .replaceFirst("\n", ""), // Replace the first '\n' to empty string 
+      original: message
+    );
+  }
+
+  @override
+  String toString() {
+    return "${MyApp.locale.input}: \n$input \n\n${MyApp.locale.output}:\n$output";
   }
 }

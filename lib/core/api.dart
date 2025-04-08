@@ -2,17 +2,18 @@ import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:fluent_ui/fluent_ui.dart';
 import 'package:intl/intl.dart';
+import 'package:html/parser.dart'; // For HTML parsing
+import 'package:html/dom.dart'; // For working with the DOM structure
 import 'package:html_character_entities/html_character_entities.dart';
-
 import 'package:http/http.dart' as http;
 import 'package:beautiful_soup_dart/beautiful_soup.dart';
+import 'package:path_provider/path_provider.dart';
+
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/core/test_server.dart';
 import 'package:ntut_program_assignment/core/utils.dart';
 import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
-import 'package:path_provider/path_provider.dart';
 
 class DevHttpOverrides extends HttpOverrides {
   @override
@@ -264,105 +265,10 @@ class TestException {
   final String message;
 
   TestException(this.message);
-}
-
-class TestResult {
-  final List<String> error, output;
-
-  TestResult({
-    required this.error,
-    required this.output
-  });
-}
-
-class Testcase {
-  final String input, output;
-  final String original;
-
-  bool testing = false;
-  TestResult? result;
-
-  Testcase({
-    required this.input,
-    required this.output,
-    required this.original
-  });
-
-  bool get hasOutput {
-    return result != null && result!.output.isNotEmpty;
-  }
-
-  bool get isPass {
-    return output.trim() == result?.output.join("\n").trim();
-  }
-
-  factory Testcase.parse(String message) {
-    // Handle the case that the message doesn't contains the input and output title
-    // These conditions only happened while TA froget to type those word ;D
-    if (!message.contains("輸入") || !message.contains("輸出")) {
-      final arr = message.split("\n");
-
-      int index = 0; 
-      int start = 0;
-
-      // Fetch the input data, skip the 
-      while (index < arr.length) {
-        if (arr[index].trim().isNotEmpty && !arr[index].contains("輸出")) {
-          index++;
-          continue;
-        }
-
-        break;
-      }
-
-      final input = arr.sublist(start, index);
-
-      index ++;
-      start = index;
-
-      // Fetch the input data, skip the 
-      while (index < arr.length) {
-        if (arr[index].trim().isNotEmpty) {
-          index++;
-          continue;
-        }
-
-        start = index;
-        break;
-      }
-
-      final output = arr.sublist(start, index);
-
-      return Testcase(
-        input: input.join("\n"),
-        output: output.join("\n"),
-        original: message
-      );
-    }
-
-    final regExp = RegExp(r"輸(入|出).+");
-
-    final arr = message.split(regExp);
-    if (arr.length < 3) {
-      logger.e("Cannot parse testcase: $message");
-      throw RuntimeError(MyApp.locale.runtime_error_testcase_parse_failed);
-    }
-
-    return Testcase(
-      input: arr[1]
-        .replaceFirst("\n", "")
-        .trimRight(),
-      output: arr
-        .last // There are always some <new lines> mark at the begin of the List 
-        .replaceFirst("\n", ""), // Replace the first '\n' to empty string 
-      original: message
-    );
-  }
 
   @override
-  String toString() {
-    return "${MyApp.locale.input}: \n$input \n\n${MyApp.locale.output}:\n$output";
-  }
+  String toString() => message;
+
 }
 
 class TestCase {
@@ -509,6 +415,7 @@ class Homework {
 
   String? title;
   List<String> problem = [];
+
   List<Testcase> testCases = [];
 
   String status;
@@ -617,6 +524,16 @@ class Homework {
     await Future.wait(tasks);
   }
 
+  String _htmlToPlainText(String html) {
+    // Parse the HTML string
+    Document document = parse(html);
+
+    // Get the plain text content
+    String plainText = document.body!.text;
+
+    return plainText;
+  }
+
   Future<void> fetchHomeworkDetail() async {
     final resp = await client._get("/showHomework?hwId=$number");
 
@@ -628,7 +545,8 @@ class Homework {
     BeautifulSoup bs = BeautifulSoup(resp.body);
     final hwDesc = bs.find("span")!;
 
-    final ctx = hwDesc.innerHtml.split("<br>");
+    // print(number);
+    final ctx = _htmlToPlainText(hwDesc.innerHtml).split("\n");
 
     int index = 0;
     int start = 0;
@@ -669,6 +587,8 @@ class Homework {
     
     late String message;
 
+    bool parseError = false;
+
     while (index < ctx.length) {
       if (!ctx[index].contains(RegExp(r"【測試資料.+】"))) {
         index++;
@@ -694,11 +614,7 @@ class Homework {
         continue;
       } catch (e) {
         logger.e("Cannot parse testcase for homework $id, message:\n$message");
-        MyApp.showToast(
-          MyApp.locale.error_occur, 
-          "解析作業 $id 的測資時發生錯誤，請到網站確認實資訊",
-          InfoBarSeverity.error
-        );
+        parseError = true;
       } finally {
         start = index + 1;
         index++;
@@ -720,11 +636,11 @@ class Homework {
       logger.d(e);
     } catch (e) {
       logger.e("Cannot parse testcase for homework $id, message:\n$message");
-      MyApp.showToast(
-        MyApp.locale.error_occur, 
-        "解析作業 $id 的測資時發生錯誤，請到網站確認實資訊",
-        InfoBarSeverity.error
-      );
+      parseError = true;
+    }
+
+    if (parseError) {
+      throw RuntimeError("解析作業 $id 的測資時發生錯誤，請到網站確認實資訊");
     }
 
     return;
@@ -832,6 +748,18 @@ class Homework {
     bytes = code.replaceAll(commentPattern, '').codeUnits;
   }
 
+  // Ensure each character in filename is legal
+  String _convertToLegalFilename(String s) {
+    final extension = s.split(".").last;
+
+    String result = s.replaceAll(RegExp(r'[^A-Za-z0-9_.]'), '');
+    if (result.isEmpty) {
+      return "$id.$extension";
+    }
+
+    return result;
+  }
+
   Future<void> upload(List<int> bytes, String filename) async {
     Future<void> prefetch() async {
       final account = GlobalSettings.account!;
@@ -890,7 +818,12 @@ class Homework {
       'POST', Uri.parse('${account.domain}/upload/upLoadFile')
     );
 
-    request.files.add(http.MultipartFile.fromBytes('hwFile', bytes, filename: filename));
+    request.files.add(http.MultipartFile.fromBytes(
+      'hwFile',
+      bytes, 
+      filename: _convertToLegalFilename(filename))
+    );
+
     // request.headers.addAll(account.headers);
     request.headers.addAll(headers);
 
@@ -962,32 +895,64 @@ class Homework {
   }
 
   Future<void> testAll(File target) async {
-    for (int i=0; i<testCases.length; i++) {
-      await test(target, i);
+    late final File exec;
+
+    try {
+      exec = await compile(target);
+
+      for (int i=0; i<testCases.length; i++) {
+        await test(exec, i);
+      }
+    } catch (e) {
+      _writeErrorToTestcase(e, 0);
+      rethrow;
     }
   }
 
-  Future<TestResult> test(File target, int index) async {
+  Future<File> compile(File target) async {
     if (!await target.exists()) {
       throw TestException(MyApp.locale.file_not_found);
     }
 
     switch (language) {
       case "Python":
-        await _testPython(target, index);
+        // Pyton don't need to compile, return source code as the executable 
+        return target;
 
+      case "C":
+        return await _compileC(target);
+
+      default:
+        throw TestException("${MyApp.locale.testcase_unsupported_lang} $language");
+    }
+  }
+
+  Future<void> compileAndTest(File target, int index) async {
+    try {
+      final exec = await compile(target);
+      await test(exec, index);
+    } catch (e) {
+      _writeErrorToTestcase(e, index);
+    }
+  }
+
+  Future<void> test(File target, int index) async {
+    // if (!await target.exists()) {
+    //   throw TestException(MyApp.locale.file_not_found);
+    // }
+
+    switch (language) {
+      case "Python":
+        await _testPython(target, index);
 
       case "C":
         await _testC(target, index);
-        
 
       default: 
-        testCases[index].testing = false;
+        testCases[index].setOutput();
         throw TestException("${MyApp.locale.testcase_unsupported_lang} $language");
     }
-    testCases[index].testing = false;
 
-    return testCases[index].result!;
   }
 
   Future<void> _testPython(File target, int index) async {
@@ -1000,10 +965,7 @@ class Homework {
     try {
       process = await Process.start(GlobalSettings.prefs.pythonPath ?? "python", [target.path]);
     } catch (e) {
-      testCases[index].result = TestResult(
-        error: ["${MyApp.locale.testcase_file_failed_to_execute} $e"],
-        output: ["${MyApp.locale.testcase_file_failed_to_execute} $e"]
-      );
+      testCases[index].testError = ["${MyApp.locale.testcase_file_failed_to_execute} $e"];
       return;
     }    
 
@@ -1014,8 +976,7 @@ class Homework {
     }
 
     await process.exitCode
-      .timeout(const Duration(seconds: 10))
-      .onError((error, trace) => _onTestError(error, trace, index, process));
+      .timeout(const Duration(seconds: 10));
 
     if (await process.exitCode != 0) {
       testCases[index].testing = false;
@@ -1031,25 +992,19 @@ class Homework {
     final err = await process.stderr
       .map((e) => utf8.decode(e))
       .toList();
-    
-    testCases[index].result = TestResult(
+
+    testCases[index].setOutput(
       error: err,
       output: out.firstOrNull
         ?.split("\n")
         .map((e) => e.replaceAll(ascii.decode([13]), ""))
         .toList() ?? []
     );
-
-    testCases[index].testing = false;
-
+    
     return;
   }
 
-  Future<void> _testC(File target, int index) async {
-    if (!TestServer.gccOK) {
-      throw RuntimeError("C ${MyApp.locale.testcase_environment_not_setup}");
-    }
-
+  Future<File> _compileC(File target) async {
     late final Process compile;
 
     final compileDir = "${(await getApplicationSupportDirectory()).path}/build";
@@ -1058,65 +1013,71 @@ class Homework {
       await Directory(compileDir).create(recursive: true);
     }
 
-    try {
-      compile = await Process.start(
-        GlobalSettings.prefs.gccPath ?? "gcc",
-        [target.path, '-o', '$compileDir/$id']
-      );
-      
-    } catch (e) {
-      testCases[index].result = TestResult(
-        error: ["${MyApp.locale.testcase_compile_failed} $e"],
-        output: ["${MyApp.locale.testcase_compile_failed} $e"]
-      );
-      return;
-    }
-    
+    compile = await Process.start(
+      GlobalSettings.prefs.gccPath ?? "gcc",
+      [target.path, '-o', '$compileDir/$id']
+    );
+
     await compile.exitCode
-      .timeout(const Duration(seconds: 10))
-      .onError((error, trace) => _onTestError(error, trace, index, compile));
+      .timeout(const Duration(seconds: 10));
     
     final exitCode = await compile.exitCode;
+    compile.kill();
+
     if (exitCode != 0) {
       final err = await compile.stderr
         .map((e) => utf8.decode(e))
         .toList();
 
-      testCases[index].testing = false;
-      testCases[index].result = TestResult(
-        error: ["${MyApp.locale.testcase_program_error_with} $exitCode \n$err"],
-        output: ["${MyApp.locale.testcase_program_error_with} $exitCode \n$err"]
-      );
       logger.e("failed to compile: ${target.path} \n$err");
-
-      return;
+      throw Exception("${MyApp.locale.testcase_program_error_with} $exitCode \n$err");
     } 
 
-    compile.kill();
+    return File('$compileDir/$id');
+  }
 
-    final process = await Process.start("$compileDir/$id", []);
+  Future<void> _testC(File target, int index) async {
+    if (!TestServer.gccOK) {
+      throw RuntimeError("C ${MyApp.locale.testcase_environment_not_setup}");
+    }
+    
+    final process = await Process.start(target.path, []);
 
     for (var line in testCases[index].input.split("\n")) {
-      // print("Feeding: $line");
       process.stdin.write(line);
       process.stdin.write(ascii.decode([10]));
     }
 
-    await process.exitCode
-      .timeout(const Duration(seconds: 10))
-      .onError((error, trace) => _onTestError(error, trace, index, process));
+    Future<int> killAndExit(Object? e, StackTrace s) async {
+      process.kill();
+      return 0;
+    }
+
+    late final List<String> out, err;
+
+    try {
+      out = await process.stdout
+        .timeout(const Duration(seconds: 10))
+        .map((e) => utf8.decode(e))
+        .toList();
+
+      err = await process.stderr
+        .timeout(const Duration(seconds: 10))
+        .map((e) => utf8.decode(e))
+        .toList();
+
+    } catch (e) {
+      process.kill();
+      rethrow;
+    }
 
     process.kill();
 
-    final out = await process.stdout
-      .map((e) => utf8.decode(e))
-      .toList();
-
-    final err = await process.stderr
-      .map((e) => utf8.decode(e))
-      .toList();
+    await process.exitCode
+      .timeout(const Duration(seconds: 10))
+      .onError(killAndExit);
     
-    testCases[index].result = TestResult(
+    testCases[index].setOutput(
       error: err,
       output: out.firstOrNull
         ?.split("\n")
@@ -1124,32 +1085,37 @@ class Homework {
         .toList() ?? []
     );
 
-    testCases[index].testing = false;
-
     return;
   }
 
-  Future<int> _onTestError(Object? error, StackTrace trace, int index, Process process) async {
-    process.kill();
-    switch (error.runtimeType) {
-      case TimeoutException _:
-        testCases[index].result = TestResult(
-          error: [MyApp.locale.testcase_timeout],
-          output: [MyApp.locale.testcase_timeout]
+  void _writeErrorToTestcase(Object? error, int index) {
+    switch (error) {
+      case TimeoutException():
+        testCases[index].setOutput(
+          error: [MyApp.locale.testcase_timeout]
         );
         throw TestException(MyApp.locale.testcase_timeout);
       
-      case OSError _:
-        testCases[index].result = TestResult(
-          error: ["${MyApp.locale.testcase_invalid_test_file} ${(error as OSError).message}"],
-          output: [MyApp.locale.testcase_timeout]
+      case OSError():
+        testCases[index].setOutput(
+          error: ["${MyApp.locale.testcase_invalid_test_file} ${error.message}"]
+        );
+
+      case Exception():
+        testCases[index].setOutput(
+          error: ["$error"]
+        );
+
+      case TestException():
+        testCases[index].setOutput(
+          error: [error.message]
         );
 
       default:
-        throw TestException(error.toString());
+        testCases[index].setOutput(
+          error: ["${MyApp.locale.testcase_file_failed_to_execute} $error"]
+        );
     }
-
-    return 0;
   }
 }
 
