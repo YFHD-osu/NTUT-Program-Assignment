@@ -432,7 +432,7 @@ class _TestAreaState extends State<TestArea> {
     final testCases = widget.homework.testCases;
     testCases[index].resetTestState();
 
-    _viewMode = 1;
+    _viewMode = 2;
 
     setState(() {});
     // await Future.delayed(Duration(seconds: 10));
