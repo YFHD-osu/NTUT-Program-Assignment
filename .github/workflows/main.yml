@@ -38,7 +38,7 @@ jobs:
           
       - name: Install flutter distributor dependencies
         run: |
-          sudo apt-get update
+          sudo apt-get update --fix-missing
           sudo apt install locate
           sudo apt install rpm patchelf
           sudo apt-get install libgtk-3-0 libblkid1 liblzma5
