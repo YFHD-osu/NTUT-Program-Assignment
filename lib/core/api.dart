@@ -418,6 +418,9 @@ class Homework {
 
   List<Testcase> testCases = [];
 
+  bool get anyTestRunning =>
+    testCases.any((e) => e.testing);
+
   String status;
 
   HomeworkStatus? fileState;
@@ -528,10 +531,29 @@ class Homework {
     // Parse the HTML string
     Document document = parse(html);
 
-    // Get the plain text content
-    String plainText = document.body!.text;
+    // Initialize an empty result string
+    String result = '';
 
-    return plainText;
+    // Traverse all child nodes in <body>
+    for (Node node in document.body!.nodes) {
+      if (node is Element) {
+        if (node.localName == 'img') {
+          // If the tag is named <img>, fetch it's url
+          String? imgUrl = node.attributes['src'];
+          if (imgUrl != null) {
+            result += "<img src='$imgUrl'>";
+          }
+        } else {
+          // Parse other tags as plain text
+          result += node.text;
+        }
+      } else if (node is Text) {
+        // For plain text, append them to the end of the result
+        result += node.text;
+      }
+    }
+
+    return result;
   }
 
   Future<void> fetchHomeworkDetail() async {
@@ -711,41 +733,31 @@ class Homework {
   }
 
   void applyTrashCode() {
-    if (bytes == null) {
-      logger.e("Bytes variable is null, so the trash code cannot be appiled");
-      return;
+    assert (bytes != null, "Bytes variable is null, so the trash code cannot be appiled");
+
+    switch (language) {
+      case "C":
+        bytes!.addAll("\n".codeUnits);
+        bytes!.addAll(Utils.generateTrashCode(CodeType.c).join("\n").codeUnits);
+
+      default:
+        throw UnimplementedError("Trash code apply is not implement for $type language");
     }
-
-    if (type != "C") {
-      throw UnimplementedError();
-    }
-
-    String code = String.fromCharCodes(bytes!);
-
-    code += "\n";
-
-    code += Utils.generateTrashCode(CodeType.c)
-      .join("\n");
-
-    bytes = code.codeUnits;
   }
 
   void applyDelComment() {
-    if (bytes == null) {
-      logger.e("Bytes variable is null, so the trash code cannot be appiled");
-      return;
+    assert(bytes != null, "Bytes variable is null, so comment cannot be deleted");
+
+    switch (language) {
+      case "C":
+        final commentExp = RegExp(r'//.*|/\*[\s\S]*?\*/');
+        bytes = String.fromCharCodes(bytes!)
+          .replaceAll(commentExp, '')
+          .codeUnits;
+
+      default:
+        throw UnimplementedError("Delete comment is not implement for $type language");
     }
-
-    if (type != "C") {
-      throw UnimplementedError();
-    }
-
-    String code = String.fromCharCodes(bytes!);
-
-    RegExp commentPattern = RegExp(r'//.*|/\*[\s\S]*?\*/');
-
-    // Remove all comments
-    bytes = code.replaceAll(commentPattern, '').codeUnits;
   }
 
   // Ensure each character in filename is legal
@@ -1000,7 +1012,7 @@ class Homework {
         .map((e) => e.replaceAll(ascii.decode([13]), ""))
         .toList() ?? []
     );
-    
+
     return;
   }
 
@@ -1030,7 +1042,11 @@ class Homework {
         .toList();
 
       logger.e("failed to compile: ${target.path} \n$err");
-      throw Exception("${MyApp.locale.testcase_program_error_with} $exitCode \n$err");
+      throw RuntimeError(
+        "${MyApp.locale.testcase_program_error_with}\n"
+        "${err.join('\n')}\n"
+        "The program exited with code $exitCode"
+      );
     } 
 
     return File('$compileDir/$id');

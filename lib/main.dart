@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:logger/logger.dart' show Logger;
+import 'package:ntut_program_assignment/page/exercise/page.dart';
 
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
@@ -178,7 +179,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final routeMap = {
     "hwlist": 0,
     "comments": 1,
-    "settings": 2
+    "settings": 2,
+    "exercise": 3
   };
   
   Future<void> _fetchUpdate() async {
@@ -350,6 +352,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             icon: const Icon(FluentIcons.comment),
             title: Text(MyApp.locale.sidebar_comment_title),
             body: const CommentPage()
+          ),
+          PaneItem(
+            icon: const Icon(FluentIcons.exercise_tracker),
+            title: Text("練習區"),
+            body: const ExercisePage()
           )
         ],
         footerItems: [

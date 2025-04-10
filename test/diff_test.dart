@@ -1,25 +1,33 @@
 // ignore_for_file: avoid_print
 
+import 'package:diff_match_patch/diff_match_patch.dart';
+
 import 'package:ntut_program_assignment/core/diff_matcher.dart';
 
 String previousVersion = // Standard
 """
-(799,700)
-(799,721)
-(801,700)
-(801,721)
-(801,799)
-(823,700)
+36 9
+38 27
 """;
 
 String updatedVersion = // Output
 """
-(799,721)
-(801,700)
-(999,000)
+all white
 """;
 
+// [ 
+//   [(0, "ABCD")]
+//   [*(0, "12"), (-1, "34"), (1, "JK")],
+//   [(0, "OLKI")]
+// ];
+
+
 void main() {
+  final dmp = DiffMatchPatch();
+
+  final l = dmp.diff(previousVersion, updatedVersion);
+
+  print(l.join("\n"));
   final res = DifferentMatcher.match(previousVersion, updatedVersion);
 
   print("COMPLETE");

@@ -103,11 +103,6 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
       return 0;
     }
 
-    // for (var hw in HomeworkInstance.homeworks) {
-    //   await hw.fetchHomeworkDetail()
-    //     .then(_onHomeworkLoadDone);
-    // }
-
     final tasks = HomeworkInstance.homeworks.map((hw) => 
       hw.fetchHomeworkDetail()
         .then(_onHomeworkLoadDone)

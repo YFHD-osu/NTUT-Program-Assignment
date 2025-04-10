@@ -279,7 +279,7 @@
   "@hwDetails_testArea_stillNotPass": {
     "description": "Message for testcases not passed"
   },
-  "hwDetails_testArea_testError": "Error: %#% (%#%)",
+  "hwDetails_testArea_testError": "Error:",
   "@hwDetails_testArea_testError": {
     "description": "Message for test error"
   },

@@ -55,7 +55,7 @@ class DiffWidgetData {
         return TextSpan(
           text: e.text,
           style: TextStyle(
-            color: Colors.white
+            color: Colors.red.lighter
           )
         );
       }
@@ -63,7 +63,7 @@ class DiffWidgetData {
       return TextSpan(
         text: e.text,
         style: TextStyle(
-          color: Colors.red.lighter
+          color: Colors.white
         )
       );
     }
@@ -132,20 +132,24 @@ class DifferentMatcher {
     final List<List<Diff>> originalDiff = [], responseDiff = [];
 
     _matchOverall(original, response, originalDiff, responseDiff);
-
-    // print(_checkReliability(originalDiff, responseDiff));
     
-    if (_checkReliability(originalDiff, responseDiff)) {
+    if (_checkReliability(originalDiff, responseDiff) || true) {
+      final lineCount = max(originalDiff.length, responseDiff.length);
+
       return DifferentMatcher(
         original: originalDiff,
         response: responseDiff,
         widgets: List
-          .generate(originalDiff.length, (e) => e)
-          .map((e) => DiffWidgetData.fromDiffs(originalDiff[e], responseDiff[e]))
+          .generate(lineCount, (e) => e)
+          .map((e) => DiffWidgetData.fromDiffs(
+            e < originalDiff.length ? originalDiff[e] : [],
+            e < responseDiff.length ? responseDiff[e] : []
+          ))
           .toList()
       );
     }
 
+    /*
     originalDiff.clear();
     responseDiff.clear();
 
@@ -159,67 +163,60 @@ class DifferentMatcher {
         .map((e) => DiffWidgetData.fromDiffs(originalDiff[e], responseDiff[e]))
         .toList()
     );
+    */
   }
 
   static void _matchOverall(
     String original, String response,
     List<List<Diff>> originalDiff, List<List<Diff>> responseDiff
   ) {
-    List<List<Diff>> updatedDiff = [[]];
+    final diffs = dmp.diff(response, original);
 
-    final aLen = original.split("\n").length;
-    final bLen = response.split("\n").length;
+    originalDiff.add([]);
+    responseDiff.add([]);
 
-    late final List<Diff> diffs;
-
-    dmp.matchThreshold = 0.0;
-    dmp.matchDistance = 1;
-
-    final reverseMode = aLen < bLen;
-
-    if (reverseMode) {
-      diffs = dmp.diff(response, original);
-    } else {
-      diffs = dmp.diff(original, response);
-    }
-
+    // Re-order the list with splitted by '\n' and turn them into an 2 dim array 
     for (var diff in diffs) {
-      if (diff.text.contains("\n")) {
-        final splitted = diff.text.split("\n");
-        
-        updatedDiff.last.add(Diff(
-          diff.operation, splitted.first));
-        
-        for (int i=1; i<splitted.length-1; i++) {
-          updatedDiff.add([Diff(diff.operation, splitted[i])]);
+      if (!diff.text.contains("\n")) {
+        if (diff.operation <= 0) {
+          responseDiff.last.add(diff);
         }
 
-        updatedDiff.add([Diff(diff.operation, splitted.last)]);
+        if (diff.operation >= 0) {
+          originalDiff.last.add(diff);
+        }
         continue;
       }
 
-      updatedDiff.last.add(diff);
-    }
+      final splitted = diff.text.split("\n");
 
-    // print(updatedDiff.join("\n"));
-
-    for (var arr in updatedDiff) {
-      originalDiff.add([]);
-      responseDiff.add([]);
-
-      for (var item in arr) {
-        if (item.operation == 0) {
-          originalDiff.last.add(item);
-          responseDiff.last.add(item);
-        } else if ((item.operation > 0) ^ reverseMode) {
-          responseDiff.last.add(item);
-        } else {
-          originalDiff.last.add(item);
+      if (diff.operation <= 0) {
+        responseDiff.last.add(Diff(
+          diff.operation, splitted.first));
+      
+        for (int i=1; i<splitted.length-1; i++) {
+          responseDiff.add([Diff(diff.operation, splitted[i])]);
         }
+
+        responseDiff.add([Diff(diff.operation, splitted.last)]);
+      }
+      
+      if (diff.operation >= 0) {
+        originalDiff.last.add(Diff(
+          diff.operation, splitted.first));
+      
+        for (int i=1; i<splitted.length-1; i++) {
+          originalDiff.add([Diff(diff.operation, splitted[i])]);
+        }
+
+        originalDiff.add([Diff(diff.operation, splitted.last)]);
       }
     }
+
+    return;
   }
 
+  /*
   static void _matchLineByLine(
     String original, String response,
     List<List<Diff>> originalDiff, List<List<Diff>> responseDiff
@@ -261,7 +258,8 @@ class DifferentMatcher {
       responseDiff.last.add(Diff(-1, resp[i]));
     }
   }
-
+  */
+  
   factory DifferentMatcher.trimAndMatch(List<String> original, List<String> response) {
     // Remove last newline character 
 
@@ -378,7 +376,7 @@ class TestCaseView extends StatelessWidget {
   });
 
   num get diffPortHeight {
-    final len = testCase.matcher!.original.length;
+    final len = testCase.matcher!.length;
 
     final result = 50 * len + len * 2 * 14 * (GlobalSettings.prefs.testcaseTextFactor - 1);
     return result > 350 ? 350 : result;

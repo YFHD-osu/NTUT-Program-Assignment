@@ -24,12 +24,8 @@ class TestArea extends StatefulWidget {
 }
 
 class _TestAreaState extends State<TestArea> {
-  bool _isAllTestRunning = false;
-
   bool _isDragOver = false;
-
   int _selectTestcase = 0;
-
   int _viewMode = 1;
 
   Testcase get testCase =>
@@ -134,13 +130,14 @@ class _TestAreaState extends State<TestArea> {
   }
 
   Widget _loreWidget() {
+    // print(widget.homework.testCases.map((e) => e.testing));
     final testCases = widget.homework.testCases;
 
     if (widget.homework.testFile == null) {
       return Text(MyApp.locale.hwDetails_testArea_dropfileHere);
     }
 
-    if (_isAllTestRunning) {
+    if (widget.homework.anyTestRunning) {
       return Text(MyApp.locale.hwDetails_testArea_testRunning);
     }
 
@@ -154,31 +151,22 @@ class _TestAreaState extends State<TestArea> {
   }
 
   Future<void> _testAll() async {
+    _viewMode = 2;
+
     for (var testCase in widget.homework.testCases) {
       testCase.resetTestState();
     }
-    
-    _isAllTestRunning = true;
-    _viewMode = 2;
 
     try {
       if (mounted) setState(() {});
-      
       await widget.homework.testAll(widget.homework.testFile!);
-    } on TestException catch (e) {
-      logger.e(e.message);
-
-      MyApp.showToast(
-        MyApp.locale.error_occur, 
-        e.message,
-        InfoBarSeverity.error
-      );
+    } catch (e) {
+      logger.e(e.toString());
     } finally {
       for (var testCase in widget.homework.testCases) {
         testCase.setOutput();
       }
 
-      _isAllTestRunning = false;
       if (mounted) setState(() {});
     }
   }  
@@ -278,7 +266,7 @@ class _TestAreaState extends State<TestArea> {
                   _loreWidget(),
                   const SizedBox(width: 10),
                   FilledButton(
-                    onPressed: widget.homework.testFile == null || _isAllTestRunning ? null : _testAll,
+                    onPressed: widget.homework.testFile == null || widget.homework.anyTestRunning ? null : _testAll,
                     child: Text(MyApp.locale.hwDetails_testArea_startTest)
                   )
                 ]
@@ -313,12 +301,14 @@ class _TestAreaState extends State<TestArea> {
     }
 
     if (testCase.hasError) {
-      return Text(MyApp.locale.hwDetails_testArea_testError
-        .format([testCase.testError!.join("\n"), testCase.testError!.length]));
+      return SelectableTextBox(
+        text: "${MyApp.locale.hwDetails_testArea_testError}\n"
+              "${testCase.testError!.join('\n')}"
+      );
     }
 
     if (! testCase.hasOutput) {
-      return Text(MyApp.locale.hwDetails_testArea_haveNotRun);
+      return SelectableTextBox(text: MyApp.locale.hwDetails_testArea_haveNotRun);
     }
 
     if (_viewMode == 0) {
@@ -351,8 +341,6 @@ class _TestAreaState extends State<TestArea> {
   }
 
   Widget _testcaseSection() {
-    // print("INSPECT ${widget.index} is ${testCase.testing} (1)");
-
     if (widget.homework.testCases.isEmpty) {
       return Center(
         child: Text(MyApp.locale.hwDetails_cannot_parse_testcase)
@@ -411,9 +399,8 @@ class _TestAreaState extends State<TestArea> {
           Text("單獨測試"),
           SizedBox(height: 5),
           FilledButton(
-            onPressed: widget.homework.testFile==null ? 
-              null : 
-              () => _startTest(_selectTestcase),
+            onPressed: widget.homework.testFile==null || widget.homework.anyTestRunning ? 
+              null : () => _startTest(_selectTestcase),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -431,20 +418,19 @@ class _TestAreaState extends State<TestArea> {
   Future<void> _startTest(int index) async {
     final testCases = widget.homework.testCases;
     testCases[index].resetTestState();
-
     _viewMode = 2;
 
     setState(() {});
-    // await Future.delayed(Duration(seconds: 10));
 
     try {
       await widget.homework.compileAndTest(widget.homework.testFile!, index);
     } on TestException catch (e) {
       MyApp.showToast("${MyApp.locale.test}${index+1}", e.message, InfoBarSeverity.error);
+      if (mounted) setState(() {});
+      
       return;
     }
     
     setState(() {});
   }
-
 }

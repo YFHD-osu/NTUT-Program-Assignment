@@ -50,7 +50,7 @@
   "hwDetails_testArea_allPass": "通过所有测试数据",
   "hwDetails_testArea_stillNotPass": "尚有 %#% 个未通过",
 
-  "hwDetails_testArea_testError": "发生错误: %#% (%#%)",
+  "hwDetails_testArea_testError": "发生错误:",
   "hwDetails_testArea_haveNotRun": "尚未执行测试",
   "hwDetails_testArea_testAll_title": "全部测试",
   "hwDetails_testArea_testAll_lore": "将所有示例测试数据全部验证过一次",
