@@ -319,7 +319,23 @@ class ProblemBox extends StatelessWidget {
 
   InlineSpan _fetchSpan(String line) {
     if (line.contains(RegExp("<img src=.+>"))) {
-      return WidgetSpan(child: Image.network(line.substring(10, line.length-2)));
+      return WidgetSpan(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.network(
+            line.substring(10, line.length-2),
+            errorBuilder: (context, error, stackTrace) {
+              return Row(
+                children: [
+                  const Icon(FluentIcons.error),
+                  SizedBox(width: 5, height: 60),
+                  Text("圖片載入失敗...")
+                ]
+              );
+            },
+          )
+        )
+      );
     }
     return TextSpan(
       text: line,

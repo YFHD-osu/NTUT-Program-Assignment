@@ -119,7 +119,7 @@ class DifferentMatcher {
     final resp = response.map((e) => e.fold(0, (p, e) => p+e.text.length)).toList();
 
     final invalidLineCount = List<int>
-      .generate(resp.length, (e) => e)
+      .generate(min(resp.length, orig.length), (e) => e)
       .map((e) => (orig[e] - resp[e]).abs() / max(orig[e], resp[e]))
       .where((e) => e != 0)
       .where((e) => e < threshold)

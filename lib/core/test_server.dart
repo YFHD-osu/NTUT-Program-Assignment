@@ -152,7 +152,7 @@ class TestServer {
 
 class Testcase {
   // Raw problem string fetch from website
-  final String original;
+  // final String original;
 
   // Splitted input, output string parsed from original
   final String input, output;
@@ -167,7 +167,7 @@ class Testcase {
   Testcase({
     required this.input,
     required this.output,
-    required this.original
+    // required this.original
   });
 
   bool get hasOutput => 
@@ -236,7 +236,7 @@ class Testcase {
       return Testcase(
         input: input.join("\n"),
         output: output.join("\n"),
-        original: message
+        // original: message
       );
     }
 
@@ -255,8 +255,22 @@ class Testcase {
       output: arr
         .last // There are always some <new lines> mark at the begin of the List 
         .replaceFirst("\n", ""), // Replace the first '\n' to empty string 
-      original: message
+      // original: message
     );
+  }
+
+  factory Testcase.fromMap(Map res) {
+    return Testcase(
+      input: res["input"],
+      output: res["output"]
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "input": input,
+      "output": output
+    };
   }
 
   @override
