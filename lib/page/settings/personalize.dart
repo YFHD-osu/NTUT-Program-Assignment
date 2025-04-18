@@ -1,9 +1,10 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_acrylic/window_effect.dart';
+
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/main.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
-import 'package:ntut_program_assignment/widget.dart';
+import 'package:ntut_program_assignment/widgets/tile.dart';
 
 class PersonalizeRoute extends StatefulWidget {
   const PersonalizeRoute({super.key});
@@ -52,14 +53,17 @@ class _ThemeSectionState extends State<ThemeSection> {
     return Expander(
       initiallyExpanded: true,
       contentPadding: EdgeInsets.zero,
-      header: Tile.lore(
-        icon: const Icon(FluentIcons.brush),
-        title: MyApp.locale.settings_personalize_theme,
-        lore: MyApp.locale.settings_personalize_theme_desc,
-        decoration: const BoxDecoration(
-          color: Colors.transparent
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 12.5)),
+      leading: Padding(
+        padding: EdgeInsets.fromLTRB(4, 20, 9, 20),
+        child: const Icon(FluentIcons.brush)
+      ),
+      header: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(MyApp.locale.settings_personalize_theme),
+          Text(MyApp.locale.settings_personalize_theme_desc),
+        ]
+      ),
       content:
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const SizedBox(height: 20),
@@ -84,12 +88,10 @@ class _ThemeSectionState extends State<ThemeSection> {
         const SizedBox(height: 20),
         const Divider(
           style: DividerThemeData(horizontalMargin: EdgeInsets.zero)),
-        Tile.subTile(
-          title: MyApp.locale.settings_personalize_window_effect,
-          decoration: const BoxDecoration(
-            color: Colors.transparent
-          ),
-          child: ComboBox<WindowEffect>(
+        ListTile(
+          contentPadding: EdgeInsets.only(left: 40, right: 15, top: 5, bottom: 5),
+          title: Text(MyApp.locale.settings_personalize_window_effect),
+          trailing: ComboBox<WindowEffect>(
             items: ThemeProvider.allowEffects
               .map((e) => ComboBoxItem<WindowEffect>(
                   value: e, child: Text(e.name.capitalize())))
@@ -117,11 +119,11 @@ class _FontFactorSectionState extends State<FontFactorSection> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Tile.lore(
-          title: MyApp.locale.settings_personalize_problem_font_size,
-          lore: MyApp.locale.settings_personalize_problem_font_size_desc,
-          icon: const Icon(FluentIcons.plain_text),
-          child: ComboBox<double>(
+        Tile(
+          title: Text(MyApp.locale.settings_personalize_problem_font_size),
+          subtitle: Text(MyApp.locale.settings_personalize_problem_font_size_desc),
+          leading: const Icon(FluentIcons.plain_text),
+          trailing: ComboBox<double>(
             value: GlobalSettings.prefs.problemTextFactor,
             items: [1.0, 1.25, 1.5, 1.75, 2.0]
               .map((e) => ComboBoxItem<double>(
@@ -135,11 +137,11 @@ class _FontFactorSectionState extends State<FontFactorSection> {
           ),
         ),
         const SizedBox(height: 5),
-        Tile.lore(
-          title: MyApp.locale.settings_personalize_testcase_font_size,
-          lore: MyApp.locale.settings_personalize_testcase_font_size_desc,
-          icon: const Icon(FluentIcons.plain_text),
-          child: ComboBox<double>(
+        Tile(
+          title: Text(MyApp.locale.settings_personalize_testcase_font_size),
+          subtitle: Text(MyApp.locale.settings_personalize_testcase_font_size_desc),
+          leading: const Icon(FluentIcons.plain_text),
+          trailing: ComboBox<double>(
             value: GlobalSettings.prefs.testcaseTextFactor,
             items: [1.0, 1.25, 1.5, 1.75, 2.0]
               .map((e) => ComboBoxItem<double>(

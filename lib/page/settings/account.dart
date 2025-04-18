@@ -1,12 +1,14 @@
 import 'dart:async';
+
 import 'package:fluent_ui/fluent_ui.dart';
 
+import 'package:ntut_program_assignment/api/api_service.dart';
 import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
 import 'package:ntut_program_assignment/page/homework/list.dart';
-import 'package:ntut_program_assignment/widget.dart';
-import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/core/database.dart';
+import 'package:ntut_program_assignment/widgets/button.dart';
+import 'package:ntut_program_assignment/widgets/tile.dart';
 
 class LoginDialog extends StatefulWidget {
   final List<String> evenCourses, oddCourses;
@@ -345,7 +347,7 @@ class _AccountRouteState extends State<AccountRoute> {
           ]
         ),
         const Spacer(),
-        CustomWidgets.alertButton(
+        AlertButton(
           onPressed: () {
             GlobalSettings.logout();
             setState(() {});
@@ -388,18 +390,18 @@ class _AccountRouteState extends State<AccountRoute> {
         Text(MyApp.locale.settings_account_logged_in_as),
         const SizedBox(height: 5),
         Tile(
-          child: AnimatedSwitcher(
+          title: AnimatedSwitcher(
             duration: const Duration(milliseconds: 350),
             child: GlobalSettings.isLogin ? 
               _loginAccountInfo() : _logoutAccountInfo()
           )
         ),
         const SizedBox(height: 5),
-        Tile.lore(
-          icon: const Icon(FluentIcons.power_automate_logo),
-          title: MyApp.locale.settings_account_auto_login,
-          lore: MyApp.locale.settings_account_auto_login_desc,
-          child: SizedBox(
+        Tile(
+          leading: const Icon(FluentIcons.power_automate_logo),
+          title: Text(MyApp.locale.settings_account_auto_login),
+          subtitle: Text(MyApp.locale.settings_account_auto_login_desc),
+          trailing: SizedBox(
             width: 200,
             child: ComboBox<String>(
               value: GlobalSettings.prefs.autoLogin ?? MyApp.locale.disable,
@@ -432,11 +434,11 @@ class _AccountRouteState extends State<AccountRoute> {
           )
         ),
         const SizedBox(height: 5),
-        Tile.lore(
-          icon: const Icon(FluentIcons.password_field),
-          title: MyApp.locale.settings_account_change_password,
-          lore: MyApp.locale.settings_account_change_password_desc,
-          child: Button(
+        Tile(
+          leading: const Icon(FluentIcons.password_field),
+          title: Text(MyApp.locale.settings_account_change_password),
+          subtitle: Text(MyApp.locale.settings_account_change_password_desc),
+          trailing: Button(
             onPressed: GlobalSettings.account == null ? 
               null :
               _changePasswd,
@@ -447,7 +449,7 @@ class _AccountRouteState extends State<AccountRoute> {
         Text(MyApp.locale.settings_account_other_user),
         const SizedBox(height: 5),
         Tile(
-          child: Row(
+          title: Row(
             children: [
               Text(MyApp.locale.settings_account_add_user),
               const Spacer(),
@@ -528,10 +530,10 @@ class _AccountRouteState extends State<AccountRoute> {
 
   Widget _accountItem(Account account) {
     final key = GlobalKey<SplitButtonState>();
-    return Tile.lore(
-      title: account.name.toString(),
-      lore: account.username,
-      icon: Container(
+    return Tile(
+      title: Text(account.name.toString()),
+      subtitle: Text(account.username),
+      leading: Container(
         width: 40, height: 40,
         decoration: BoxDecoration(
           color: Colors.blue.lightest,
@@ -539,7 +541,7 @@ class _AccountRouteState extends State<AccountRoute> {
         ),
         child: const Icon(FluentIcons.user_optional),
       ),
-      child: SplitButton(
+      trailing: SplitButton(
         key: key,
         enabled: !_isLogging,
         flyout: FlyoutContent(

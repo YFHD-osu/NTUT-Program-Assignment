@@ -1,13 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:fluent_ui/fluent_ui.dart';
-
-import 'package:ntut_program_assignment/widget.dart';
-import 'package:ntut_program_assignment/core/updater.dart';
-import 'package:ntut_program_assignment/main.dart' show MyApp;
-
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import 'package:ntut_program_assignment/core/updater.dart';
+import 'package:ntut_program_assignment/main.dart' show MyApp;
+import 'package:ntut_program_assignment/widgets/tile.dart';
 
 
 const String termOfUse = """
@@ -271,10 +270,10 @@ class ThanksCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tile.lore(
-      title: title,
-      lore: lore,
-      icon: SizedBox.square(
+    return Tile(
+      title: Text(title),
+      subtitle: Text(lore),
+      leading: SizedBox.square(
         dimension: 35,
         child: ClipRRect(
         borderRadius: BorderRadius.circular(40),
@@ -287,7 +286,7 @@ class ThanksCard extends StatelessWidget {
           )
         )
       ),
-      child: content
+      trailing: content
     );
   }
 }

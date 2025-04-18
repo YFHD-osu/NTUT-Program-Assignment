@@ -1,9 +1,6 @@
 import 'dart:math';
 
-enum CodeType {
-  c,
-  python
-}
+import 'package:ntut_program_assignment/core/test_server.dart';
 
 class Utils {
   static var rng = Random();

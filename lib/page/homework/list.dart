@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:ntut_program_assignment/core/api.dart';
+
+import 'package:ntut_program_assignment/core/extension.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/main.dart';
-
-import 'package:ntut_program_assignment/widget.dart';
+import 'package:ntut_program_assignment/models/api_model.dart' show Homework;
 import 'package:ntut_program_assignment/page/homework/page.dart';
+import 'package:ntut_program_assignment/widgets/general_page.dart';
+import 'package:ntut_program_assignment/widgets/tile.dart';
 
 class HomeworkInstance {
   static final StreamController<EventType> update = StreamController();
@@ -46,9 +48,9 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   void _onGlobalEvent(GlobalEvent e) {
     if (e == GlobalEvent.refreshHwList) {
       _refresh();
-      setState(() => {});
+      if (mounted) setState(() {});
     } else if (e == GlobalEvent.setHwState) {
-      setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
@@ -71,8 +73,8 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
       HomeworkInstance.homeworks = await GlobalSettings.account!.fetchHomeworkList();
       await _fetchDescription();
       await Homework.refreshHandedIn(HomeworkInstance.homeworks);
-    } on RuntimeError catch (e) {
-      errMsg = e.message;
+    } catch (e) {
+      errMsg = e.toString();
       _loadCount = null;
       
       if (mounted) setState(() {});
@@ -112,6 +114,31 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
     await Future.wait(tasks);
   }
 
+  Widget _listItem(Homework hw) {
+    return Tile(
+      title: Text(
+        "${hw.hwId} ${hw.title??''}"
+      ),
+      subtitle: Text(
+        "${MyApp.locale.hwDetails_deadline}: ${hw.deadline.toRelative()}"
+      ),
+      leading: Icon(
+        hw.isPass ? FluentIcons.check_mark : FluentIcons.clear
+      ),
+      trailing: Icon(FluentIcons.chevron_right),
+      onPressed: () {
+        if (GlobalSettings.route.current.name == "hwDetail") {
+          return;
+        }
+        GlobalSettings.route.push(
+          "hwDetail",
+          title: "${hw.hwId} ${hw.title??MyApp.locale.no_title}", 
+          parameter: {"id": hw.id-1},
+        );
+      }
+    );
+  }
+
   Widget _pendingHws() {
     final notPasses = HomeworkInstance.homeworks
       .where((e) => !e.isPass);
@@ -130,7 +157,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: notPasses
-              .map((e) => ListItem(homework: e))
+              .map((e) => _listItem(e))
               .toList()
           )
         )
@@ -153,11 +180,11 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
         Text(MyApp.locale.hwDetails_passed, style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         SizedBox(
-          height: (65 * passed.length) + (10 * (passed.length-1)),
+          height: (61 * passed.length) + (10 * (passed.length-1)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: passed
-              .map((e) => ListItem(homework: e))
+              .map((e) => _listItem(e))
               .toList()
           )
         )
@@ -195,52 +222,51 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
           }
         ),
         const Spacer(),
-        Tile(
-          alignment: Alignment.center,
-          padding: EdgeInsets.zero,
+        SizedBox(
           height: 50, width: 150,
-          child: Column(
-            children: [
-              const Spacer(),
-              Row(
-                children: [
-                  const Spacer(),
-                  Text("${passes.length}/${HomeworkInstance.homeworks.length}",
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 10),
-                  Text(MyApp.locale.hwDetails_completion),
-                  const Spacer(),
-                ]
-              ),
-              const Spacer(),
-              SizedBox(
-                width: 150,
-                child: ProgressBar(value: passRate)
-              )
-            ]
+          child: Tile(
+          // alignment: Alignment.center,
+            padding: EdgeInsets.zero, 
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                Row(
+                  children: [
+                    Spacer(),
+                    Text("${passes.length}/${HomeworkInstance.homeworks.length}",
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(width: 10),
+                    Text(MyApp.locale.hwDetails_completion),
+                    Spacer()
+                  ]
+                ),
+                const Spacer(),
+                SizedBox(
+                  width: 150,
+                  child: ProgressBar(value: passRate)
+                )
+              ]
+            )
           )
         ),
+        
         const SizedBox(width: 10),
-        Tile(
-          alignment: Alignment.center,
-          padding: EdgeInsets.zero,
+        SizedBox(
           height: 50, width: 150,
-          child: Column(
-            children: [
-              const Spacer(),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Spacer(),
-                  Text("${HomeworkInstance.homeworks.length-passes.length}",
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 10),
-                  Text(MyApp.locale.hwDetails_failed),
-                  const Spacer()
-                ]
-              ),
-              const Spacer()
-            ]
+          child: Tile(
+            padding: EdgeInsets.zero,
+            trailing: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Spacer(),
+                Text("${HomeworkInstance.homeworks.length-passes.length}",
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(width: 10),
+                Text(MyApp.locale.hwDetails_failed),
+                const Spacer()
+              ]
+            )
           )
         )
       ]
@@ -251,7 +277,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   Widget build(BuildContext context) {
     super.build(context);
 
-    if (GlobalSettings.isLoggingIn) {
+    if (GlobalSettings.account?.isLoggingIn ?? false) {
       return const LoggingInBlock();
     }
 
@@ -304,87 +330,4 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
   @override
   bool get wantKeepAlive => true;
 
-}
-
-class ListItem extends StatefulWidget {
-  final Homework homework;
-
-  const ListItem({
-    super.key,
-    required this.homework
-  });
-
-  @override
-  State<ListItem> createState() => _ListItemState();
-}
-
-class _ListItemState extends State<ListItem> {
-
-  String fetchTitle() {
-    return "${widget.homework.number} ${widget.homework.title??''}";
-  }
-
-  String fetchDeadline() {
-    final hw = widget.homework;
-    return "${MyApp.locale.hwDetails_deadline}: ${formatDate(hw.deadline)}";
-  }
-
-  String formatDate(DateTime date) {
-    final now = DateTime.now();
-    
-    Duration diff = date.difference(now);
-
-    final decoration = (diff > Duration.zero) ? 
-      MyApp.locale.hwDetails_remaining :
-      MyApp.locale.hwDetails_ago;
-    
-    diff = (diff < Duration.zero) ? now.difference(date) : diff;
-    
-    if (diff > const Duration(days: 7)) {
-      // print("[$date] ${diff.inDays} -> ${(diff.inDays / 7).toInt()}");
-      return "${diff.inDays ~/ 7} ${MyApp.locale.week} $decoration";
-    } else if (diff > const Duration(days: 1)) {
-      return "${diff.inDays} ${MyApp.locale.day} $decoration";
-    } else if (diff > const Duration(hours: 1)) {
-      return "${diff.inHours} ${MyApp.locale.hour} $decoration";
-    } else {
-      return "${diff.inMinutes} ${MyApp.locale.minute} $decoration";
-    }
-  }
-
-  IconData fetchIcon() {
-    final hw = widget.homework;
-
-    if (!hw.canHandIn) {
-      return hw.state == HomeworkState.passed ? FluentIcons.check_mark : FluentIcons.clear;
-    }
-
-    return FluentIcons.edit;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Button(
-      style: const ButtonStyle(
-        padding: WidgetStatePropertyAll(EdgeInsets.zero)
-      ),
-      child: Tile.lore(
-        decoration: const BoxDecoration(),
-        title: fetchTitle(),
-        lore: fetchDeadline(),
-        icon: Icon(fetchIcon()),
-        child: const Icon(FluentIcons.chevron_right),
-      ),
-      onPressed: () {
-        if (GlobalSettings.route.current.name == "hwDetail") {
-          return;
-        }
-        GlobalSettings.route.push(
-          "hwDetail",
-          title: "${widget.homework.number} ${widget.homework.title??MyApp.locale.no_title}", 
-          parameter: {"id": widget.homework.id-1},
-        );
-      }
-    );
-  }
 }

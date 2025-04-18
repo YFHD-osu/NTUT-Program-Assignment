@@ -1,11 +1,12 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:file_picker/file_picker.dart';
+
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/core/test_server.dart';
 import 'package:ntut_program_assignment/main.dart';
-import 'package:ntut_program_assignment/widget.dart';
+import 'package:ntut_program_assignment/widgets/tile.dart';
 
 class TestServerRoute extends StatefulWidget {
   const TestServerRoute({super.key});
@@ -152,10 +153,10 @@ class _TestServerRouteState extends State<TestServerRoute> {
       }
 
       switch (compiler.type) {
-        case CompilerType.environment:
+        case CompilerSource.environment:
           return MyApp.locale.settings_test_server_environment_variable;
 
-        case CompilerType.path:
+        case CompilerSource.path:
           return "${MyApp.locale.settings_test_server_sepcified_path} (${GlobalSettings.prefs.pythonPath})";
       }
     }
@@ -212,10 +213,10 @@ class _TestServerRouteState extends State<TestServerRoute> {
       }
 
       switch (compiler.type) {
-        case CompilerType.environment:
+        case CompilerSource.environment:
           return MyApp.locale.settings_test_server_environment_variable;
 
-        case CompilerType.path:
+        case CompilerSource.path:
           return "${MyApp.locale.settings_test_server_sepcified_path} (${GlobalSettings.prefs.gccPath})";
       }
     }
@@ -269,11 +270,11 @@ class _TestServerRouteState extends State<TestServerRoute> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Tile.lore(
-          title: MyApp.locale.settings_test_server_test_compiler_path,
-          lore: MyApp.locale.settings_test_server_test_compiler_path_desc,
-          icon: const Icon(FluentIcons.file_code),
-          child: AnimatedContainer(
+        Tile(
+          title: Text(MyApp.locale.settings_test_server_test_compiler_path),
+          subtitle: Text(MyApp.locale.settings_test_server_test_compiler_path_desc),
+          leading: const Icon(FluentIcons.file_code),
+          trailing: AnimatedContainer(
             width: 10, height: 10,
             duration: const Duration(milliseconds: 350),
             decoration: BoxDecoration(

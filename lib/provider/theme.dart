@@ -1,11 +1,12 @@
-import 'package:ntut_program_assignment/core/global.dart';
 import 'package:win32/win32.dart';
-import 'package:bitsdojo_window/bitsdojo_window.dart' show appWindow;
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:bitsdojo_window/bitsdojo_window.dart' show appWindow;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_acrylic/window.dart';
 import 'package:flutter_acrylic/window_effect.dart';
-import 'package:ntut_program_assignment/widget.dart' show Platforms;
+
+import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/core/platform.dart';
 
 class ThemeProvider extends ChangeNotifier {
   ThemeProvider._();

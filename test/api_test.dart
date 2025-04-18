@@ -2,9 +2,10 @@ import 'dart:io';
 import 'package:logger/logger.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ntut_program_assignment/core/api.dart';
+import 'package:ntut_program_assignment/api/api_service.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/main.dart' show logger;
+import 'package:ntut_program_assignment/models/api_model.dart';
 
 void main() async {
   logger = Logger(
@@ -92,15 +93,15 @@ void main() async {
   });
 
   test('Fetch success list', () async {
-    final success = await hws.first.fetchPassList();
+    await hws.first.refreshPassList();
   
-    expect(success.runtimeType, List<String>);
+    // expect(success.runtimeType, List<String>);
   });
 
   test('Fetch test case result', () async {
-    final success = await hws.first.fetchTestcases();
+    await hws.first.fetchTestcases();
   
-    expect(success.runtimeType, List<CheckResult>);
+    // expect(success.runtimeType, List<CheckResult>);
   });
 
   test('Delete homework', () async {

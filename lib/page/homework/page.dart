@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+
 import 'package:ntut_program_assignment/main.dart';
 import 'package:ntut_program_assignment/router.dart';
 import 'package:ntut_program_assignment/page/homework/details.dart';
@@ -20,9 +21,14 @@ class _HomeworkPageState extends State<HomeworkPage> {
   Widget build(BuildContext context) {
     return FluentNavigation(
       title: MyApp.locale.sidebar_homework_title,
-      struct: {
-        "default": HomeworkList(),
-        "hwDetail": HomeworkDetail()
+      builder: (String route) {
+        switch (route) {
+          case "hwDetail":
+            return HomeworkDetail();
+
+          default:
+            return HomeworkList();
+        }
       }
     );
   }

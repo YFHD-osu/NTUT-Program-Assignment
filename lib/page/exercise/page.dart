@@ -1,9 +1,34 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:flutter/foundation.dart';
 
-import 'package:ntut_program_assignment/router.dart';
-import 'package:ntut_program_assignment/widget.dart';
+import 'package:ntut_program_assignment/core/local_problem.dart';
+import 'package:ntut_program_assignment/page/exercise/details.dart';
 import 'package:ntut_program_assignment/page/exercise/problem_list.dart';
+import 'package:ntut_program_assignment/router.dart';
+
+class ProblemInstance {
+  static List<ProblemCollection>? onlineList;
+  static List<ProblemCollection>? localList;
+
+  static int get onlineCount {
+    if (onlineList == null) {
+      return 0;
+    }
+
+    return onlineList!
+      .map((e) => e.problemIDs.length)
+      .reduce((a ,b) => a+b);
+  }
+
+  static int get localCount {
+    if (localList == null) {
+      return 0;
+    }
+
+    return localList!
+      .map((e) => e.problemIDs.length)
+      .reduce((a ,b) => a+b);
+  }
+}
 
 class ExercisePage extends StatefulWidget {
   const ExercisePage({super.key});
@@ -12,18 +37,26 @@ class ExercisePage extends StatefulWidget {
   State<ExercisePage> createState() => _ExercisePageState();
 }
 
-class _ExercisePageState extends State<ExercisePage> {
+class _ExercisePageState extends State<ExercisePage> with AutomaticKeepAliveClientMixin {
+
   @override
   Widget build(BuildContext context) {
-    if (!kDebugMode) {
-      return UnimplementPage();
-    }
+    super.build(context);
 
     return FluentNavigation(
       title: "練習區",
-      struct: {
-        "default": ProblemList()
+      builder: (String route) {
+        switch (route) {
+          case "exercise":
+            return ProblemDetail();
+          
+          default:
+            return ProblemList();
+        }
       }
     );
   }
+  
+  @override
+  bool get wantKeepAlive => true;
 }

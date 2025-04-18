@@ -1,22 +1,22 @@
 import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:ntut_program_assignment/core/api.dart';
-import 'package:ntut_program_assignment/core/diff_matcher.dart';
-import 'package:ntut_program_assignment/core/extension.dart';
-import 'package:ntut_program_assignment/core/test_server.dart';
-
-import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
-import 'package:ntut_program_assignment/page/homework/details.dart';
-import 'package:ntut_program_assignment/widget.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
+import 'package:ntut_program_assignment/widgets/diff_indicator.dart';
+import 'package:ntut_program_assignment/widgets/selectable_text_box.dart';
+import 'package:ntut_program_assignment/widgets/tile.dart';
+import 'package:ntut_program_assignment/core/extension.dart';
+import 'package:ntut_program_assignment/core/test_server.dart';
+import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
+import 'package:ntut_program_assignment/page/homework/details.dart';
+
 class TestArea extends StatefulWidget {
-  final Homework homework;
+  final Testcase testcase;
 
   const TestArea({
     super.key,
-    required this.homework
+    required this.testcase
   });
 
   @override
@@ -28,8 +28,14 @@ class _TestAreaState extends State<TestArea> {
   int _selectTestcase = 0;
   int _viewMode = 1;
 
-  Testcase get testCase =>
-    widget.homework.testCases[_selectTestcase];
+  Case get _current =>
+    widget.testcase.cases[_selectTestcase];
+
+  Testcase get _testCase =>
+    widget.testcase;
+  
+  bool get _canStartTest =>
+    widget.testcase.testFile == null || widget.testcase.anyTestRunning;
 
   Widget _testcaseBtns() => GridView(
     shrinkWrap : true,
@@ -39,7 +45,7 @@ class _TestAreaState extends State<TestArea> {
         crossAxisSpacing: 5,
         mainAxisSpacing: 5
     ),
-    children: List<int>.generate(widget.homework.testCases.length, (e) => e)
+    children: List<int>.generate(widget.testcase.cases.length, (e) => e)
       .map((e) => _testcaseBtn(e))
       .toList()
   );
@@ -90,19 +96,17 @@ class _TestAreaState extends State<TestArea> {
   Future<void> _onLoad(path) async {
     var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
 
-    if (!widget.homework.allowedExtensions.contains(myFile.path.split(".").last)) {
+    if (!widget.testcase.allowedExtensions.contains(myFile.path.split(".").last)) {
       logger.i("Unsupported format: ${myFile.path}");
       MyApp.showToast(
         MyApp.locale.error_occur, 
-        "${MyApp.locale.test_server_file_not_support} ${widget.homework.allowedExtensions.map((e) => ".$e").join(", ")}",
+        "${MyApp.locale.test_server_file_not_support} ${widget.testcase.allowedExtensions.map((e) => ".$e").join(", ")}",
         InfoBarSeverity.error
       );
       return;
     }
 
-    widget.homework.testFile = myFile;
-    // final tasks = [_homework.upload(myFile), _setKeyState()];
-    // await Future.wait(tasks);
+    _testCase.testFile = myFile;
 
     if (!mounted) return;
     setState(() {});
@@ -119,7 +123,7 @@ class _TestAreaState extends State<TestArea> {
 
     final filename = await event.session.items.first.dataReader?.rawReader?.getSuggestedName();
 
-    if (filename != null && !widget.homework.allowedExtensions.contains(filename.split(".").last)) {
+    if (filename != null && !widget.testcase.allowedExtensions.contains(filename.split(".").last)) {
       return DropOperation.none;
     }
 
@@ -131,17 +135,15 @@ class _TestAreaState extends State<TestArea> {
 
   Widget _loreWidget() {
     // print(widget.homework.testCases.map((e) => e.testing));
-    final testCases = widget.homework.testCases;
-
-    if (widget.homework.testFile == null) {
+    if (_testCase.testFile == null) {
       return Text(MyApp.locale.hwDetails_testArea_dropfileHere);
     }
 
-    if (widget.homework.anyTestRunning) {
+    if (_testCase.anyTestRunning) {
       return Text(MyApp.locale.hwDetails_testArea_testRunning);
     }
 
-    final notPass = testCases.where((e) => !e.isPass).length;
+    final notPass = _testCase.cases.where((e) => !e.isPass).length;
 
     if (notPass == 0) {
       return Text(MyApp.locale.hwDetails_testArea_allPass);
@@ -153,17 +155,22 @@ class _TestAreaState extends State<TestArea> {
   Future<void> _testAll() async {
     _viewMode = 2;
 
-    for (var testCase in widget.homework.testCases) {
+    for (var testCase in _testCase.cases) {
       testCase.resetTestState();
     }
 
     try {
       if (mounted) setState(() {});
-      await widget.homework.testAll(widget.homework.testFile!);
+
+      await _testCase.testAll(
+        widget.testcase.testFile!,
+        widget.testcase.codeType
+      );
+
     } catch (e) {
       logger.e(e.toString());
     } finally {
-      for (var testCase in widget.homework.testCases) {
+      for (var testCase in _testCase.cases) {
         testCase.setOutput();
       }
 
@@ -172,7 +179,7 @@ class _TestAreaState extends State<TestArea> {
   }  
 
   Widget _testcaseBtn(int index) {
-    final testCase = widget.homework.testCases[index];
+    final testCasse = _testCase.cases[index];
 
     return Button(
       child: Row(
@@ -183,8 +190,8 @@ class _TestAreaState extends State<TestArea> {
             width: 10, height: 10,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: testCase.hasOutput ?
-                (testCase.isPass ? Colors.green.lightest : Colors.red.lightest) : 
+              color: testCasse.hasOutput ?
+                (testCasse.isPass ? Colors.green.lightest : Colors.red.lightest) : 
                 Colors.grey
           )),
           const SizedBox(width: 10),
@@ -192,7 +199,7 @@ class _TestAreaState extends State<TestArea> {
         ]
       ),
       onPressed: () {
-        if (widget.homework.testCases.any((e) => e.testing)) {
+        if (_testCase.cases.any((e) => e.testing)) {
           return;
         }
         _selectTestcase = index;
@@ -228,11 +235,11 @@ class _TestAreaState extends State<TestArea> {
             const SizedBox(height: 5),
             _testcaseWindow(),
             const SizedBox(height: 5),
-            Tile.lore(
-              title: "輸出檢視模式",
-              lore: "調整輸出資料與答案的檢視比較模式",
-              icon: const Icon(FluentIcons.entry_view),
-              child: ComboBox<int>(
+            Tile(
+              title: Text("輸出檢視模式"),
+              subtitle: Text("調整輸出資料與答案的檢視比較模式"),
+              leading: const Icon(FluentIcons.entry_view),
+              trailing: ComboBox<int>(
                 value: _viewMode,
                 items: [
                   ComboBoxItem(
@@ -241,12 +248,12 @@ class _TestAreaState extends State<TestArea> {
                   ),
                   ComboBoxItem(
                     value: 0,
-                    enabled: testCase.hasOutput,
+                    enabled: _current.hasOutput,
                     child: Text("僅顯示輸出")
                   ),
                   ComboBoxItem(
                     value: 2,
-                    enabled: testCase.hasOutput,
+                    enabled: _current.hasOutput,
                     child: Text("比較答案與輸出")
                   ),
                 ],
@@ -257,16 +264,16 @@ class _TestAreaState extends State<TestArea> {
               )
             ),
             const SizedBox(height: 5),
-            Tile.lore(
-              title: MyApp.locale.hwDetails_testArea_testAll_title,
-              lore: MyApp.locale.hwDetails_testArea_testAll_lore,
-              icon: const Icon(FluentIcons.test_case),
-              child: Row(
+            Tile(
+              title: Text(MyApp.locale.hwDetails_testArea_testAll_title),
+              subtitle: Text(MyApp.locale.hwDetails_testArea_testAll_lore),
+              leading: const Icon(FluentIcons.test_case),
+              trailing: Row(
                 children: [
                   _loreWidget(),
                   const SizedBox(width: 10),
                   FilledButton(
-                    onPressed: widget.homework.testFile == null || widget.homework.anyTestRunning ? null : _testAll,
+                    onPressed: _canStartTest ? null : _testAll,
                     child: Text(MyApp.locale.hwDetails_testArea_startTest)
                   )
                 ]
@@ -284,11 +291,11 @@ class _TestAreaState extends State<TestArea> {
         constraints: BoxConstraints(
           maxHeight: 350
         ),
-        child: SelectableTextBox(text: testCase.output)
+        child: SelectableTextBox(text: _current.output)
       );
     }
 
-    if (testCase.testing) {
+    if (_current.testing) {
       return Row(
         mainAxisSize: MainAxisSize.max,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -300,19 +307,19 @@ class _TestAreaState extends State<TestArea> {
       );
     }
 
-    if (testCase.hasError) {
+    if (_current.hasError) {
       return SelectableTextBox(
         text: "${MyApp.locale.hwDetails_testArea_testError}\n"
-              "${testCase.testError!.join('\n')}"
+              "${_current.testError!.join('\n')}"
       );
     }
 
-    if (! testCase.hasOutput) {
+    if (! _current.hasOutput) {
       return SelectableTextBox(text: MyApp.locale.hwDetails_testArea_haveNotRun);
     }
 
     if (_viewMode == 0) {
-      final text = testCase.testOutput!.join("\n");
+      final text = _current.testOutput!.join("\n");
       return ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: 350
@@ -322,18 +329,18 @@ class _TestAreaState extends State<TestArea> {
     }
 
     return SingleChildScrollView(
-      child: TestCaseView(testCase: testCase)
+      child: TestCaseView(testCase: _current)
     );
   }
 
   String? _fetchTextContext() {
     switch (_viewMode) {
       case 0: // Only output context
-        final text = testCase.testOutput!.join("\n");
+        final text = _current.testOutput!.join("\n");
         return text; 
 
       case 1: // Only answer context
-        return testCase.output;
+        return _current.output;
 
       default: // Compare mode
         return null;
@@ -341,14 +348,14 @@ class _TestAreaState extends State<TestArea> {
   }
 
   Widget _testcaseSection() {
-    if (widget.homework.testCases.isEmpty) {
+    if (_testCase.cases.isEmpty) {
       return Center(
         child: Text(MyApp.locale.hwDetails_cannot_parse_testcase)
       );
     }
 
     return Tile(
-      child: Column(
+      title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -356,8 +363,8 @@ class _TestAreaState extends State<TestArea> {
               Container(
                 width: 10, height: 10,
                 decoration: BoxDecoration(
-                  color: testCase.hasOutput ? 
-                    (testCase.isPass ? Colors.green.lightest : Colors.red.lightest) : 
+                  color: _current.hasOutput ? 
+                    (_current.isPass ? Colors.green.lightest : Colors.red.lightest) : 
                     Colors.grey,
                   borderRadius: BorderRadius.circular(10)
                 )
@@ -379,8 +386,8 @@ class _TestAreaState extends State<TestArea> {
               maxHeight: 250, minHeight: 0
             ),
             child: SelectableTextBox(
-              text: testCase.input,
-              suffix: CopyButton(context: testCase.input)
+              text: _current.input,
+              suffix: CopyButton(context: _current.input)
             )
           ),
           const SizedBox(height: 10),
@@ -399,7 +406,7 @@ class _TestAreaState extends State<TestArea> {
           Text("單獨測試"),
           SizedBox(height: 5),
           FilledButton(
-            onPressed: widget.homework.testFile==null || widget.homework.anyTestRunning ? 
+            onPressed: _canStartTest ? 
               null : () => _startTest(_selectTestcase),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -416,14 +423,17 @@ class _TestAreaState extends State<TestArea> {
   }
 
   Future<void> _startTest(int index) async {
-    final testCases = widget.homework.testCases;
-    testCases[index].resetTestState();
+    _testCase.cases[index].resetTestState();
     _viewMode = 2;
 
     setState(() {});
 
     try {
-      await widget.homework.compileAndTest(widget.homework.testFile!, index);
+      await _testCase.compileAndTest(
+        widget.testcase.testFile!,
+        index,
+        widget.testcase.codeType
+      );
     } on TestException catch (e) {
       MyApp.showToast("${MyApp.locale.test}${index+1}", e.message, InfoBarSeverity.error);
       if (mounted) setState(() {});

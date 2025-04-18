@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:ntut_program_assignment/core/api.dart';
-import 'package:ntut_program_assignment/core/database.dart';
-import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
+
 import 'package:ntut_program_assignment/router.dart';
+import 'package:ntut_program_assignment/core/database.dart';
+import 'package:ntut_program_assignment/api/api_service.dart';
+import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
 
 enum GlobalEvent {
   refreshHwList,
@@ -17,7 +18,6 @@ class GlobalSettings {
   // The account that current using
   static Account? account;
 
-  static bool isLoggingIn = false;
   static final update = StreamController<GlobalEvent>();
   static final stream = update.stream.asBroadcastStream();
 
@@ -49,24 +49,23 @@ class GlobalSettings {
     final db = Database(name: "accounts");
     await db.initialize();
     final acc = await db.get(prefs.autoLogin!);
+
     if (acc == null) {
       logger.e("Account with id: ${prefs.autoLogin} does not exists");
-      isLoggingIn = false;
       update.sink.add(GlobalEvent.refreshHwList);
-
       return;
     }
 
-    isLoggingIn = true;
-    update.sink.add(GlobalEvent.refreshHwList);
-    
+    account = Account.fromMap(acc);
+    account!.isLoggingIn = true;
+    update.sink.add(GlobalEvent.setHwState);
+
     try {
-      await GlobalSettings.login(Account.fromMap(acc));
+      await GlobalSettings.login(account!);
     } catch (e) {
       logger.e(e.toString());
       MyApp.showToast("無法自動登入", e.toString(), InfoBarSeverity.error);
     } finally {
-      isLoggingIn = false;
       update.sink.add(GlobalEvent.refreshHwList);
     }
   }

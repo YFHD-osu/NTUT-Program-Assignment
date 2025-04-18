@@ -1,9 +1,9 @@
 import 'dart:io';
-
 import 'dart:async';
+
 import 'package:intl/intl.dart';
-import 'package:fluent_ui/fluent_ui.dart';
 import 'package:logger/logger.dart';
+import 'package:fluent_ui/fluent_ui.dart';
 import 'package:path_provider/path_provider.dart';
 
 class LogToFile {

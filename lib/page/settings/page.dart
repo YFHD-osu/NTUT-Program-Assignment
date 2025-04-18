@@ -1,18 +1,17 @@
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:ntut_program_assignment/core/updater.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:ntut_program_assignment/api/api_service.dart';
+import 'package:ntut_program_assignment/core/updater.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/main.dart' show MyApp;
 import 'package:ntut_program_assignment/page/settings/test_server.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
 import 'package:ntut_program_assignment/router.dart';
-import 'package:ntut_program_assignment/widget.dart';
-import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/page/settings/about.dart';
 import 'package:ntut_program_assignment/page/settings/account.dart';
 import 'package:ntut_program_assignment/page/settings/personalize.dart';
-
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:ntut_program_assignment/widgets/tile.dart';
 
 final _languageStream = ValueNotifier<String>("");
 
@@ -44,12 +43,23 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return FluentNavigation(
       title: MyApp.locale.sidebar_settings_title,
-      struct: {
-        "default": OptionList(),
-        "account": AccountRoute(),
-        "testEnvironment": TestServerRoute(),
-        "personalize": PersonalizeRoute(),
-        "about": AboutRoute(),
+      builder: (String route) {
+        switch (route) {
+          case "account":
+            return AccountRoute();
+          
+          case "testEnvironment":
+            return TestServerRoute();
+
+          case "personalize":
+            return PersonalizeRoute();
+
+          case "about":
+            return AboutRoute();
+
+          default:
+            return OptionList();
+        }
       }
     );
   }
@@ -129,17 +139,12 @@ class OptionList extends StatelessWidget {
         const SizedBox(height: 20),
         LanguageSection(),
         const SizedBox(height: 10),
-        Button(
-          style: const ButtonStyle(
-            padding: WidgetStatePropertyAll(EdgeInsets.zero)
-          ),
-          child: Tile.lore(
-            decoration: const BoxDecoration(),
-            title: MyApp.locale.account,
-            lore: MyApp.locale.settings_page_account_desc,
-            icon: const Icon(FluentIcons.accounts),
-            child: const Icon(FluentIcons.chevron_right),
-          ),
+        Tile(
+          limitIconSize: true,
+          title: Text(MyApp.locale.account),
+          subtitle: Text(MyApp.locale.settings_page_account_desc),
+          leading: const Icon(FluentIcons.accounts),
+          trailing: const Icon(FluentIcons.chevron_right),
           onPressed: () {
             if (GlobalSettings.route.length > 1) {
               return;
@@ -148,17 +153,12 @@ class OptionList extends StatelessWidget {
           }
         ),
         const SizedBox(height: 10),
-        Button(
-          style: const ButtonStyle(
-            padding: WidgetStatePropertyAll(EdgeInsets.zero)
-          ),
-          child: Tile.lore(
-            decoration: const BoxDecoration(),
-            title: MyApp.locale.settings_page_test_environment,
-            lore: MyApp.locale.settings_page_test_environment_desc,
-            icon: const Icon(FluentIcons.server_enviroment),
-            child: const Icon(FluentIcons.chevron_right)
-          ),
+        Tile(
+          limitIconSize: true,
+          title: Text(MyApp.locale.settings_page_test_environment),
+          subtitle: Text(MyApp.locale.settings_page_test_environment_desc),
+          leading: const Icon(FluentIcons.server_enviroment),
+          trailing: const Icon(FluentIcons.chevron_right),
           onPressed: () {
             if (GlobalSettings.route.length > 1) {
               return;
@@ -167,17 +167,12 @@ class OptionList extends StatelessWidget {
           }
         ),
         const SizedBox(height: 10),
-        Button(
-          style: const ButtonStyle(
-            padding: WidgetStatePropertyAll(EdgeInsets.zero)
-          ),
-          child: Tile.lore(
-            decoration: const BoxDecoration(),
-            title: MyApp.locale.settings_page_personalize,
-            lore: MyApp.locale.settings_page_personalize_desc,
-            icon: const Icon(FluentIcons.personalize),
-            child: const Icon(FluentIcons.chevron_right),
-          ),
+        Tile(
+          limitIconSize: true,
+          title: Text(MyApp.locale.settings_page_personalize),
+          subtitle: Text(MyApp.locale.settings_page_personalize_desc),
+          leading: const Icon(FluentIcons.personalize),
+          trailing: const Icon(FluentIcons.chevron_right),
           onPressed: () {
             if (GlobalSettings.route.length > 1) {
               return;
@@ -186,17 +181,12 @@ class OptionList extends StatelessWidget {
           }
         ),
         const SizedBox(height: 10),
-        Button(
-          style: const ButtonStyle(
-            padding: WidgetStatePropertyAll(EdgeInsets.zero)
-          ),
-          child: Tile.lore(
-            decoration: const BoxDecoration(),
-            title: MyApp.locale.settings_page_about,
-            lore: MyApp.locale.settings_page_about_desc,
-            icon: const Icon(FluentIcons.info),
-            child: const Icon(FluentIcons.chevron_right),
-          ),
+        Tile(
+          limitIconSize: true,
+          title: Text(MyApp.locale.settings_page_about),
+          subtitle: Text(MyApp.locale.settings_page_about_desc),
+          leading: const Icon(FluentIcons.info),
+          trailing: const Icon(FluentIcons.chevron_right),
           onPressed: () {
             if (GlobalSettings.route.length > 1) {
               return;
@@ -264,35 +254,28 @@ class _LanguageSectionState extends State<LanguageSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Button(
-      style: const ButtonStyle(
-        padding: WidgetStatePropertyAll(EdgeInsets.zero)
-      ),
-      child: Tile.lore(
-        decoration: const BoxDecoration(),
-        title: MyApp.locale.settings_page_language,
-        lore: MyApp.locale.settings_page_language_desc,
-        icon: const Icon(FluentIcons.locale_language),
-        child: ComboBox(
-          value: GlobalSettings.prefs.language,
-          items: AppLocalizations.supportedLocales
-            .map((e) => ComboBoxItem(
-              value: e.toString(),
-              child: Text(_trans[e.toString()] ?? e.toString()))
-            )
-            .toList(),
-          onChanged: (v) {
-            if (v == null) {
-              return;
-            }
-            GlobalSettings.prefs.language = v;
-
-            _languageStream.value = v;
-            ThemeProvider.instance.setTheme(ThemeProvider.instance.theme);
+    return Tile(
+      title: Text(MyApp.locale.settings_page_language),
+      subtitle: Text(MyApp.locale.settings_page_language_desc),
+      leading: const Icon(FluentIcons.locale_language),
+      trailing: ComboBox(
+        value: GlobalSettings.prefs.language,
+        items: AppLocalizations.supportedLocales
+          .map((e) => ComboBoxItem(
+            value: e.toString(),
+            child: Text(_trans[e.toString()] ?? e.toString()))
+          )
+          .toList(),
+        onChanged: (v) {
+          if (v == null) {
+            return;
           }
-        )
-      ),
-      onPressed: () {}
+          GlobalSettings.prefs.language = v;
+
+          _languageStream.value = v;
+          ThemeProvider.instance.setTheme(ThemeProvider.instance.theme);
+        }
+      )
     );
   }
 }

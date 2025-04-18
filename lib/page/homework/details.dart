@@ -1,19 +1,20 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:flutter/services.dart';
 
+import 'package:flutter/services.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dotted_decoration/dotted_decoration.dart';
-import 'package:ntut_program_assignment/page/homework/test_area.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 
+import 'package:ntut_program_assignment/models/api_model.dart';
+import 'package:ntut_program_assignment/page/homework/test_area.dart';
+import 'package:ntut_program_assignment/widgets/button.dart';
+import 'package:ntut_program_assignment/widgets/tile.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/page/homework/list.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
-import 'package:ntut_program_assignment/widget.dart';
-import 'package:ntut_program_assignment/core/api.dart';
 import 'package:ntut_program_assignment/main.dart' show MyApp, logger;
 import 'package:ntut_program_assignment/page/homework/page.dart';
 
@@ -75,7 +76,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
       title: Text(MyApp.locale.hwDetails_deleteDialog_title),
       content: Text(MyApp.locale.hwDetails_deleteDialog_context),
       actions: [
-        CustomWidgets.alertButton(
+        AlertButton(
           onPressed: () {
             Navigator.pop(context, true);
           },
@@ -120,7 +121,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
           style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         TestArea(
-          homework: homework
+          testcase: homework.testCase
         ),
         const SizedBox(height: 10),
         Text(MyApp.locale.hwDetails_subtitle_copyarea,
@@ -135,8 +136,8 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
             const SizedBox(width: 10),
             CopyButton(
               title: MyApp.locale.hwDetails_widget_copyWholeTestcase,
-              context: List<int>.generate(homework.testCases.length, (i) => i)
-                .map((i) => "${MyApp.locale.testcase} ${i+1}\n${homework.testCases[i]}")
+              context: List<int>.generate(homework.testCase.cases.length, (i) => i)
+                .map((i) => "${MyApp.locale.testcase} ${i+1}\n${homework.testCase.cases[i]}")
                 .join("\n\n")
             )
           ]
@@ -152,12 +153,11 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
         Text(MyApp.locale.hwDetails_subtitle_dangerZone,
           style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
-        Tile.lore(
-          title: MyApp.locale.hwDetails_widget_deleteHw_title,
-          lore: MyApp.locale.hwDetails_widget_deleteHw_context,
-          icon: const Icon(FluentIcons.delete),
-          child: CustomWidgets.alertButton(
-            child: Text(MyApp.locale.delete),
+        Tile(
+          title: Text(MyApp.locale.hwDetails_widget_deleteHw_title),
+          subtitle: Text(MyApp.locale.hwDetails_widget_deleteHw_context),
+          leading: const Icon(FluentIcons.delete),
+          trailing: AlertButton(
             onPressed: !homework.canDelete ? null : () async {
               final isConfirmed = await showDialog<bool>(
                 context: context,
@@ -181,7 +181,8 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
               }
               
               setState(() {});
-            }
+            },
+            child: Text(MyApp.locale.delete)
           )
         )
       ]
@@ -210,35 +211,35 @@ class _StateSectionState extends State<StateSection> {
     if (widget.homework.fileState == null) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Tile.lore(
-          title: MyApp.locale.hwDetails_state_not_submitted,
-          lore: MyApp.locale.hwDetails_state_not_submitted_desc,
-          icon: const Icon(FluentIcons.not_executed),
+        child: Tile(
+          title: Text(MyApp.locale.hwDetails_state_not_submitted),
+          subtitle: Text(MyApp.locale.hwDetails_state_not_submitted_desc),
+          trailing: const Icon(FluentIcons.not_executed),
         )
       );
     }
 
     return Column(
       children: [
-        Tile.lore(
-          title: MyApp.locale.hwDetails_widget_editFileName_title,
-          lore: MyApp.locale.hwDetails_widget_editFileName_lore,
-          icon: const Icon(FluentIcons.rename),
-          child: Text(state.filename)
+        Tile(
+          title: Text(MyApp.locale.hwDetails_widget_editFileName_title),
+          subtitle: Text(MyApp.locale.hwDetails_widget_editFileName_lore),
+          leading: const Icon(FluentIcons.rename),
+          trailing: Text(state.filename)
         ),
         const SizedBox(height: 5),
-        Tile.lore(
-          title: MyApp.locale.hwDetails_widget_fileStatus_title,
-          lore: MyApp.locale.hwDetails_widget_fileStatus_lore,
-          icon: const Icon(FluentIcons.process),
-          child: Text(state.status.replaceAll("刪除", "可以變更"))
+        Tile(
+          title: Text(MyApp.locale.hwDetails_widget_fileStatus_title),
+          subtitle: Text(MyApp.locale.hwDetails_widget_fileStatus_lore),
+          leading: const Icon(FluentIcons.process),
+          trailing: Text(state.status.replaceAll("刪除", "可以變更"))
         ),
         const SizedBox(height: 5),
-        Tile.lore(
-          title: MyApp.locale.hwDetails_widget_uploadTime_title,
-          lore: MyApp.locale.hwDetails_widget_uploadTime_lore,
-          icon: const Icon(FluentIcons.date_time),
-          child: Text(state.date.toString())
+        Tile(
+          title: Text(MyApp.locale.hwDetails_widget_uploadTime_title),
+          subtitle: Text(MyApp.locale.hwDetails_widget_uploadTime_lore),
+          leading: const Icon(FluentIcons.date_time),
+          trailing: Text(state.date.toString())
         ),
       ]
     );
@@ -353,7 +354,7 @@ class ProblemBox extends StatelessWidget {
       return Tile(
         width: double.infinity,
         height: 50,
-        child: Center(
+        title: Center(
           child: Text(MyApp.locale.hwDetails_problem_empty)
         ),
       );
@@ -361,7 +362,7 @@ class ProblemBox extends StatelessWidget {
     
     return Tile(
       width: double.infinity,
-      child: SelectableText.rich(
+      title: SelectableText.rich(
         selectionControls: fluentTextSelectionControls,
         TextSpan(
           style: TextStyle(
@@ -653,7 +654,7 @@ class _OverviewCardState extends State<OverviewCard> {
     final FilePickerResult? outputFile = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       lockParentWindow: true,
-      allowedExtensions: widget.homework.allowedExtensions,
+      allowedExtensions: widget.homework.testCase.allowedExtensions,
       dialogTitle: MyApp.locale.hwDetails_select_homework_window_title
     );
 
@@ -706,9 +707,18 @@ class _OverviewCardState extends State<OverviewCard> {
     widget.homework.submitting = true;
     setState(() {});
 
-    await widget.homework.upload(widget.homework.bytes!, widget.homework.filename!);
-    await widget.homework.fetchTestcases();
-    await widget.homework.fetchPassList();
+    try {
+      await widget.homework.upload(widget.homework.bytes!, widget.homework.filename!);
+      await widget.homework.fetchTestcases();
+      await widget.homework.refreshPassList();
+    } catch (error) {
+      MyApp.showToast(
+        MyApp.locale.error_occur,
+        error.toString(),
+        InfoBarSeverity.error
+      );
+    }
+    
     setState(() {});
   }
 
@@ -731,6 +741,7 @@ class _OverviewCardState extends State<OverviewCard> {
   @override
   Widget build(BuildContext context) {
     _successVal = passVal == null ? _successVal : passVal!.length.toDouble();
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -739,26 +750,18 @@ class _OverviewCardState extends State<OverviewCard> {
           controller: _personFlyOut,
           child: SizedBox(
             height: 50, width: 150,
-            child: Button(
-              style: const ButtonStyle(
-                padding: WidgetStatePropertyAll(EdgeInsets.zero),
-                foregroundColor: WidgetStatePropertyAll(Colors.white)
-              ),
-              onPressed: passVal == null ? null : _showPeopleFlyOut,
-              child: _completeCount()
+            child: Tile(
+              onPressed: passVal == null ? () {} : _showPeopleFlyOut,
+              trailing: _completeCount()
             )
           )
         ),
         const SizedBox(width: 10),
         SizedBox(
           height: 50, width: 150,
-          child: Button(
-            style: const ButtonStyle(
-              padding: WidgetStatePropertyAll(EdgeInsets.zero),
-              foregroundColor: WidgetStatePropertyAll(Colors.white)
-            ),
-            onPressed: isClickable ? _showTestcaseFlyOut : null,
-            child: ClipRRect(
+          child: Tile(
+            onPressed: isClickable ? _showTestcaseFlyOut : () {},
+            trailing: ClipRRect(
             clipBehavior: Clip.hardEdge,
               child: FlyoutTarget(
                 controller: _testCaseFlyOut,
@@ -840,28 +843,27 @@ class TestCaseFlyout extends StatelessWidget {
   });
 
   Widget _testDataRow(TestCase testcase, BuildContext context) {
-    return Tile(
-      constraints: const BoxConstraints(
-        minHeight: 48
-      ),
-      margin: const EdgeInsets.only(left: 10, right: 11),
-      child: Row(
-        children: [
-          Container(
-            width: 10, height: 10,
-            decoration: BoxDecoration(
-              color: testcase.pass ? Colors.green.lighter : Colors.red.light,
-              borderRadius: BorderRadius.circular(10)
+    return Padding(
+      padding: const EdgeInsets.only(left: 10, right: 11),
+      child: Tile(
+        title: Row(
+          children: [
+            Container(
+              width: 10, height: 10,
+              decoration: BoxDecoration(
+                color: testcase.pass ? Colors.green.lighter : Colors.red.light,
+                borderRadius: BorderRadius.circular(10)
+              ),
             ),
-          ),
-          const SizedBox(width: 18),
-          Text(testcase.title),
-          const SizedBox(width: 10),
-          Flexible(
-            child: Text(testcase.testResult??"")
-          ),
-        ]
-      ),
+            const SizedBox(width: 18),
+            Text(testcase.title),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(testcase.testResult??"")
+            ),
+          ]
+        ),
+      )
     );
   }
 
@@ -879,21 +881,23 @@ class TestCaseFlyout extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Tile(
-            padding: const EdgeInsets.all(10),
-            margin: const EdgeInsets.only(left: 10, right: 11, bottom: 10),
-            child: Row(
-              children: [
-                Text(MyApp.locale.status),
-                const SizedBox(width: 10),
-                Text(MyApp.locale.number),
-                const SizedBox(width: 10),
-                Text(MyApp.locale.output),
-                const Spacer(),
-                Text("${results.passRate} %", style: const TextStyle(
-                  fontWeight: FontWeight.bold
-                ))
-              ]
+          Padding(
+            padding: const EdgeInsets.only(left: 10, right: 11, bottom: 10),
+            child: Tile(
+              padding: const EdgeInsets.all(10),
+              title: Row(
+                children: [
+                  Text(MyApp.locale.status),
+                  const SizedBox(width: 10),
+                  Text(MyApp.locale.number),
+                  const SizedBox(width: 10),
+                  Text(MyApp.locale.output),
+                  const Spacer(),
+                  Text("${results.passRate} %", style: const TextStyle(
+                    fontWeight: FontWeight.bold
+                  ))
+                ]
+              )
             )
           ),
           Expanded(child: ListView.separated(
@@ -919,7 +923,7 @@ class PlagiarismFlyout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tile(
+    return Container(
       constraints: const BoxConstraints(
         maxHeight: 195, maxWidth: 300
       ),
@@ -929,23 +933,23 @@ class PlagiarismFlyout extends StatelessWidget {
         borderRadius: BorderRadius.circular(5)
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start  ,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text("作業抄襲", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           SizedBox(height: 5),
           Tile(
-            width: double.infinity,
+            constraints: BoxConstraints(),
             padding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-            child: Text(result.cases.firstOrNull?.message ?? "???")
+            title: Text(result.cases.firstOrNull?.message ?? "???")
           ),
           SizedBox(height: 10),
           
           Text("提示", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           SizedBox(height: 5),
           Tile(
-            width: double.infinity,
             padding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-            child: RichText(
+            constraints: BoxConstraints(),
+            title: RichText(
               text: TextSpan(
                 text: "少年，你相信光嗎?\n",
                 children: [
@@ -983,7 +987,7 @@ class CompileFailFlyout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    return Tile(
+    return Container(
       constraints: const BoxConstraints(
         maxHeight: 195, maxWidth: 280, minWidth: 280
       ),
@@ -998,18 +1002,18 @@ class CompileFailFlyout extends StatelessWidget {
           Text("編譯失敗", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           SizedBox(height: 5),
           Tile(
-            width: double.infinity,
+            constraints: BoxConstraints(),
             padding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-            child: Text(result.cases.firstOrNull?.message ?? "???")
+            title: Text(result.cases.firstOrNull?.message ?? "???")
           ),
           SizedBox(height: 10),
           
           Text("提示", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           SizedBox(height: 5),
           Tile(
-            width: double.infinity,
+            constraints: BoxConstraints(),
             padding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-            child: RichText(
+            title: RichText(
               text: TextSpan(
                 text: "少年，你相信光嗎?\n",
                 children: [
@@ -1045,21 +1049,23 @@ class PersonFlyout extends StatelessWidget {
   });
 
   Widget _testDataRow(String result, BuildContext context) {
-    return Tile(
-      margin: const EdgeInsets.only(left: 10, right: 11),
-      child: Row(
-        children: [
-          Container(
-            width: 10, height: 10,
-            decoration: BoxDecoration(
-              color: Colors.green.lighter,
-              borderRadius: BorderRadius.circular(10)
+    return Padding(
+      padding: const EdgeInsets.only(left: 10, right: 11),
+      child: Tile(
+        title: Row(
+          children: [
+            Container(
+              width: 10, height: 10,
+              decoration: BoxDecoration(
+                color: Colors.green.lighter,
+                borderRadius: BorderRadius.circular(10)
+              ),
             ),
-          ),
-          const SizedBox(width: 18),
-          Text(result)
-        ]
-      ),
+            const SizedBox(width: 18),
+            Text(result)
+          ]
+        ),
+      )
     );
   }
 
@@ -1112,7 +1118,7 @@ class _UploadSectionState extends State<UploadSection> {
     final FilePickerResult? outputFile = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       lockParentWindow: true,
-      allowedExtensions: widget.homework.allowedExtensions,
+      allowedExtensions: widget.homework.testCase.allowedExtensions,
       dialogTitle: MyApp.locale.hwDetails_select_homework_window_title
     );
 
@@ -1152,11 +1158,11 @@ class _UploadSectionState extends State<UploadSection> {
     // For Chinese path support 
     var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
 
-    if (!widget.homework.allowedExtensions.contains(myFile.path.split(".").last)) {
+    if (!widget.homework.testCase.allowedExtensions.contains(myFile.path.split(".").last)) {
       logger.i("Unsupported format: ${myFile.path}");
       MyApp.showToast(
         MyApp.locale.error_occur, 
-        "${MyApp.locale.test_server_file_not_support} ${widget.homework.allowedExtensions.map((e) => ".$e").join(", ")}",
+        "${MyApp.locale.test_server_file_not_support} ${widget.homework.testCase.allowedExtensions.map((e) => ".$e").join(", ")}",
         InfoBarSeverity.error
       );
       return;
@@ -1185,7 +1191,7 @@ class _UploadSectionState extends State<UploadSection> {
         return;
       }
       
-      await widget.homework.fetchPassList();
+      await widget.homework.refreshPassList();
       await widget.homework.fetchTestcases();
       widget.homework.deleting = false;
       HomeworkInstance.update.add(EventType.setStateOverview);
@@ -1197,7 +1203,7 @@ class _UploadSectionState extends State<UploadSection> {
 
     await _uploadFile(file);
 
-    await widget.homework.fetchPassList();
+    await widget.homework.refreshPassList();
     await widget.homework.fetchTestcases();
 
     GlobalSettings.update.add(GlobalEvent.setHwState);
@@ -1284,14 +1290,7 @@ class _UploadSectionState extends State<UploadSection> {
           borderRadius: BorderRadius.circular(4)
         ): null,
         child: Tile(
-          icon: const Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              SizedBox(height: 10),
-              Icon(FluentIcons.upload)
-            ] 
-          ),
-          child: Column(
+          trailing: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(

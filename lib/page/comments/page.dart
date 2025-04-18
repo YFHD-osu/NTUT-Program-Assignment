@@ -1,13 +1,14 @@
 import 'dart:async';
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:ntut_program_assignment/core/api.dart';
+
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/main.dart';
+import 'package:ntut_program_assignment/models/api_model.dart';
 import 'package:ntut_program_assignment/provider/theme.dart';
-
 import 'package:ntut_program_assignment/router.dart';
-import 'package:ntut_program_assignment/widget.dart';
+import 'package:ntut_program_assignment/widgets/general_page.dart';
+import 'package:ntut_program_assignment/widgets/tile.dart';
 
 class CommentPage extends StatelessWidget {
   const CommentPage({super.key});
@@ -16,8 +17,8 @@ class CommentPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return FluentNavigation(
       title: MyApp.locale.comment_board_title,
-      struct: {
-        "default": CommentView()
+      builder: (String route) {
+        return CommentView();
       }
     );
   }
@@ -31,7 +32,7 @@ class CommentView extends StatefulWidget {
 }
 
 class CommentViewState extends State<CommentView> {
-  List<Comment>? comments;
+  List<UserComment>? comments;
   String? _error;
 
   final _update = StreamController<int>();
@@ -43,12 +44,6 @@ class CommentViewState extends State<CommentView> {
 
     try {
       comments = await GlobalSettings.account!.fetchMsgBoard();
-    } on RuntimeError catch (e) {
-      _error = e.message;
-      if (mounted) {
-        setState(() {});
-      }
-      return;
     } catch (e) {
       _error = e.toString();
       if (mounted) {
@@ -83,7 +78,7 @@ class CommentViewState extends State<CommentView> {
 
   @override
   Widget build(BuildContext context) {
-    if (!GlobalSettings.isLogin || GlobalSettings.isLoggingIn) {
+    if (!GlobalSettings.isLogin || (GlobalSettings.account?.isLoggingIn ?? false)) {
       return LoginBlock();
     }
     
@@ -132,8 +127,8 @@ class CommentList extends StatefulWidget {
     this.master
   });
   
-  final List<Comment> comments;
-  final Comment? master;
+  final List<UserComment> comments;
+  final UserComment? master;
   final StreamController<int> stream;
 
   @override
@@ -167,62 +162,63 @@ class CommentListState extends State<CommentList> {
   }
 
   Widget _replyBox() => Tile(
-    padding: EdgeInsets.fromLTRB(16, 0, 10, 0),
-    child: ListTile(
-      contentPadding: EdgeInsets.symmetric(vertical: 10),
-      title: RichText(
-        text: TextSpan(
-          style: TextStyle(color: ThemeProvider.instance.isLight ? Colors.black : Colors.white),
-          children: [
-            TextSpan(
-              text: GlobalSettings.account!.username,
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)
-            ),
-            TextSpan(
-              text: "  ${MyApp.locale.comment_board_add_reply}",
-              style: TextStyle(fontSize: 13)
-            ),
-          ]
-        )
+    padding: EdgeInsets.fromLTRB(20, 8, 10, 8),
+    leading: Container(
+      width: 40, height: 40,
+      decoration: BoxDecoration(
+        color: Colors.blue.lighter,
+        borderRadius: BorderRadius.circular(40)
       ),
-      subtitle: Padding(
-        padding: EdgeInsets.only(top: 5, right: 10),
-        child: TextBox(
-          enabled: !_isSending,
-          controller: _controller,
-          onChanged: (v) => setState(() {}),
-        )
-      ),
-      leading: Container(
-        width: 40, height: 40,
-        decoration: BoxDecoration(
-          color: Colors.blue.lighter,
-          borderRadius: BorderRadius.circular(40)
-        ),
-        child: Icon(FluentIcons.profile_search)
-      ),
-      trailing: FilledButton(
-        onPressed: _controller.text.isEmpty ? 
-          null : _send,
-        child: Text(MyApp.locale.send),
-      ),
+      child: Icon(FluentIcons.profile_search)
+    ),
+    trailing: FilledButton(
+      onPressed: _controller.text.isEmpty ? 
+        null : _send,
+      child: Text(MyApp.locale.send)
+    ),
+    title: RichText(
+      text: TextSpan(
+        style: TextStyle(color: ThemeProvider.instance.isLight ? Colors.black : Colors.white),
+        children: [
+          TextSpan(
+            text: GlobalSettings.account!.username,
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)
+          ),
+          TextSpan(
+            text: "  ${MyApp.locale.comment_board_add_reply}",
+            style: TextStyle(fontSize: 13)
+          )
+        ]
+      )
+    ),
+    subtitle: Padding(
+      padding: EdgeInsets.only(top: 5, right: 10),
+      child: TextBox(
+        enabled: !_isSending,
+        controller: _controller,
+        onChanged: (v) => setState(() {}),
+      )
     )
   );
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _replyBox(),
-        SizedBox(height: 5),
-        ...widget.comments.reversed.map((e) => CommentTile(comment: e, stream: widget.stream)),
-      ]
+    final contents = [
+      _replyBox(),
+      ...widget.comments.reversed.map((e) => CommentTile(comment: e, stream: widget.stream)),
+    ];
+
+    return ListView.separated(
+      shrinkWrap: true,
+      itemCount: contents.length,
+      itemBuilder: (context, index) => contents[index],
+      separatorBuilder: (context, index) => SizedBox(height: 8),
     );
   }
 }
 
 class CommentTile extends StatefulWidget {
-  final Comment comment;
+  final UserComment comment;
   final StreamController<int> stream;
   
   const CommentTile({
@@ -262,76 +258,81 @@ class _CommentTileState extends State<CommentTile> {
     );
   }
 
-  Widget _commentCard() => ListTile(
-    contentPadding: EdgeInsets.symmetric(vertical: 10),
-    title: RichText(
-      text: TextSpan(
-        style: TextStyle(color: ThemeProvider.instance.isLight ? Colors.black : Colors.white),
-        children: [
-          TextSpan(
-            text: widget.comment.author,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)
-          ),
-          TextSpan(
-            text: "  ${widget.comment.metadata}",
-            style: TextStyle(fontSize: 13)
-          ),
-        ]
-      )
+  RichText get _title => RichText(
+    text: TextSpan(
+      style: TextStyle(color: ThemeProvider.instance.isLight ? Colors.black : Colors.white),
+      children: [
+        TextSpan(
+          text: widget.comment.author,
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)
+        ),
+        TextSpan(
+          text: "  ${widget.comment.metadata}",
+          style: TextStyle(fontSize: 13)
+        ),
+      ]
+    )
+  );
+
+  RichText get _lore => RichText(
+    text: TextSpan(
+      style: TextStyle(color: ThemeProvider.instance.isLight ? Colors.black : Colors.white),
+      children: [
+        TextSpan(
+          text: "\n",
+          style: TextStyle(fontSize: 1)
+        ),
+        TextSpan(
+          text: widget.comment.text,
+          style: TextStyle(fontSize: 17)
+        )
+      ]
+    )
+  );
+
+  Widget get _leading => Container(
+    width: 40, height: 40,
+    decoration: BoxDecoration(
+      color: Colors.blue.lighter,
+      borderRadius: BorderRadius.circular(40)
     ),
-    subtitle: RichText(
-      text: TextSpan(
-        style: TextStyle(color: ThemeProvider.instance.isLight ? Colors.black : Colors.white),
-        children: [
-          TextSpan(
-            text: "\n",
-            style: TextStyle(fontSize: 1)
-          ),
-          TextSpan(
-            text: widget.comment.text,
-            style: TextStyle(fontSize: 17)
-          )
-        ]
-      )
-    ),
-    leading: Container(
-      width: 40, height: 40,
-      decoration: BoxDecoration(
-        color: Colors.blue.lighter,
-        borderRadius: BorderRadius.circular(40)
-      ),
-      child: Icon(FluentIcons.profile_search)
-    ),
-    // trailing: _buildTrailing(),
+    child: Icon(FluentIcons.profile_search)
+  );
+
+  Widget _commentCard() => Tile(
+    title: _title,
+    subtitle: _lore,
+    leading: _leading,
   );
 
   @override
   Widget build(BuildContext context) {
     
     if (!widget.comment.canReply) {
-      return Tile(
-        margin: EdgeInsets.symmetric(vertical: 5),
-        padding: EdgeInsets.fromLTRB(16, 0, 10, 0),
-        child: _commentCard()
-      );
+      return _commentCard();
     }
 
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 5),
-      child: Expander(
-        onStateChanged: (state) {
-          _isOpen = state;
-          setState(() {});
-        },
-        contentPadding: EdgeInsets.all(10),
-        header: _commentCard(),
-        content: CommentList(
-          master: widget.comment,
-          comments: widget.comment.child,
-          stream: widget.stream,
-        ),
-        icon: _buildTrailing()
-      )
+    return Expander(
+      onStateChanged: (state) {
+        _isOpen = state;
+        setState(() {});
+      },
+      contentPadding: EdgeInsets.all(8),
+      header: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [ _title, _lore ]
+      ),
+      leading: Padding(
+        padding: EdgeInsets.only(left: 3, right: 10),
+        child: _leading
+      ),
+      content: CommentList(
+        master: widget.comment,
+        comments: widget.comment.child,
+        stream: widget.stream,
+      ),
+      icon: _buildTrailing()
     );
   }
 }

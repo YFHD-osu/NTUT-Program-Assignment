@@ -1,8 +1,7 @@
-
 import 'package:fluent_ui/fluent_ui.dart';
 
-import 'package:ntut_program_assignment/widget.dart';
 import 'package:ntut_program_assignment/core/global.dart';
+import 'package:ntut_program_assignment/widgets/general_page.dart';
 
 class RouteItem {
   final String name, title;
@@ -68,11 +67,11 @@ class RouterController extends ChangeNotifier {
 }
 
 class CustomRouter extends StatefulWidget {
-  final Map<String, Widget> struct;
+  final Widget? Function(String) builder;
 
   const CustomRouter({
     super.key,
-    required this.struct
+    required this.builder
   });
 
   @override
@@ -82,6 +81,24 @@ class CustomRouter extends StatefulWidget {
 class _CustomRouterState extends State<CustomRouter> {
   String get cRoute => GlobalSettings.route.current.name;
   bool get isForward => GlobalSettings.route.isForward;
+
+  Widget _pageNotFound() {
+    return Center(
+      child: Column(
+        children: [
+          Icon(FluentIcons.error, size: 60),
+          SizedBox(height: 10),
+          Text("你是怎麼來到這個尚未完工之地的!"),
+          Text("請務必把方法分享給我聽聽~"),
+          Text(
+            "Current route ID: "
+            "${GlobalSettings.route._root}/"
+            "${GlobalSettings.route.routes.map((e) => e.name).join("/")}"
+          )
+        ]
+      )
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +125,7 @@ class _CustomRouterState extends State<CustomRouter> {
       duration: const Duration(milliseconds: 300),
       child: PageBase(
         key: ValueKey(cRoute),
-        child: widget.struct[cRoute] ?? const SizedBox()
+        child: widget.builder.call(cRoute) ?? _pageNotFound()
       )
     );
   }
@@ -116,11 +133,13 @@ class _CustomRouterState extends State<CustomRouter> {
 
 class FluentNavigation extends StatefulWidget {
   final String title;
-  final Map<String, Widget> struct;
+
+  final Widget? Function(String) builder;
+  // final Map<String, Widget> struct;
 
   const FluentNavigation({
     super.key,
-    required this.struct,
+    required this.builder,
     required this.title
   });
 
@@ -187,7 +206,7 @@ class _FluentNavigationState extends State<FluentNavigation> {
           )
         )
       ),
-      content: CustomRouter(struct: widget.struct)
+      content: CustomRouter(builder: widget.builder)
     );
   }
 }

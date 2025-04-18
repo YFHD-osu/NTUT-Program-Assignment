@@ -1,8 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'package:diff_match_patch/diff_match_patch.dart';
-
-import 'package:ntut_program_assignment/core/diff_matcher.dart';
+import 'package:ntut_program_assignment/models/diff_model.dart';
 
 String previousVersion = // Standard
 """

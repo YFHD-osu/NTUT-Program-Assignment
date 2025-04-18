@@ -1,17 +1,18 @@
 import 'dart:io';
 import 'dart:async';
-import 'package:fluent_ui/fluent_ui.dart';
-import 'package:logger/logger.dart' show Logger;
-import 'package:ntut_program_assignment/page/exercise/page.dart';
 
 import 'package:provider/provider.dart';
+import 'package:fluent_ui/fluent_ui.dart';
+import 'package:logger/logger.dart' show Logger;
 import 'package:toastification/toastification.dart';
-// import 'package:window_manager/window_manager.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:window_manager/window_manager.dart' show WindowCaption, windowManager;
 
-import 'package:ntut_program_assignment/core/api.dart';
+import 'package:ntut_program_assignment/api/api_service.dart';
+import 'package:ntut_program_assignment/core/platform.dart';
+import 'package:ntut_program_assignment/page/exercise/page.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/core/updater.dart';
 import 'package:ntut_program_assignment/core/logger.dart';
@@ -20,8 +21,6 @@ import 'package:ntut_program_assignment/provider/theme.dart';
 import 'package:ntut_program_assignment/page/comments/page.dart' show CommentPage;
 import 'package:ntut_program_assignment/page/homework/page.dart' show HomeworkPage;
 import 'package:ntut_program_assignment/page/settings/page.dart' show SettingsPage;
-import 'package:ntut_program_assignment/widget.dart';
-import 'package:window_manager/window_manager.dart' show WindowCaption, windowManager;
 
 late final Logger logger;
 
@@ -47,7 +46,6 @@ void main() async {
 
   await GlobalSettings.initialize();
   await ThemeProvider.instance.initialize();
-
   await TestServer.initialize();
 
   runApp(const MyApp());
@@ -179,8 +177,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final routeMap = {
     "hwlist": 0,
     "comments": 1,
-    "settings": 2,
-    "exercise": 3
+    "exercise": 2,
+    "settings": 3
   };
   
   Future<void> _fetchUpdate() async {

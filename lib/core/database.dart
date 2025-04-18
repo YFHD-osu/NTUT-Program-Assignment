@@ -5,10 +5,10 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_acrylic/window_effect.dart' show WindowEffect;
 import 'package:hive/hive.dart';
 import 'package:crypto/crypto.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
-import 'package:ntut_program_assignment/widget.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:ntut_program_assignment/core/platform.dart';
 
 class Database {
   final String name;
@@ -193,4 +193,18 @@ class Preferences {
 
     _language = map["language"] ?? "zh_Hant";
   }
+}
+
+class LocalProblemDatabase {
+  final database = Database(
+    name: "local_problem"
+  );
+
+
+  Future<void> initialize() async {
+    await database.initialize();
+    // await refresh();
+  }
+
+
 }
