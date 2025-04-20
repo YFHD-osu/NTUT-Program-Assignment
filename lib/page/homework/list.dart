@@ -123,7 +123,8 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
         "${MyApp.locale.hwDetails_deadline}: ${hw.deadline.toRelative()}"
       ),
       leading: Icon(
-        hw.isPass ? FluentIcons.check_mark : FluentIcons.clear
+        hw.isPass ? FluentIcons.check_mark :
+          hw.canHandIn ? FluentIcons.pen_workspace : FluentIcons.clear 
       ),
       trailing: Icon(FluentIcons.chevron_right),
       onPressed: () {
