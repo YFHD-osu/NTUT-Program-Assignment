@@ -18,64 +18,66 @@ class DiffIndicator extends StatelessWidget {
           delegate: SliverChildBuilderDelegate(
             childCount: matcher.length,
             (BuildContext context, int index) {
-              return Tile(
-                // margin: EdgeInsets.symmetric(vertical: 3.5),
-                padding: EdgeInsets.symmetric(vertical: 2),
-
-                leading: Container(
-                  width: 40,
-                  decoration: BoxDecoration(
-                    color: matcher.widgets[index].isEqual ? 
-                      Colors.green.lighter : Colors.red.lighter,
-                    borderRadius: BorderRadius.circular(4)
+              return Padding(
+                padding: EdgeInsets.symmetric(vertical: 3.5),
+                child: Tile(
+                  padding: EdgeInsets.symmetric(vertical: 2),
+                  leading: Container(
+                    width: 40,
+                    margin: EdgeInsets.only(left: 8),
+                    decoration: BoxDecoration(
+                      color: matcher.widgets[index].isEqual ? 
+                        Colors.green.lighter : Colors.red.lighter,
+                      borderRadius: BorderRadius.circular(4)
+                    ),
+                    child: Column(
+                      children: [
+                        Text("行"),
+                        Text(index.toString())
+                      ]
+                    )
                   ),
-                  child: Column(
-                    children: [
-                      Text("行"),
-                      Text(index.toString())
-                    ]
-                  )
-                ),
-                title: RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      fontFamily: "FiraCode",
-                      fontSize: 14 * GlobalSettings.prefs.testcaseTextFactor
-                    ),
-                    children: [
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.middle,
-                        child: Icon(
-                          FluentIcons.check_mark,
-                          size: 12 * GlobalSettings.prefs.testcaseTextFactor
-                        )
+                  title: RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontFamily: "FiraCode",
+                        fontSize: 14 * GlobalSettings.prefs.testcaseTextFactor
                       ),
-                      WidgetSpan(
-                        child: SizedBox(width: 5)
+                      children: [
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: Icon(
+                            FluentIcons.check_mark,
+                            size: 12 * GlobalSettings.prefs.testcaseTextFactor
+                          )
+                        ),
+                        WidgetSpan(
+                          child: SizedBox(width: 5)
+                        ),
+                        ... matcher.widgets[index].original
+                      ]
+                  )),
+                  subtitle: RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                        height: 1,
+                        fontFamily: "FiraCode",
+                        fontSize: 14 * GlobalSettings.prefs.testcaseTextFactor
                       ),
-                      ... matcher.widgets[index].original
-                    ]
-                )),
-                subtitle: RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      height: 1,
-                      fontFamily: "FiraCode",
-                      fontSize: 14 * GlobalSettings.prefs.testcaseTextFactor
-                    ),
-                    children: [
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.middle,
-                        child: Icon(
-                          FluentIcons.lightbulb_solid,
-                          size: 12 * GlobalSettings.prefs.testcaseTextFactor
-                        )
-                      ),
-                      WidgetSpan(
-                        child: SizedBox(width: 5)
-                      ),
-                      ... matcher.widgets[index].response
-                    ]
+                      children: [
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: Icon(
+                            FluentIcons.lightbulb_solid,
+                            size: 12 * GlobalSettings.prefs.testcaseTextFactor
+                          )
+                        ),
+                        WidgetSpan(
+                          child: SizedBox(width: 5)
+                        ),
+                        ... matcher.widgets[index].response
+                      ]
+                    )
                   )
                 )
               );
