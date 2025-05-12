@@ -518,7 +518,6 @@ class Case {
     testOutput != null;
 
   bool get isPass {
-<<<<<<< HEAD
     final outputs = output.split("\n");
     final testOutputs = testOutput??[];
 
@@ -529,16 +528,6 @@ class Case {
     return List
       .generate(outputs.length, (e) => e)
       .every((i) => outputs[i].trimRight() == testOutputs[i].trimRight());
-=======
-    final answer = output.split("\n");
-    if (answer.length != testOutput?.length) {
-      return false;
-    }
-
-    return List<int>.generate(answer.length, (e) => e)
-      .every((e) => answer[e].trimRight() == testOutput![e].trimRight());
-
->>>>>>> 6bfaf8e77746d718ae5b82c6597bf53714dc813a
   }
 
   bool get hasError =>
