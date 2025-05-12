@@ -518,7 +518,14 @@ class Case {
     testOutput != null;
 
   bool get isPass {
-    return output.trim() == testOutput?.join("\n").trim();
+    final answer = output.split("\n");
+    if (answer.length != testOutput?.length) {
+      return false;
+    }
+
+    return List<int>.generate(answer.length, (e) => e)
+      .every((e) => answer[e].trimRight() == testOutput![e].trimRight());
+
   }
 
   bool get hasError =>
