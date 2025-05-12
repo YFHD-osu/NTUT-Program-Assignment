@@ -379,7 +379,13 @@ class Homework {
 
     int attempts = 1;
 
-    await GlobalSettings.account!.upload(hwId, language, bytes, filename);
+    try {
+      await GlobalSettings.account!.upload(hwId, language, bytes, filename);
+    } on TimeoutException catch (_) {
+      // Go to fetch state function if upload request timeout
+    } catch (e) {
+      rethrow;
+    }
 
     while (attempts > 0) {
       final state = await _fetchState();

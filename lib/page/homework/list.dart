@@ -154,7 +154,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
         Text(MyApp.locale.hwDetails_failed, style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         SizedBox(
-          height: (65 * notPasses.length) + (10 * (notPasses.length-1)),
+          height: (61 * notPasses.length) + (10 * (notPasses.length-1)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: notPasses
@@ -181,7 +181,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
         Text(MyApp.locale.hwDetails_passed, style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
         SizedBox(
-          height: (61 * passed.length) + (10 * (passed.length-1)),
+          height: (60 * passed.length) + (10 * (passed.length-1)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: passed
