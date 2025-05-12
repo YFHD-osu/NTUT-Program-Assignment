@@ -1,0 +1,36 @@
+display_name: NTUT Program Assignment
+package_name: ntut-program-assignment
+
+maintainer:
+  name: YFHD-osu
+  email: yfhdtw@gmail.com
+
+co_authors:
+  - name: Kingkor Roy Tirtho
+    email: krtirtho@gmail.com
+
+priority: optional
+section: x11
+installed_size: 20000
+essential: false
+
+icon: assets/icon@x500.png
+
+postinstall_scripts:
+  - echo "Installed my awesome app"
+postuninstall_scripts:
+  - echo "Surprised Pickachu face"
+
+keywords:
+  - NTUT
+  - NTUT Program
+
+generic_name: Program Homework 
+
+categories:
+  - Development
+  - Utility
+
+startup_notify: true
+
+metainfo: linux/packaging/ntut.appdata.xml
