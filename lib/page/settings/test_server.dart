@@ -52,12 +52,24 @@ class _TestServerRouteState extends State<TestServerRoute> {
   }
 
   Future<void> _customPath(String type) async {
-    final FilePickerResult? outputFile = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      lockParentWindow: true,
-      allowedExtensions: compilerAllowExtension,
-      dialogTitle: MyApp.locale.settings_test_server_select_compiler
-    );
+    late final FilePickerResult? outputFile;
+    try {
+      outputFile = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        lockParentWindow: true,
+        allowedExtensions: compilerAllowExtension,
+        dialogTitle: MyApp.locale.settings_test_server_select_compiler
+      );
+    } on Exception catch (e) {
+      if (Platform.isLinux) {
+        logger.e("Cannot open file picker, you need to install qarma, zenity or kdialog:\n$e");
+      } else {
+        logger.e(e);
+      }
+      
+      return;
+    }
+    
 
     if (outputFile?.paths.first == null) {
       setState(() {});

@@ -48,6 +48,36 @@ class _ThemeSectionState extends State<ThemeSection> {
     MyApp.locale.settings_personalize_dark_theme
   ];
 
+  // Only build mica settings combobox for supported devices
+  List<Widget> _buildMicaSettings() {
+    if (! ThemeProvider.isMicaSupport) {
+      return [
+        SizedBox(height: 20)
+      ];
+    }
+
+    return [
+      const SizedBox(height: 20),
+        const Divider(
+          style: DividerThemeData(horizontalMargin: EdgeInsets.zero)),
+        ListTile(
+          contentPadding: EdgeInsets.only(left: 40, right: 15, top: 5, bottom: 5),
+          title: Text(MyApp.locale.settings_personalize_window_effect),
+          trailing: ComboBox<WindowEffect>(
+            items: ThemeProvider.allowEffects
+              .map((e) => ComboBoxItem<WindowEffect>(
+                  value: e, child: Text(e.name.capitalize())))
+              .toList(),
+            value: GlobalSettings.prefs.windowEffect,
+            onChanged: (WindowEffect? effect) async {
+              ThemeProvider.instance
+                .setEffect(effect ?? WindowEffect.disabled);
+              setState(() {});
+            })
+        )
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Expander(
@@ -85,24 +115,7 @@ class _ThemeSectionState extends State<ThemeSection> {
             return const SizedBox(height: 20);
           }
         }),
-        const SizedBox(height: 20),
-        const Divider(
-          style: DividerThemeData(horizontalMargin: EdgeInsets.zero)),
-        ListTile(
-          contentPadding: EdgeInsets.only(left: 40, right: 15, top: 5, bottom: 5),
-          title: Text(MyApp.locale.settings_personalize_window_effect),
-          trailing: ComboBox<WindowEffect>(
-            items: ThemeProvider.allowEffects
-              .map((e) => ComboBoxItem<WindowEffect>(
-                  value: e, child: Text(e.name.capitalize())))
-              .toList(),
-            value: GlobalSettings.prefs.windowEffect,
-            onChanged: (WindowEffect? effect) async {
-              ThemeProvider.instance
-                .setEffect(effect ?? WindowEffect.disabled);
-              setState(() {});
-            })
-        )
+        ..._buildMicaSettings()
       ]));
   }
 }

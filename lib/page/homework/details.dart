@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dotted_decoration/dotted_decoration.dart';
+import 'package:ntut_program_assignment/core/platform.dart' show Platforms;
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 import 'package:animated_flip_counter/animated_flip_counter.dart';
 
@@ -1115,12 +1116,25 @@ class _UploadSectionState extends State<UploadSection> {
 
     setState(() => _explorerOpen = true);
 
-    final FilePickerResult? outputFile = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      lockParentWindow: true,
-      allowedExtensions: widget.homework.testCase.allowedExtensions,
-      dialogTitle: MyApp.locale.hwDetails_select_homework_window_title
-    );
+    late final FilePickerResult? outputFile; 
+
+    try {
+      outputFile = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        lockParentWindow: true,
+        allowedExtensions: widget.homework.testCase.allowedExtensions,
+        dialogTitle: MyApp.locale.hwDetails_select_homework_window_title
+      );
+    } on Exception catch (e) {
+      if (Platform.isLinux) {
+        logger.e("Cannot open file picker, you need to install qarma, zenity or kdialog:\n$e");
+      } else {
+        logger.e(e);
+      }
+
+      setState(() => _explorerOpen = false);
+      return;
+    }
 
     if (outputFile?.paths.first == null) {
       setState(() => _explorerOpen = false);
@@ -1156,7 +1170,14 @@ class _UploadSectionState extends State<UploadSection> {
 
   void _convertDragPath(path) async {
     // For Chinese path support 
-    var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
+    String fileUri = Uri.decodeFull(path.toString().replaceAll(r"file:///", ""));
+
+    // Fix file path doesn't start with '/' and cause file not found error
+    if (Platforms.isLinux && !fileUri.startsWith("/")) {
+      fileUri = "/$fileUri";
+    }
+
+    var myFile = File(fileUri);
 
     if (!widget.homework.testCase.allowedExtensions.contains(myFile.path.split(".").last)) {
       logger.i("Unsupported format: ${myFile.path}");
@@ -1281,7 +1302,7 @@ class _UploadSectionState extends State<UploadSection> {
       onDropLeave: _onDropLeave,
       onPerformDrop: _onPerformDrop,
       child: AnimatedContainer(
-        height: _isDragOver && widget.homework.canUpload ? 200 : 63,
+        height: _isDragOver && widget.homework.canUpload ? 200 : 65,
         duration: const Duration(milliseconds: 150),
         foregroundDecoration: _isDragOver && widget.homework.canUpload ? DottedDecoration(
           shape: Shape.box,

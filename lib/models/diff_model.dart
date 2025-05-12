@@ -3,6 +3,7 @@ import 'dart:core';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:diff_match_patch/diff_match_patch.dart';
+import 'package:ntut_program_assignment/provider/theme.dart';
 
 class DiffWidgetData {
   final List<TextSpan> original;
@@ -42,7 +43,8 @@ class DiffWidgetData {
         return TextSpan(
           text: e.text,
           style: TextStyle(
-            color: Colors.white
+            color: ThemeProvider.instance.isDark ? 
+            Colors.white : Colors.black
           )
         );
       }
@@ -59,7 +61,8 @@ class DiffWidgetData {
       return TextSpan(
         text: e.text,
         style: TextStyle(
-          color: Colors.white
+          color: ThemeProvider.instance.isDark ? 
+            Colors.white : Colors.black
         )
       );
     }

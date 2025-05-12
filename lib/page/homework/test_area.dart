@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:ntut_program_assignment/core/platform.dart' show Platforms;
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import 'package:ntut_program_assignment/widgets/diff_indicator.dart';
@@ -40,10 +41,10 @@ class _TestAreaState extends State<TestArea> {
   Widget _testcaseBtns() => GridView(
     shrinkWrap : true,
     gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 100,
-        childAspectRatio: 2.8,
-        crossAxisSpacing: 5,
-        mainAxisSpacing: 5
+      maxCrossAxisExtent: 100,
+      childAspectRatio: 2.8,
+      crossAxisSpacing: 5,
+      mainAxisSpacing: 5
     ),
     children: List<int>.generate(widget.testcase.cases.length, (e) => e)
       .map((e) => _testcaseBtn(e))
@@ -94,7 +95,15 @@ class _TestAreaState extends State<TestArea> {
   }
 
   Future<void> _onLoad(path) async {
-    var myFile = File(Uri.decodeFull(path.toString().replaceAll(r"file:///", "")));
+    // For Chinese path support 
+    String fileUri = Uri.decodeFull(path.toString().replaceAll(r"file:///", ""));
+
+    // Fix file path doesn't start with '/' and cause file not found error
+    if (Platforms.isLinux && !fileUri.startsWith("/")) {
+      fileUri = "/$fileUri";
+    }
+
+    var myFile = File(fileUri);
 
     if (!widget.testcase.allowedExtensions.contains(myFile.path.split(".").last)) {
       logger.i("Unsupported format: ${myFile.path}");
@@ -372,8 +381,7 @@ class _TestAreaState extends State<TestArea> {
               const SizedBox(width: 10),
               Text(
                 "${MyApp.locale.testcase}"
-                " ${_selectTestcase+1}",
-                style: const TextStyle(color: Colors.white)
+                " ${_selectTestcase+1}"
               )
             ]
           ),
@@ -428,12 +436,12 @@ class _TestAreaState extends State<TestArea> {
 
     setState(() {});
 
-    try {
       await _testCase.compileAndTest(
         widget.testcase.testFile!,
         index,
         widget.testcase.codeType
       );
+    try {
     } on TestException catch (e) {
       MyApp.showToast("${MyApp.locale.test}${index+1}", e.message, InfoBarSeverity.error);
       if (mounted) setState(() {});

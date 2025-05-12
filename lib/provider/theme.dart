@@ -36,6 +36,8 @@ class ThemeProvider extends ChangeNotifier {
   WindowEffect get effect => 
     GlobalSettings.prefs.windowEffect;
 
+  static late final bool isMicaSupport;
+
   void _removeTitleBarButtons() { 
     final hWnd = appWindow.handle;
     if (hWnd==null) return;
@@ -44,7 +46,7 @@ class ThemeProvider extends ChangeNotifier {
       hWnd,
       WINDOW_LONG_PTR_INDEX.GWL_STYLE
     );
-
+  
     // Remove minimize, maximize, and close buttons
     SetWindowLongPtr(
       hWnd,
@@ -93,6 +95,8 @@ class ThemeProvider extends ChangeNotifier {
   }
   
   Future<ThemeMode> initialize() async {
+    isMicaSupport = Platforms.isWindows || Platforms.isMacOS;
+
     await setTheme(theme);    
 
     if (Platforms.isWindows) {
@@ -106,18 +110,23 @@ class ThemeProvider extends ChangeNotifier {
   Future<void> setEffect(WindowEffect effect) async {
     GlobalSettings.prefs.windowEffect = effect;
     
-    await Window.setEffect(
-      dark: isDark,
-      effect: effect,
-      color: isDark ? Colors.transparent : Colors.red,
-    );
+    if (isMicaSupport) {
+      await Window.setEffect(
+        dark: isDark,
+        effect: effect,
+        color: isDark ? Colors.transparent : Colors.red,
+      );
+    }
 
     notifyListeners();
   }
 
   Future<void> setTheme(ThemeMode themeMode) async {
     GlobalSettings.prefs.themeMode = themeMode;
+
+    // Only set mica effect in windows or macOS, Linux is not supported
     await setEffect(effect);
+
     notifyListeners();
   }
 

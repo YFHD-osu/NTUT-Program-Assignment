@@ -39,11 +39,13 @@ void main() async {
   HttpOverrides.global = DevHttpOverrides();
 
   if (Platforms.isDesktop) {
-    // Enable windows mica effect
     await windowManager.ensureInitialized();
-    await Window.initialize();
-  }
 
+    // Enable windows mica effect for non linux deevicesZ
+    if (!Platforms.isLinux) {
+      await Window.initialize();
+    }
+  }
   await GlobalSettings.initialize();
   await ThemeProvider.instance.initialize();
   await TestServer.initialize();
@@ -52,9 +54,10 @@ void main() async {
 
   if (Platforms.isDesktop) {
     doWhenWindowReady(() {
-      appWindow.size = const Size(800, 600);
-      appWindow.minSize = const Size(800, 600);
       appWindow.title = "NTUT Program Assigiment";
+
+      appWindow.minSize = const Size(400, 300);
+
       appWindow.show();
     });
   }
@@ -149,11 +152,13 @@ class MyApp extends StatelessWidget {
         // print(AppLocalizations.supportedLocales);
         return FluentApp(
           locale: _locale,
-          // scrollBehavior: MyCustomScrollBehavior(),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           debugShowCheckedModeBanner: false,
-          home: WindowBorder(color: Colors.transparent, child: const HomePage()),
+          home: WindowBorder(
+            color: Colors.transparent,
+            child: const HomePage()
+          ),
           theme: ThemePack.light,
           darkTheme: ThemePack.dark,
           themeMode: themeProvider.theme,
