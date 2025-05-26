@@ -21,11 +21,9 @@ class DiffWidgetData {
   }
 
   static bool _isLineCorrect(List<Diff> original, List<Diff> response) {
-    if (!original.every((e) => e.operation == 0)) {
-      return false;
-    }
-    
-    return response.every((e) => e.operation == 0);
+    return [...original, ...response]
+      .where((e) => e.text.isNotEmpty) // Filter Diff("", 1) condition
+      .every((e) => e.operation == 0); // See if every non-empty element is the same 
   }
 
   static List<TextSpan> _diffsToText(List<Diff> diffs) {
@@ -132,37 +130,19 @@ class DifferentMatcher {
 
     _matchOverall(original, response, originalDiff, responseDiff);
     
-    if (_checkReliability(originalDiff, responseDiff) || true) {
-      final lineCount = max(originalDiff.length, responseDiff.length);
-
-      return DifferentMatcher(
-        original: originalDiff,
-        response: responseDiff,
-        widgets: List
-          .generate(lineCount, (e) => e)
-          .map((e) => DiffWidgetData.fromDiffs(
-            e < originalDiff.length ? originalDiff[e] : [],
-            e < responseDiff.length ? responseDiff[e] : []
-          ))
-          .toList()
-      );
-    }
-
-    /*
-    originalDiff.clear();
-    responseDiff.clear();
-
-    _matchLineByLine(original, response, originalDiff, responseDiff);
+    final lineCount = max(originalDiff.length, responseDiff.length);
 
     return DifferentMatcher(
-      original: originalDiff, 
+      original: originalDiff,
       response: responseDiff,
       widgets: List
-        .generate(originalDiff.length, (e) => e)
-        .map((e) => DiffWidgetData.fromDiffs(originalDiff[e], responseDiff[e]))
+        .generate(lineCount, (e) => e)
+        .map((e) => DiffWidgetData.fromDiffs(
+          e < originalDiff.length ? originalDiff[e] : [],
+          e < responseDiff.length ? responseDiff[e] : []
+        ))
         .toList()
     );
-    */
   }
 
   static void _matchOverall(

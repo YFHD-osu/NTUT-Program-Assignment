@@ -56,7 +56,7 @@ void main() async {
     doWhenWindowReady(() {
       appWindow.title = "NTUT Program Assigiment";
 
-      appWindow.minSize = const Size(400, 300);
+      appWindow.minSize = const Size(640, 480);
 
       appWindow.show();
     });

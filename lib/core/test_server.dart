@@ -510,25 +510,24 @@ class Case {
 
   Case({
     required this.input,
-    required this.output,
+    required this.output
     // required this.original
   });
 
-  bool get hasOutput => 
-    testOutput != null;
-
-  bool get isPass {
-    final outputs = output.split("\n");
-    final testOutputs = testOutput??[];
-
-    if (outputs.length != testOutputs.length) {
+  bool _isPassCheck(List<String> output, List<String> answer) {
+    if (output.length != answer.length) {
       return false;
     }
 
     return List
-      .generate(outputs.length, (e) => e)
-      .every((i) => outputs[i].trimRight() == testOutputs[i].trimRight());
+      .generate(output.length, (e) => e)
+      .every((i) => output[i].trimRight() == answer[i].trimRight());
   }
+
+  bool get hasOutput => 
+    testOutput != null;
+
+  bool isPass = false;
 
   bool get hasError =>
     testError?.isNotEmpty??false;
@@ -541,6 +540,11 @@ class Case {
     if (testOutput != null) {
       matcher = DifferentMatcher.trimAndMatch(this.output.split("\n"), testOutput!);
     }
+
+    isPass = _isPassCheck(
+      this.output.split("\n"),
+      testOutput??[]
+    );
   }
 
   void resetTestState() {
