@@ -56,7 +56,7 @@ class ProgramTest {
         .timeout(const Duration(seconds: 10));
     } on TimeoutException catch (_) {
       process.kill();
-      throw TestException("測試時間超時，已強制結束");
+      throw TestException(MyApp.locale.testcase_timeout);
     }
 
     final out = await process.stdout

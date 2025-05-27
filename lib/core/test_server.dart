@@ -220,6 +220,7 @@ class Testcase {
   Future<void> compileAndTest(File target, int index, CodeType type) async {
     try {
       final exec = await compile(target, type);
+      logger.i("Compile complete. (${exec.path})");
       await test(exec, index, type);
     } catch (e) {
       _writeErrorToTestcase(e, index);
@@ -297,18 +298,27 @@ class Testcase {
 
     final compileDir = "${(await getApplicationSupportDirectory()).path}/build";
 
-    if (! (await Directory(compileDir).exists())) {
-      await Directory(compileDir).create(recursive: true);
-    }
+    logger.d("Start compiling ${target.path}");
 
     compile = await Process.start(
       GlobalSettings.prefs.gccPath ?? "gcc",
       [target.path, '-o', '$compileDir/$filename']
     );
 
+    // Listen to the stream to prevent compile timeout while gcc throw warning
+    // (Make no sense, and linux works without listening them) 
+    compile.stdout.asBroadcastStream().listen((data) {
+      logger.d("[Compile STDOUT] ${utf8.decode(data)}");
+    });
+
+    compile.stderr.asBroadcastStream().listen((data) {
+      logger.d("[Compile STDERR] ${utf8.decode(data)}");
+    });
+
     await compile.exitCode
       .timeout(const Duration(seconds: 10));
     
+    logger.d("Compile complete (${target.path})");
     final exitCode = await compile.exitCode;
     compile.kill();
 
