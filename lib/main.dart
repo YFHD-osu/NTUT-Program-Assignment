@@ -7,9 +7,9 @@ import 'package:logger/logger.dart' show Logger;
 import 'package:toastification/toastification.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:window_manager/window_manager.dart' show WindowCaption, windowManager;
 
+import 'package:ntut_program_assignment/l10n/app_localizations.dart';
 import 'package:ntut_program_assignment/api/api_service.dart';
 import 'package:ntut_program_assignment/core/platform.dart';
 import 'package:ntut_program_assignment/page/exercise/page.dart';

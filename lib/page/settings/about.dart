@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import 'package:ntut_program_assignment/l10n/app_localizations.dart';
 import 'package:ntut_program_assignment/core/updater.dart';
 import 'package:ntut_program_assignment/main.dart' show MyApp;
 import 'package:ntut_program_assignment/widgets/tile.dart';
