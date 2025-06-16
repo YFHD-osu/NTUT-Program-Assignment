@@ -72,7 +72,7 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
     try {
       HomeworkInstance.homeworks = await GlobalSettings.account!.fetchHomeworkList();
       await _fetchDescription();
-      await Homework.refreshHandedIn(HomeworkInstance.homeworks);
+      await Homework.refreshHomeworkListHandedIn(HomeworkInstance.homeworks);
     } catch (e) {
       errMsg = e.toString();
       _loadCount = null;

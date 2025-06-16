@@ -44,17 +44,17 @@ class ThemeProvider extends ChangeNotifier {
 
     final currentStyle = GetWindowLongPtr(
       hWnd,
-      WINDOW_LONG_PTR_INDEX.GWL_STYLE
+      GWL_STYLE
     );
   
     // Remove minimize, maximize, and close buttons
     SetWindowLongPtr(
       hWnd,
-      WINDOW_LONG_PTR_INDEX.GWL_STYLE,
+      GWL_STYLE,
       currentStyle & 
         // ~WINDOW_STYLE.WS_MINIMIZEBOX & 
         // ~WINDOW_STYLE.WS_MAXIMIZEBOX & 
-        ~WINDOW_STYLE.WS_SYSMENU,
+        ~WS_SYSMENU,
     );
 
     // Update the window's style to apply changes
@@ -65,10 +65,10 @@ class ThemeProvider extends ChangeNotifier {
       0,
       0,
       0,
-      SET_WINDOW_POS_FLAGS.SWP_NOMOVE | 
-        SET_WINDOW_POS_FLAGS.SWP_NOSIZE | 
-        SET_WINDOW_POS_FLAGS.SWP_NOZORDER | 
-        SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED
+      SWP_NOMOVE | 
+      SWP_NOSIZE | 
+      SWP_NOZORDER | 
+      SWP_FRAMECHANGED
     );
   }
 

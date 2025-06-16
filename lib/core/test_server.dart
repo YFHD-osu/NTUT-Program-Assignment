@@ -190,15 +190,33 @@ class Testcase {
   Future<void> testAll(File target, CodeType type) async {
     late final File exec;
 
-    try {
-      exec = await compile(target, type);
+    exec = await compile(target, type);
 
-      for (int i=0; i<cases.length; i++) {
-        await test(exec, i, type);
-      }
-    } catch (e) {
-      _writeErrorToTestcase(e, 0);
-      rethrow;
+    for (int i=0; i<cases.length; i++) {
+      await test(exec, i, type);
+    }
+
+    // try {
+      
+    // } catch (e) {
+    //   _writeErrorToTestcase(e, 0);
+    //   rethrow;
+    // }
+  }
+
+  /// Clear all output data and set testing flag for children 
+  /// - Mostly execute before test start to set testing flag
+  void beforeTestStart() {
+    for (var testCase in cases) {
+      testCase.beforeTestStart();
+    }
+  }
+
+  /// Set testing flag to false and clear all output data
+  /// - Mostly execute after testing error to clear testing flag
+  void clearAll() {
+    for (var testCase in cases) {
+      testCase.clear();
     }
   }
 
@@ -218,13 +236,9 @@ class Testcase {
   }
 
   Future<void> compileAndTest(File target, int index, CodeType type) async {
-    try {
-      final exec = await compile(target, type);
-      logger.i("Compile complete. (${exec.path})");
-      await test(exec, index, type);
-    } catch (e) {
-      _writeErrorToTestcase(e, index);
-    }
+    final exec = await compile(target, type);
+    logger.i("Compile complete. (${exec.path})");
+    await test(exec, index, type);
   }
 
   Future<void> test(File target, int index, CodeType type) async {
@@ -249,12 +263,7 @@ class Testcase {
 
     late final Process process;
 
-    try {
-      process = await Process.start(GlobalSettings.prefs.pythonPath ?? "python", [target.path]);
-    } catch (e) {
-      cases[index].testError = ["${MyApp.locale.testcase_file_failed_to_execute} $e"];
-      return;
-    }    
+    process = await Process.start(GlobalSettings.prefs.pythonPath ?? "python", [target.path]);
 
     for (var line in cases[index].input.split("\n")) {
       // print("Feeding: $line");
@@ -298,21 +307,31 @@ class Testcase {
 
     final compileDir = "${(await getApplicationSupportDirectory()).path}/build";
 
+    if (!await Directory(compileDir).exists()) {
+      await Directory(compileDir).create(recursive: true);
+    }
+
     logger.d("Start compiling ${target.path}");
 
     compile = await Process.start(
       GlobalSettings.prefs.gccPath ?? "gcc",
-      [target.path, '-o', '$compileDir/$filename']
+      [target.path, '-o', '$compileDir/$filename', '-lm']
     );
 
     // Listen to the stream to prevent compile timeout while gcc throw warning
-    // (Make no sense, and linux works without listening them) 
-    compile.stdout.asBroadcastStream().listen((data) {
+    // (Make no sense, and linux works without listening them)
+    final stdout = compile.stdout.asBroadcastStream();
+    final stderr = compile.stderr.asBroadcastStream();
+
+    final List<String> errorMessage = [];
+
+    stdout.listen((data) {
       logger.d("[Compile STDOUT] ${utf8.decode(data)}");
     });
 
-    compile.stderr.asBroadcastStream().listen((data) {
-      logger.d("[Compile STDERR] ${utf8.decode(data)}");
+    stderr.listen((data) {
+      errorMessage.add(utf8.decode(data));
+      logger.d("[Compile STDERR] ${errorMessage.last}");
     });
 
     await compile.exitCode
@@ -323,14 +342,11 @@ class Testcase {
     compile.kill();
 
     if (exitCode != 0) {
-      final err = await compile.stderr
-        .map((e) => utf8.decode(e))
-        .toList();
 
-      logger.e("failed to compile: ${target.path} \n$err");
+      logger.e("Failed to compile: ${target.path}");
       throw RuntimeError(
         "${MyApp.locale.testcase_program_error_with}\n"
-        "${err.join('\n')}\n"
+        "${errorMessage.join('\n')}\n"
         "The program exited with code $exitCode"
       );
     } 
@@ -388,36 +404,6 @@ class Testcase {
     );
 
     return;
-  }
-
-  void _writeErrorToTestcase(Object? error, int index) {
-    switch (error) {
-      case TimeoutException():
-        cases[index].setOutput(
-          error: [MyApp.locale.testcase_timeout]
-        );
-        throw TestException(MyApp.locale.testcase_timeout);
-      
-      case OSError():
-        cases[index].setOutput(
-          error: ["${MyApp.locale.testcase_invalid_test_file} ${error.message}"]
-        );
-
-      case Exception():
-        cases[index].setOutput(
-          error: ["$error"]
-        );
-
-      case TestException():
-        cases[index].setOutput(
-          error: [error.message]
-        );
-
-      default:
-        cases[index].setOutput(
-          error: ["${MyApp.locale.testcase_file_failed_to_execute} $error"]
-        );
-    }
   }
 
   factory Testcase.parse(List<String> ctx, int index, int start, CodeType codeType) {
@@ -514,7 +500,7 @@ class Case {
   bool testing = false;
 
   // Store test output and error message
-  List<String>? testError, testOutput;
+  List<String>? testOutput;
 
   DifferentMatcher? matcher;
 
@@ -539,11 +525,21 @@ class Case {
 
   bool isPass = false;
 
-  bool get hasError =>
-    testError?.isNotEmpty??false;
+  /// Clear output data and set testing flag to true
+  /// - Mostly execute before test start to set testing flag
+  void beforeTestStart() {
+    testOutput = null;
+    testing = true;
+  }
+
+  /// Clear output data and set testing flag to false
+  /// - Mostly execute after testing error to clear testing flag
+  void clear() {
+    testOutput = null;
+    testing = false;
+  }
 
   void setOutput({List<String>? error, List<String>? output}) {
-    testError = error ?? testError;
     testOutput = output ?? testOutput;
     testing = false;
 
@@ -555,12 +551,6 @@ class Case {
       this.output.split("\n"),
       testOutput??[]
     );
-  }
-
-  void resetTestState() {
-    testOutput = null;
-    testError = null;
-    testing = true;
   }
 
   factory Case.parse(String message) {

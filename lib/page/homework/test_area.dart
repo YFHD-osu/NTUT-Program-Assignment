@@ -1,9 +1,10 @@
 import 'dart:io';
 
 import 'package:fluent_ui/fluent_ui.dart';
-import 'package:ntut_program_assignment/core/platform.dart' show Platforms;
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
+import 'package:ntut_program_assignment/core/platform.dart' show Platforms;
+import 'package:ntut_program_assignment/widgets/test_error_dialog.dart';
 import 'package:ntut_program_assignment/widgets/diff_indicator.dart';
 import 'package:ntut_program_assignment/widgets/selectable_text_box.dart';
 import 'package:ntut_program_assignment/widgets/tile.dart';
@@ -161,32 +162,6 @@ class _TestAreaState extends State<TestArea> {
     return Text(MyApp.locale.hwDetails_testArea_stillNotPass.format([notPass]));
   }
 
-  Future<void> _testAll() async {
-    _viewMode = 2;
-
-    for (var testCase in _testCase.cases) {
-      testCase.resetTestState();
-    }
-
-    try {
-      if (mounted) setState(() {});
-
-      await _testCase.testAll(
-        widget.testcase.testFile!,
-        widget.testcase.codeType
-      );
-
-    } catch (e) {
-      logger.e(e.toString());
-    } finally {
-      for (var testCase in _testCase.cases) {
-        testCase.setOutput();
-      }
-
-      if (mounted) setState(() {});
-    }
-  }  
-
   Widget _testcaseBtn(int index) {
     final testCasse = _testCase.cases[index];
 
@@ -212,6 +187,11 @@ class _TestAreaState extends State<TestArea> {
           return;
         }
         _selectTestcase = index;
+
+        if (!_current.hasOutput) {
+          _viewMode = 1;
+        }
+
         setState(() {});
       }
     );
@@ -282,7 +262,7 @@ class _TestAreaState extends State<TestArea> {
                   _loreWidget(),
                   const SizedBox(width: 10),
                   FilledButton(
-                    onPressed: _canStartTest ? null : _testAll,
+                    onPressed: _canStartTest ? null : () => test(null),
                     child: Text(MyApp.locale.hwDetails_testArea_startTest)
                   )
                 ]
@@ -294,58 +274,10 @@ class _TestAreaState extends State<TestArea> {
     );
   }
 
-  Widget _viewPortBuilder() {
-    if (_viewMode == 1) {
-      return ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: 350
-        ),
-        child: SelectableTextBox(text: _current.output)
-      );
-    }
-
-    if (_current.testing) {
-      return Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ProgressRing(),
-          SizedBox(width: 10),
-          Text(MyApp.locale.hwDetails_test_running)
-        ]
-      );
-    }
-
-    if (_current.hasError) {
-      return SelectableTextBox(
-        text: "${MyApp.locale.hwDetails_testArea_testError}\n"
-              "${_current.testError!.join('\n')}"
-      );
-    }
-
-    if (! _current.hasOutput) {
-      return SelectableTextBox(text: MyApp.locale.hwDetails_testArea_haveNotRun);
-    }
-
-    if (_viewMode == 0) {
-      final text = _current.testOutput!.join("\n");
-      return ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: 350
-        ),
-        child: SelectableTextBox(text: text)
-      );
-    }
-
-    return SingleChildScrollView(
-      child: TestCaseView(testCase: _current)
-    );
-  }
-
   String? _fetchTextContext() {
     switch (_viewMode) {
       case 0: // Only output context
-        final text = _current.testOutput!.join("\n");
+        final text = _current.testOutput?.join("\n");
         return text; 
 
       case 1: // Only answer context
@@ -404,7 +336,10 @@ class _TestAreaState extends State<TestArea> {
           Row(
             children: [
               Expanded(
-                child: _viewPortBuilder()
+                child: ResultViewPort(
+                  viewMode: _viewMode,
+                  testcase: _current,
+                )
               ),
               SizedBox(width: 5),
               CopyButton(context: _fetchTextContext())
@@ -415,7 +350,7 @@ class _TestAreaState extends State<TestArea> {
           SizedBox(height: 5),
           FilledButton(
             onPressed: _canStartTest ? 
-              null : () => _startTest(_selectTestcase),
+              null : () => test(_selectTestcase),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -430,25 +365,112 @@ class _TestAreaState extends State<TestArea> {
     );
   }
 
-  Future<void> _startTest(int index) async {
-    _testCase.cases[index].resetTestState();
-    _viewMode = 2;
+  Future<void> test(int? index) async {
+    if (index != null) {
+      _testCase.cases[index].beforeTestStart();
+    } else {
+      _testCase.beforeTestStart();
+    }
 
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
 
-      await _testCase.compileAndTest(
+    late final Future task;
+
+    if (index != null) {
+      task = _testCase.compileAndTest(
         widget.testcase.testFile!,
         index,
         widget.testcase.codeType
       );
+    } else {
+      task = _testCase.testAll(
+        widget.testcase.testFile!,
+        widget.testcase.codeType
+      );
+    }
+
+    // Set viewport to compare mode
+    _viewMode = 2; 
+
     try {
-    } on TestException catch (e) {
-      MyApp.showToast("${MyApp.locale.test}${index+1}", e.message, InfoBarSeverity.error);
-      if (mounted) setState(() {});
+      await task;
+    } catch (e) {
       
-      return;
+      if (!mounted) {
+        return;
+      }
+
+      await showDialog(
+        context: context,
+        builder: (context) => TestErrorDialog(error: e)
+      );
+      
+      // Fallback to only show output mode if test failed
+      _viewMode = 1;
+
+      if (index != null) {
+        _testCase.cases[index].clear();
+      } else {
+        _testCase.clearAll();
+      }
     }
     
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
+
+  }
+
+}
+
+class ResultViewPort extends StatelessWidget {
+  final int viewMode;
+  final Case testcase;
+  const ResultViewPort({
+    super.key,
+    required this.viewMode,
+    required this.testcase
+  });
+
+  Widget get _onlyShowAnswer =>
+    SelectableTextBox(text: testcase.output);
+
+  Widget get _onlyShowOutput =>
+    SelectableTextBox(
+      text: testcase.testOutput?.join("\n") ?? ""
+    );
+
+  Widget get _showCompare =>
+    DiffIndicator(matcher: testcase.matcher!);
+
+  Widget _testingIndicator() {
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ProgressRing(),
+        SizedBox(width: 10),
+        Text(MyApp.locale.hwDetails_test_running)
+      ]
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (testcase.testing) {
+      return _testingIndicator();
+    }
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: 350
+      ),
+      child: (viewMode == 0) ? _onlyShowOutput :
+             (viewMode == 1) ? _onlyShowAnswer :
+             _showCompare
+    );
+
   }
 }

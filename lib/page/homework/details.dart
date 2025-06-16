@@ -70,7 +70,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
     _sub.cancel();
   }
 
-  Widget _showDeleteConfirm() {
+  Widget _deleteConfirm() {
     return ContentDialog(
       constraints: const BoxConstraints(
         minHeight: 0, minWidth: 0, maxHeight: 400, maxWidth: 400),
@@ -162,7 +162,7 @@ class _HomeworkDetailState extends State<HomeworkDetail> {
             onPressed: !homework.canDelete ? null : () async {
               final isConfirmed = await showDialog<bool>(
                 context: context,
-                builder: (context) => _showDeleteConfirm()
+                builder: (context) => _deleteConfirm()
               );
 
               if (!(isConfirmed??false)) return;
@@ -293,9 +293,9 @@ class _CopyButtonState extends State<CopyButton> {
     return Button(
       onPressed: widget.context==null ? null : () async {
         await Clipboard.setData(ClipboardData(text: widget.context!));
-        setState(() => copyState = true);
+        if (mounted) setState(() => copyState = true);
         await Future.delayed(const Duration(milliseconds: 800));
-        setState(() => copyState = false);
+        if (mounted) setState(() => copyState = false);
       },
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 100),
@@ -712,6 +712,7 @@ class _OverviewCardState extends State<OverviewCard> {
       await widget.homework.upload(widget.homework.bytes!, widget.homework.filename!);
       await widget.homework.fetchTestcases();
       await widget.homework.refreshPassList();
+      await widget.homework.refreshSelfHandedIn();
     } catch (error) {
       MyApp.showToast(
         MyApp.locale.error_occur,
@@ -1220,18 +1221,8 @@ class _UploadSectionState extends State<UploadSection> {
 
     widget.homework.submitting = true;
     HomeworkInstance.update.add(EventType.setStateOverview);
-    // HomeworkInstance.update.add(EventType.setStateOverview);
 
-    await _uploadFile(file);
-
-    await widget.homework.refreshPassList();
-    await widget.homework.fetchTestcases();
-
-    GlobalSettings.update.add(GlobalEvent.setHwState);
-    HomeworkInstance.update.add(EventType.setStateOverview);
-  }
-
-  Future<void> _uploadFile(File file) async{
+    // Upload process
     if (!await file.exists()) {
       MyApp.showToast(MyApp.locale.hwDetails_failed_upload_homework, MyApp.locale.file_not_found, InfoBarSeverity.error);
       return;
@@ -1239,11 +1230,17 @@ class _UploadSectionState extends State<UploadSection> {
 
     try {
       final bytes = await file.readAsBytes();
-      return await widget.homework.upload(bytes, file.uri.pathSegments.last);
+      await widget.homework.upload(bytes, file.uri.pathSegments.last);
+      await widget.homework.refreshPassList();
+      await widget.homework.fetchTestcases();
+      await widget.homework.refreshSelfHandedIn();
     } catch (e) {
       MyApp.showToast(MyApp.locale.hwDetails_failed_upload_homework, e.toString(), InfoBarSeverity.error);
       return;
-    }
+    } 
+
+    GlobalSettings.update.add(GlobalEvent.setHwState);
+    HomeworkInstance.update.add(EventType.setStateOverview);
   }
 
   void _onDropLeave(DropEvent event) {

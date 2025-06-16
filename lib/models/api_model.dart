@@ -418,7 +418,7 @@ class Homework {
     return map.values.toList();
   }
 
-  static Future<List<Homework>> refreshHandedIn(List<Homework> hws) async {
+  static Future<List<Homework>> refreshHomeworkListHandedIn(List<Homework> hws) async {
     final map = Map<String, Homework>.fromEntries(hws.map((e) => MapEntry(e.hwId, e)));
     final updated = await GlobalSettings.account!.fetchHanddedHomeworks();
     
@@ -427,6 +427,11 @@ class Homework {
     }
 
     return map.values.toList();
+  }
+
+  Future<void> refreshSelfHandedIn() async {
+    final updated = await GlobalSettings.account!.fetchHanddedHomeworks();
+    fileState = updated.where((e) => e.id == hwId).firstOrNull;
   }
 
   factory Homework.fromSoup(Bs4Element e) {

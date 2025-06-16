@@ -110,21 +110,6 @@ class DifferentMatcher {
     required this.widgets
   });
 
-  static bool _checkReliability(List<List<Diff>> original, List<List<Diff>> response) {
-    // Calculate string length for each diff match result 
-    final orig = original.map((e) => e.fold(0, (p, e) => p+e.text.length)).toList();
-    final resp = response.map((e) => e.fold(0, (p, e) => p+e.text.length)).toList();
-
-    final invalidLineCount = List<int>
-      .generate(min(resp.length, orig.length), (e) => e)
-      .map((e) => (orig[e] - resp[e]).abs() / max(orig[e], resp[e]))
-      .where((e) => e != 0)
-      .where((e) => e < threshold)
-      .length;
-    // print(invalidLineCount / orig.length < 1-threshold);
-    return invalidLineCount / orig.length < 1-threshold;
-  }
-  
   factory DifferentMatcher.match(String original, String response) {
     final List<List<Diff>> originalDiff = [], responseDiff = [];
 
