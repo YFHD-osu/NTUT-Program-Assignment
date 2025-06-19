@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/services.dart';
 
 import 'package:ntut_program_assignment/core/extension.dart';
 import 'package:ntut_program_assignment/core/global.dart';
 import 'package:ntut_program_assignment/main.dart';
 import 'package:ntut_program_assignment/models/api_model.dart' show Homework;
+import 'package:ntut_program_assignment/page/homework/details.dart';
 import 'package:ntut_program_assignment/page/homework/page.dart';
+import 'package:ntut_program_assignment/widgets/debug_widget.dart';
 import 'package:ntut_program_assignment/widgets/general_page.dart';
 import 'package:ntut_program_assignment/widgets/tile.dart';
 
@@ -166,6 +170,29 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
     );
   }
 
+  Widget _debugSection() {
+    String result = HomeworkInstance.homeworks
+      .map((e) => json.encode(e.toMap()))
+      .join("\n");
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("偵錯選項", style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        Tile(
+          limitIconSize: true,
+          title: Text("複製所有題目"),
+          subtitle: Text("將所有題目轉換成 JSON 後複製到剪貼簿"),
+          leading: const Icon(FluentIcons.clipboard_list),
+          trailing: CopyButton(
+            context: result
+          )
+        )
+      ]
+    );
+  }
+
   Widget _passedHws() {
     final passed = HomeworkInstance.homeworks
       .reversed
@@ -316,16 +343,24 @@ class _HomeworkListState extends State<HomeworkList> with AutomaticKeepAliveClie
         )
       );
     }
+
+    final widgetList = [
+      _overviewCard(),
+      _pendingHws(),
+      _passedHws(),
+      DebugOnlyWidget(
+        child: _debugSection()
+      )
+    ];
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _overviewCard(),
+    return ListView.separated(
+      shrinkWrap: true,
+      itemBuilder: (context, index) => 
+        widgetList[index],
+      separatorBuilder: (context, index) =>
         const SizedBox(height: 10),
-        _pendingHws(),
-        const SizedBox(height: 10),
-        _passedHws()
-    ]);
+      itemCount: widgetList.length
+    );
   }
   
   @override

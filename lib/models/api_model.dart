@@ -446,6 +446,25 @@ class Homework {
       status: e.contents[6].text.trim()
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      "_comment": null,
+      "uuid": null,
+      "title": title,
+      "createDate": deadline.millisecondsSinceEpoch,
+      "collections": [
+
+      ],
+      "problem": problem,
+      "testcase": {
+        "codeType": codeType.index,
+        "cases": testCase.cases.map(
+          (e) => e.toMap()
+        ).toList()
+      }
+    };
+  }
 }
 
 class HomeworkStatus {

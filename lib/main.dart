@@ -150,22 +150,39 @@ class MyApp extends StatelessWidget {
       builder: (context, _) {
         final themeProvider = Provider.of<ThemeProvider>(context);
         // print(AppLocalizations.supportedLocales);
-        return FluentApp(
-          locale: _locale,
-          supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          debugShowCheckedModeBanner: false,
-          home: WindowBorder(
-            color: Colors.transparent,
-            child: const HomePage()
-          ),
-          theme: ThemePack.light,
-          darkTheme: ThemePack.dark,
-          themeMode: themeProvider.theme,
+        return UnfocusOnTapWrapper(
+          child: FluentApp(
+            locale: _locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            debugShowCheckedModeBanner: false,
+            home: WindowBorder(
+              color: Colors.transparent,
+              child: const HomePage()
+            ),
+            theme: ThemePack.light,
+            darkTheme: ThemePack.dark,
+            themeMode: themeProvider.theme,
+          )
         );
       });
   }
 }
+
+class UnfocusOnTapWrapper extends StatelessWidget {
+  final Widget child;
+  const UnfocusOnTapWrapper({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      behavior: HitTestBehavior.translucent,
+      child: child,
+    );
+  }
+}
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

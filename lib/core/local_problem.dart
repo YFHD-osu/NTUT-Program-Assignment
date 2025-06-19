@@ -87,6 +87,33 @@ class ProblemCollection {
     required this.problemIDs
   });
 
+  int _naturalCompare(String a, String b) {
+    final regex = RegExp(r'(\d+)|(\D+)');
+    final aMatches = regex.allMatches(a);
+    final bMatches = regex.allMatches(b);
+
+    final len = aMatches.length < bMatches.length ? aMatches.length : bMatches.length;
+
+    for (int i = 0; i < len; i++) {
+      final aPart = aMatches.elementAt(i).group(0)!;
+      final bPart = bMatches.elementAt(i).group(0)!;
+
+      final aNum = int.tryParse(aPart);
+      final bNum = int.tryParse(bPart);
+
+      if (aNum != null && bNum != null) {
+        final cmp = aNum.compareTo(bNum);
+        if (cmp != 0) return cmp;
+      } else {
+        final cmp = aPart.compareTo(bPart);
+        if (cmp != 0) return cmp;
+      }
+    }
+
+    return a.length.compareTo(b.length);
+  }
+
+
   Future<void> fetchProblems() async {
     if (isInitialized) return;
 
@@ -103,8 +130,12 @@ class ProblemCollection {
     }
     
     for (var item in results) {
-        problems.add(item);
+      problems.add(item);
     }
+
+    problems.sort(
+      (a, b) => _naturalCompare(a.title, b.title)
+    );
 
     isInitialized = true; 
   }

@@ -3,6 +3,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 // import 'package:flutter/material.dart';
 
 import 'package:flutter_syntax_view/flutter_syntax_view.dart';
+import 'package:ntut_program_assignment/core/extension.dart';
 
 class SyntaxViewShit extends StatefulWidget {
   
@@ -69,10 +70,6 @@ class SyntaxViewShitState extends State<SyntaxViewShit> {
           ? const EdgeInsets.only(left: 15, top: 10, right: 5, bottom: 10)
           : const EdgeInsets.all(10),
       color: widget.syntaxTheme!.backgroundColor,
-      constraints: BoxConstraints(
-        minHeight: 0, maxHeight: 400,
-        minWidth: double.infinity
-      ),
       child: Scrollbar(
         controller: _verticalScrollController,
         child: SingleChildScrollView(
@@ -80,9 +77,9 @@ class SyntaxViewShitState extends State<SyntaxViewShit> {
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: widget.withLinesCount
-                ? buildCodeWithLinesCount() // Syntax view with line number to the left
-                : buildCode() // Syntax view
-            ))));
+              ? buildCodeWithLinesCount() // Syntax view with line number to the left
+              : buildCode() // Syntax view
+          ))));
   }
 
   Widget buildCodeWithLinesCount() {
@@ -91,47 +88,56 @@ class SyntaxViewShitState extends State<SyntaxViewShit> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Column(
-            // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              for (int i = 1; i <= numLines; i++)
-                RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                        fontFamily: 'firacode',
-                        fontSize: widget.fontSize*1.05,
-                        color: widget.syntaxTheme!.linesCountColor),
-                    text: "$i",
-                  ))
-            ]),
-        SizedBox(
-          width: 10,
-          // direction: Axis.horizontal
-        ),
+        _buildNumber(numLines),
+        SizedBox(width: 10),
         buildCode()
       ],
     );
   }
 
+  Widget _buildNumber(int numLines) {
+    return RichText(
+      text: TextSpan(
+        children: List
+          .generate(numLines, (i) => i+1)
+          .map((e) => TextSpan(text: "${e.toString().padLeft(2)}\n"))
+          .toList(),
+        style: TextStyle(
+          fontFamily: 'firacode',
+          fontSize: widget.fontSize*1.05,
+          color: widget.syntaxTheme!.linesCountColor
+        )
+      )
+    );
+  }
+
   Widget buildCode() {
+    final style = TextStyle(fontFamily: 'firacode', fontSize: widget.fontSize);
+    final children = <TextSpan>[
+      getSyntax(widget.syntax, widget.syntaxTheme).format(widget.code)
+    ];
+
     if (widget.selectable) {
       return SelectableText.rich(
         selectionControls: fluentTextSelectionControls,
         TextSpan(
-          style: TextStyle(fontFamily: 'firacode', fontSize: widget.fontSize),
-          children: <TextSpan>[
-            getSyntax(widget.syntax, widget.syntaxTheme).format(widget.code)
-          ]
-        )
+          style: style,
+          children: children
+        ),
+        strutStyle: StrutStyle(
+          height: 1.3,
+          forceStrutHeight: true,
+        ),
       );
     } else {
       return RichText(
         text: TextSpan(
-          style: TextStyle(fontFamily: 'firacode', fontSize: widget.fontSize),
-          children: <TextSpan>[
-            getSyntax(widget.syntax, widget.syntaxTheme).format(widget.code)
-          ]
+          style: style,
+          children: children
+        ),
+        strutStyle: StrutStyle(
+          height: 1.3,
+          forceStrutHeight: true,
         )
       );
     }

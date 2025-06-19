@@ -38,34 +38,28 @@ class _ProblemDetailState extends State<ProblemDetail> {
 
   Widget _sampleCodeView() {
     if (localProblem?.sampleCode == null) {
-      return Center(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(FluentIcons.error),
-            SizedBox(width: 10, height: 60),
-            Text("此題尚未有範例程式")
-          ]
-        ),
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Icon(FluentIcons.error),
+          SizedBox(width: 10, height: 50),
+          Text("此題尚未有範例程式")
+        ]
       );
     }
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: 400, minWidth: double.infinity
+    return ClipRRect(
+      borderRadius: const BorderRadius.all(
+        Radius.circular(8.0),
       ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.all(
-          Radius.circular(8.0),
-        ),
-        child: SyntaxViewShit(
-          withZoom: false,
-          code: localProblem!.sampleCode!.join("\n"),
-          syntaxTheme: getSyntaxTheme(FluentTheme.of(context)),
-          syntax: Syntax.C,
-          fontSize: 16
-        ),
-      )
+      child: SyntaxViewShit(
+        withZoom: false,
+        code: localProblem!.sampleCode!.join("\n"),
+        syntaxTheme: getSyntaxTheme(FluentTheme.of(context)),
+        syntax: Syntax.C,
+        fontSize: 16
+      ),
     );
   }
 
@@ -95,7 +89,13 @@ class _ProblemDetailState extends State<ProblemDetail> {
         Text("範例程式",
           style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
-        _sampleCodeView(),
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: 600,
+            minWidth: double.infinity
+          ),
+          child: _sampleCodeView()
+        ),
         SizedBox(height: 10),
         Text(MyApp.locale.hwDetails_subtitle_copyarea,
           style: const TextStyle(fontWeight: FontWeight.bold)),
